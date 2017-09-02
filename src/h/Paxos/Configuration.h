@@ -44,21 +44,31 @@ struct Configuration {
 
     const NodeId &node_id() const { return _node_id; }
     const Weight &weight()  const { return _weight; }
+
+    void inc_weight() {
+      Weight new_weight = weight() + ((Weight)1);
+      if (new_weight < weight()) return;
+      _weight = new_weight;
+    }
   };
 
   /* Invariants:
     - if .entries is empty then there are no quorums.
     - if .entries is nonempty then the total weight is >0
+    - the total weight does not overflow
     - all weights are > 0
   */
   std::vector<Entry> entries;
   const bool is_quorate(const std::set<NodeId> &) const;
+  std::vector<Entry>::iterator find(const NodeId &);
 
   const Weight total_weight() const {
     Weight w = 0;
     for (auto &entry : entries) { w += entry.weight(); }
     return w;
   }
+
+  void increment_weight(const NodeId&);
 
   Configuration(const NodeId &acceptor) {
     entries.push_back(Entry(acceptor, 1));

@@ -43,6 +43,26 @@ const bool Configuration::is_quorate(const std::set<NodeId> &acceptors) const {
           && total_weight < 2 * accepted_weight;
 }
 
+std::vector<Configuration::Entry>::iterator
+  Configuration::find(const NodeId &aid) {
+
+  return find_if(entries.begin(),
+                 entries.end(),
+                 [aid](const Configuration::Entry &e)
+                 { return e.node_id() == aid; });
+}
+
+void Configuration::increment_weight(const NodeId &aid){
+  if (total_weight() == 255) { return; }
+  auto it = find(aid);
+  if (it == entries.end()) {
+    entries.push_back(Configuration::Entry(aid, 1));
+  } else {
+    assert(it->weight() > 0);
+    it->inc_weight();
+  }
+}
+
 std::ostream& operator<<(std::ostream &o, const Configuration::Entry &entry) {
   return o << entry.node_id()
     << "=" << (uint32_t) entry.weight();
