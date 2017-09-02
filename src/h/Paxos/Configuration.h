@@ -50,6 +50,13 @@ struct Configuration {
       if (new_weight < weight()) return;
       _weight = new_weight;
     }
+
+    void dec_weight() {
+      Weight new_weight = weight() - ((Weight)1);
+      if (new_weight > weight() || new_weight == 0) return;
+      _weight = new_weight;
+    }
+
   };
 
   /* Invariants:
@@ -69,6 +76,7 @@ struct Configuration {
   }
 
   void increment_weight(const NodeId&);
+  void decrement_weight(const NodeId&);
 
   Configuration(const NodeId &acceptor) {
     entries.push_back(Entry(acceptor, 1));

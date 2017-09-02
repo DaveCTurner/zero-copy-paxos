@@ -63,6 +63,18 @@ void Configuration::increment_weight(const NodeId &aid){
   }
 }
 
+void Configuration::decrement_weight(const NodeId &aid){
+  if (total_weight() <= 1) { return; }
+  auto it = find(aid);
+  if (it == entries.end()) { return; }
+  assert(it->weight() > 0);
+  if (it->weight() == 1) {
+    entries.erase(it);
+  } else {
+    it->dec_weight();
+  }
+}
+
 std::ostream& operator<<(std::ostream &o, const Configuration::Entry &entry) {
   return o << entry.node_id()
     << "=" << (uint32_t) entry.weight();
