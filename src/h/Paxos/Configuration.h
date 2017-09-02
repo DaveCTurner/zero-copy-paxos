@@ -63,6 +63,12 @@ struct Configuration {
       assert (new_weight / multiplier == weight()); // no overflow
       _weight = new_weight;
     }
+
+    void div_weight(const Weight &divisor) {
+      assert(divisor != 0);
+      assert(weight() % divisor == 0);
+      _weight /= divisor;
+    }
   };
 
   /* Invariants:
@@ -84,6 +90,7 @@ struct Configuration {
   void increment_weight(const NodeId&);
   void decrement_weight(const NodeId&);
   void multiply_weights(const Weight&);
+  void   divide_weights(const Weight&);
 
   Configuration(const NodeId &acceptor) {
     entries.push_back(Entry(acceptor, 1));

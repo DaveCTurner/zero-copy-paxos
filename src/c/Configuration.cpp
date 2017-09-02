@@ -89,6 +89,17 @@ void Configuration::multiply_weights(const Weight &multiplier){
   }
 }
 
+void Configuration::divide_weights(const Weight &divisor){
+  if (divisor == 0) { return; }
+
+  for (const auto &entry : entries) {
+    if (entry.weight() % divisor != 0) { return; }
+  }
+  for (auto &entry : entries) {
+    entry.div_weight(divisor);
+  }
+}
+
 std::ostream& operator<<(std::ostream &o, const Configuration::Entry &entry) {
   return o << entry.node_id()
     << "=" << (uint32_t) entry.weight();
