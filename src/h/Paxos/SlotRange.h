@@ -17,16 +17,34 @@
 */
 
 
+
+#ifndef PAXOS_SLOT_RANGE_H
+#define PAXOS_SLOT_RANGE_H
+
+#include "Paxos/basic_types.h"
+
 #include <iostream>
 
-void term_tests();
-void slot_range_tests();
+namespace Paxos {
 
-int main() {
-  term_tests();
-  slot_range_tests();
+struct SlotRange {
+  Slot _start; /* inclusive */
+  Slot _end;   /* exclusive */
 
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+  SlotRange(const Slot &start, const Slot &end) {
+    _start = start;
+    _end   = end;
+  }
+
+  const Slot &start() const { return _start; }
+  const Slot &end()   const { return _end;   }
+
+  const bool is_empty() const {
+    return _end <= _start;
+  }
+};
+std::ostream& operator<<(std::ostream&, const SlotRange&);
+
 }
 
+#endif // ndef PAXOS_SLOT_RANGE_H

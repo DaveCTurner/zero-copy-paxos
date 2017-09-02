@@ -25,6 +25,7 @@
 
 namespace Paxos {
 
+typedef uint64_t Slot;
 typedef uint32_t Era;
 typedef uint32_t TermNumber;
 typedef uint32_t NodeId;

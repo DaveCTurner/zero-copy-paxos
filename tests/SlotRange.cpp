@@ -17,16 +17,15 @@
 */
 
 
+
+#include "Paxos/SlotRange.h"
+
 #include <iostream>
+#include <cassert>
 
-void term_tests();
-void slot_range_tests();
+using namespace Paxos;
 
-int main() {
-  term_tests();
-  slot_range_tests();
-
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+void slot_range_tests() {
+  SlotRange r1(4,6);
+  std::cout << r1 << std::endl;
 }
-

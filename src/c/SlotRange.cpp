@@ -17,16 +17,15 @@
 */
 
 
-#include <iostream>
 
-void term_tests();
-void slot_range_tests();
+#include "Paxos/SlotRange.h"
 
-int main() {
-  term_tests();
-  slot_range_tests();
+namespace Paxos {
 
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+std::ostream& operator<<(std::ostream &o, const SlotRange &r) {
+  o << '[' << r.start() << "," << r.end() << ")";
+  if (r.is_empty()) { o << "={}"; }
+  return o;
 }
 
+}
