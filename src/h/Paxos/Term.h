@@ -17,14 +17,31 @@
 */
 
 
+
+#ifndef PAXOS_TERM_H
+#define PAXOS_TERM_H
+
+#include "Paxos/basic_types.h"
 #include <iostream>
 
-void term_tests();
+namespace Paxos {
 
-int main() {
-  term_tests();
+struct Term {
+  Era           era         = 0;
+  TermNumber    term_number = 0;
+  NodeId        owner = 0;
 
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+  Term() {}
+
+  Term(Era e, TermNumber tn, NodeId p) {
+    era         = e;
+    term_number = tn;
+    owner       = p;
+  }
+};
+
+std::ostream& operator<<(std::ostream&, const Term&);
+
 }
 
+#endif // ndef PAXOS_TERM_H

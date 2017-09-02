@@ -17,14 +17,18 @@
 */
 
 
-#include <iostream>
 
-void term_tests();
+#ifndef PAXOS_BASIC_TYPES_H
+#define PAXOS_BASIC_TYPES_H
 
-int main() {
-  term_tests();
+#include <stdint.h>
 
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+namespace Paxos {
+
+typedef uint32_t Era;
+typedef uint32_t TermNumber;
+typedef uint32_t NodeId;
+
 }
 
+#endif // ndef PAXOS_BASIC_TYPES_H

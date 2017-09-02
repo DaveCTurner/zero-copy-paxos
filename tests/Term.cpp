@@ -17,14 +17,20 @@
 */
 
 
+
+#include "Paxos/Term.h"
+
 #include <iostream>
+#include <cassert>
 
-void term_tests();
+using namespace Paxos;
 
-int main() {
-  term_tests();
+void term_tests() {
+  Term t1(1,2,3);
 
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+  std::cout << t1 << std::endl;
+
+  assert(t1.era         == 1);
+  assert(t1.term_number == 2);
+  assert(t1.owner       == 3);
 }
-

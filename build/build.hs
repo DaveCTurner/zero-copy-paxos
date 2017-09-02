@@ -48,9 +48,10 @@ main = shakeArgs shakeOptions $ do
 
   "_build/*/test" %> \out -> do
     let level = takeDirectory1 $ dropDirectory1 out
-    objs <- objs level "tests"
+    objs1 <- objs level "src"
+    objs2 <- objs level "tests"
     cmd "g++" [optFlag level] "-Wall -Werror -pthread -o" [out]
-        (defineFlags level) objs
+        (defineFlags level) objs1 objs2
 
   "_build/*/obj//*.o" %> \out -> do
     let level = takeDirectory1 $ dropDirectory1 out

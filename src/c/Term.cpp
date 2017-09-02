@@ -17,14 +17,16 @@
 */
 
 
-#include <iostream>
 
-void term_tests();
+#include "Paxos/Term.h"
 
-int main() {
-  term_tests();
+namespace Paxos {
 
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+std::ostream& operator<<(std::ostream &o, const Term &t) {
+  return o << '[' << t.era
+           << '.' << t.term_number
+           << '.' << t.owner
+           << ']';
 }
 
+}
