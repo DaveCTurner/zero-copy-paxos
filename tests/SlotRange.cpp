@@ -28,4 +28,6 @@ using namespace Paxos;
 void slot_range_tests() {
   SlotRange r1(4,6);
   std::cout << r1 << std::endl;
+
+  assert(r1.is_nonempty());
 }

@@ -42,6 +42,10 @@ struct SlotRange {
   const bool is_empty() const {
     return _end <= _start;
   }
+
+  const bool is_nonempty() const {
+    return _start < _end;
+  }
 };
 std::ostream& operator<<(std::ostream&, const SlotRange&);
 
