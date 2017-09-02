@@ -38,6 +38,7 @@ struct SlotRange {
 
   const Slot &start() const { return _start; }
   const Slot &end()   const { return _end;   }
+  void set_end(const Slot &end) { _end = end; }
 
   const bool contains(const Slot &slot) const {
     return _start <= slot && slot < _end;

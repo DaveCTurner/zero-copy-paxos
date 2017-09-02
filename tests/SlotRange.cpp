@@ -34,4 +34,11 @@ void slot_range_tests() {
   assert( r1.contains(5));
   assert(!r1.contains(6));
   assert(r1.is_nonempty());
+
+  r1.set_end(4);
+  assert(r1.is_empty());
+
+  r1.set_end(3);
+  assert(r1.is_empty());
+  std::cout << r1 << std::endl;
 }
