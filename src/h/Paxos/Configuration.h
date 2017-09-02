@@ -24,6 +24,7 @@
 #include "Paxos/basic_types.h"
 
 #include <iostream>
+#include <set>
 #include <vector>
 
 namespace Paxos {
@@ -45,7 +46,19 @@ struct Configuration {
     const Weight &weight()  const { return _weight; }
   };
 
+  /* Invariants:
+    - if .entries is empty then there are no quorums.
+    - if .entries is nonempty then the total weight is >0
+    - all weights are > 0
+  */
   std::vector<Entry> entries;
+  const bool is_quorate(const std::set<NodeId> &) const;
+
+  const Weight total_weight() const {
+    Weight w = 0;
+    for (auto &entry : entries) { w += entry.weight(); }
+    return w;
+  }
 
   Configuration(const NodeId &acceptor) {
     entries.push_back(Entry(acceptor, 1));

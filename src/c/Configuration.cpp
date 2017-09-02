@@ -27,6 +27,22 @@
 
 namespace Paxos {
 
+const bool Configuration::is_quorate(const std::set<NodeId> &acceptors) const {
+  uint8_t total_weight    = 0;
+  uint8_t accepted_weight = 0;
+
+  for (const auto &entry : entries) {
+    assert(entry.weight() > 0);
+    total_weight += entry.weight();
+    if (acceptors.find(entry.node_id()) != acceptors.end()) {
+      accepted_weight += entry.weight();
+    }
+  }
+
+  return 0 < total_weight
+          && total_weight < 2 * accepted_weight;
+}
+
 std::ostream& operator<<(std::ostream &o, const Configuration::Entry &entry) {
   return o << entry.node_id()
     << "=" << (uint32_t) entry.weight();
