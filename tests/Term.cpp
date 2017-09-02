@@ -33,4 +33,12 @@ void term_tests() {
   assert(t1.era         == 1);
   assert(t1.term_number == 2);
   assert(t1.owner       == 3);
+
+  Term t2 __attribute__((unused)) = t1;
+
+  assert(t2.era         == 1);
+  assert(t2.term_number == 2);
+  assert(t2.owner       == 3);
+
+  assert (t1 == t2);
 }

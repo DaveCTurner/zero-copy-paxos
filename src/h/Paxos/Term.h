@@ -40,6 +40,15 @@ struct Term {
   }
 };
 
+inline const bool operator==(const Term &t1, const Term &t2)
+    __attribute__((always_inline));
+
+inline const bool operator==(const Term &t1, const Term &t2) {
+  return t1.era         == t2.era
+      && t1.term_number == t2.term_number
+      && t1.owner       == t2.owner;
+}
+
 std::ostream& operator<<(std::ostream&, const Term&);
 
 }
