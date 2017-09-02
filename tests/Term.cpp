@@ -41,4 +41,10 @@ void term_tests() {
   assert(t2.owner       == 3);
 
   assert (t1 == t2);
+  assert (!(t1 != t2));
+
+  t2.term_number = 3;
+  assert (!(t1 == t2));
+  assert (t1 != t2);
+
 }
