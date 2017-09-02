@@ -21,7 +21,6 @@
 #include "Paxos/Configuration.h"
 
 #include <algorithm>
-#include <cassert>
 #include <string.h>
 #include <unistd.h>
 
@@ -72,6 +71,21 @@ void Configuration::decrement_weight(const NodeId &aid){
     entries.erase(it);
   } else {
     it->dec_weight();
+  }
+}
+
+void Configuration::multiply_weights(const Weight &multiplier){
+  if (multiplier == 0) return;
+
+  auto old_total = total_weight();
+  auto new_total = old_total * multiplier;
+  if (new_total / multiplier != old_total) {
+    // overflow
+    return;
+  }
+
+  for (auto &entry : entries) {
+    entry.mul_weight(multiplier);
   }
 }
 

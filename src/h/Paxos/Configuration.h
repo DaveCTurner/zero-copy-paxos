@@ -26,6 +26,7 @@
 #include <iostream>
 #include <set>
 #include <vector>
+#include <cassert>
 
 namespace Paxos {
 
@@ -57,6 +58,11 @@ struct Configuration {
       _weight = new_weight;
     }
 
+    void mul_weight(const Weight &multiplier) {
+      Weight new_weight = weight() * multiplier;
+      assert (new_weight / multiplier == weight()); // no overflow
+      _weight = new_weight;
+    }
   };
 
   /* Invariants:
@@ -77,6 +83,7 @@ struct Configuration {
 
   void increment_weight(const NodeId&);
   void decrement_weight(const NodeId&);
+  void multiply_weights(const Weight&);
 
   Configuration(const NodeId &acceptor) {
     entries.push_back(Entry(acceptor, 1));
