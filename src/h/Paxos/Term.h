@@ -57,6 +57,17 @@ inline const bool operator!=(const Term &t1, const Term &t2) {
       || t1.owner       != t2.owner;
 }
 
+inline const bool operator<(const Term &t1, const Term &t2)
+    __attribute__((always_inline));
+
+inline const bool operator<(const Term &t1, const Term &t2) {
+#define LT_LEX(a,b,c) (((a) == (b)) ? (c) : (((a) < (b)) ? true : false))
+  return LT_LEX(t1.era,          t2.era,
+         LT_LEX(t1.term_number,  t2.term_number,
+                t1.owner       < t2.owner));
+#undef LT_LEX
+}
+
 std::ostream& operator<<(std::ostream&, const Term&);
 
 }
