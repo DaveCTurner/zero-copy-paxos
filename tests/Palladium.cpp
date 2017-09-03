@@ -71,5 +71,38 @@ void palladium_tests() {
       });
   std::cout << pal << std::endl << std::endl;
 
+  std::cout << "ACC[0.0.2]:[10,18)@2=NO-OP" << std::endl << std::endl;
+  pal.handle_accepted(2, {
+        .slots = {
+          .start = 10,
+          .end   = 18,
+        },
+        .term = Term(0,0,2),
+        .value = {.type = Value::Type::no_op}
+      });
+  std::cout << pal << std::endl << std::endl;
+
+  std::cout << "ACC[0.0.2]:[18,20)@2=NO-OP" << std::endl << std::endl;
+  pal.handle_accepted(2, {
+        .slots = {
+          .start = 18,
+          .end   = 20,
+        },
+        .term = Term(0,0,2),
+        .value = {.type = Value::Type::no_op}
+      });
+  std::cout << pal << std::endl << std::endl;
+
+  std::cout << "ACC[0.0.2]:[0,12)@3=NO-OP" << std::endl << std::endl;
+  pal.handle_accepted(3, {
+        .slots = {
+          .start = 0,
+          .end   = 12,
+        },
+        .term = Term(0,0,2),
+        .value = {.type = Value::Type::no_op}
+      });
+  std::cout << pal << std::endl << std::endl;
+
 }
 
