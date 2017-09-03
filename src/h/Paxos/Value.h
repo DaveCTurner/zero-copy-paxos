@@ -78,6 +78,9 @@ std::ostream& operator<<(std::ostream&, const Value::OffsetStream&);
 inline const bool operator==(const Value&, const Value&)
     __attribute__((always_inline));
 
+inline const bool operator!=(const Value&, const Value&)
+    __attribute__((always_inline));
+
 inline const bool operator==(const Value &v1, const Value &v2) {
   if (v1.type != v2.type) { return false; }
 
@@ -111,6 +114,11 @@ inline const bool operator==(const Value &v1, const Value &v2) {
       return false;
   }
 }
+
+inline const bool operator!=(const Value &v1, const Value &v2) {
+  return !(v1 == v2);
+}
+
 
 }
 
