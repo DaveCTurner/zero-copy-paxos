@@ -170,6 +170,7 @@ private:
     assert(first_unchosen_slot < slot);
 
     if (is_reconfiguration(chosen_message.value.type)) {
+      assert(slot == first_unchosen_slot + 1);
 
       configurations.clear();
       record_current_configuration();
