@@ -144,6 +144,13 @@ private:
           .value = accepted_message.value,
         };
 
+        if (is_reconfiguration(chosen_message.value.type)) {
+          // Can only choose one value if it is an reconfiguration,
+          // as the subsequent values have different configurations.
+          chosen_message.slots
+              .set_end(chosen_message.slots.start() + 1);
+        }
+
         if (search_for_quorums(acceptor_iterator,
                                received_acceptances.cend(),
                                chosen_message,
