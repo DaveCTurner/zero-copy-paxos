@@ -176,7 +176,19 @@ const Proposal Palladium::handle_promise
     }
   }
 
+  bool propose_first_unchosen = false;
+
   if (first_inactive_slot < effective_slots.end()) {
+
+    if (first_inactive_slot == first_unchosen_slot
+        && is_ready_to_propose) {
+
+      // About to activate an slot proposer for the first_unchosen_slot
+      // which has .has_proposed_value = true.  Remember this for later when
+      // working out what proposal message to return.
+      propose_first_unchosen = true;
+    }
+
     activate({ .type = Value::Type::no_op },
       effective_slots.end() - first_inactive_slot);
   }
@@ -238,6 +250,19 @@ const Proposal Palladium::handle_promise
         is_ready_to_propose = true;
         promises_for_inactive_slots.clear();
       }
+    }
+  }
+
+  if (propose_first_unchosen) {
+    const auto &a = *active_slot_states.begin();
+
+    if (a.has_proposed_value) {
+      // Value is still unbound - the promise doesn't apply to these slots.
+      return {
+        .slots = a.slots,
+        .term  = a.term,
+        .value = a.value
+      };
     }
   }
 
