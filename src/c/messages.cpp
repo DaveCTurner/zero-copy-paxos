@@ -20,6 +20,7 @@
 
 #include <iostream>
 
+#include "Paxos/Promise.h"
 #include "Paxos/Proposal.h"
 
 namespace Paxos {
@@ -28,6 +29,22 @@ std::ostream& operator<<(std::ostream &o, const Proposal &p) {
   return o << p.slots
    << ": " << p.term
    << ": " << p.value;
+}
+
+std::ostream& operator<<(std::ostream &o, const Promise &p) {
+  switch (p.type) {
+    case Promise::Type::none:
+      return o << "[no promise]";
+    case Promise::Type::multi:
+      return o << p.term << ":[" << p.slots.start() << ",oo)";
+    case Promise::Type::free:
+      return o << p.term << ":" << p.slots;
+    case Promise::Type::bound:
+      return o << p.term << ":" << p.slots
+        << "=" << p.max_accepted_term
+          << ":" << p.max_accepted_term_value;
+  }
+  return o;
 }
 
 }
