@@ -29,6 +29,10 @@ Palladium::Palladium(const NodeId         id,
   , first_inactive_slot     (initial_slot)
   , current_era             (initial_era)
   , current_configuration   (initial_configuration) {
+    record_current_configuration();
+}
+
+void Palladium::record_current_configuration() {
   configurations.insert(std::pair<Era, Configuration>
                     (current_era, current_configuration));
 }

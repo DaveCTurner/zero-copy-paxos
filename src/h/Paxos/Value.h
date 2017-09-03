@@ -81,6 +81,9 @@ inline const bool operator==(const Value&, const Value&)
 inline const bool operator!=(const Value&, const Value&)
     __attribute__((always_inline));
 
+inline const bool is_reconfiguration(const Value::Type)
+    __attribute__((always_inline));
+
 inline const bool operator==(const Value &v1, const Value &v2) {
   if (v1.type != v2.type) { return false; }
 
@@ -119,6 +122,24 @@ inline const bool operator!=(const Value &v1, const Value &v2) {
   return !(v1 == v2);
 }
 
+inline const bool is_reconfiguration(const Value::Type type) {
+  switch (type) {
+    case Value::Type::no_op:
+    case Value::Type::generate_node_id:
+    case Value::Type::stream_content:
+      return false;
+
+    case Value::Type::reconfiguration_inc:
+    case Value::Type::reconfiguration_dec:
+    case Value::Type::reconfiguration_mul:
+    case Value::Type::reconfiguration_div:
+      return true;
+
+    default:
+      assert(false); // All cases already handled
+      return false;
+  }
+}
 
 }
 

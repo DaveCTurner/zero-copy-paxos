@@ -111,6 +111,7 @@ private:
   const Proposal *find_maximum_acceptance(Slot &promise_end_slot) const;
 
   void split_active_slot_states_at(const Slot slot);
+  void record_current_configuration();
 
   const bool check_for_quorums(Proposal &chosen_message) const {
 
@@ -157,7 +158,40 @@ private:
   }
 
   void handle_chosen(const Proposal &chosen_message) {
+
     const auto &slot = chosen_message.slots.end();
+
+    if (is_reconfiguration(chosen_message.value.type)) {
+
+      configurations.clear();
+      record_current_configuration();
+
+      const auto &a = chosen_message.value.payload.reconfiguration;
+
+      switch (chosen_message.value.type) {
+        case Value::Type::reconfiguration_inc:
+          current_configuration.increment_weight(a.subject);
+          break;
+
+        case Value::Type::reconfiguration_dec:
+          current_configuration.decrement_weight(a.subject);
+          break;
+
+        case Value::Type::reconfiguration_mul:
+          current_configuration.multiply_weights(a.factor);
+          break;
+
+        case Value::Type::reconfiguration_div:
+          current_configuration.divide_weights(a.factor);
+          break;
+
+        default:
+          assert(false);
+      }
+
+      current_era += 1;
+      record_current_configuration();
+    }
 
     first_unchosen_slot = slot;
     if (first_inactive_slot < slot) {
