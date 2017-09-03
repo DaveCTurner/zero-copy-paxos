@@ -211,6 +211,13 @@ void Palladium::split_active_slot_states_at(const Slot slot) {
 
   active_slot_states.insert(it, *it);
 
+  // Iterator invalidated - find the right state again.
+  it = find_if(
+          active_slot_states.begin(),
+          active_slot_states.end(),
+          [slot](const ActiveSlotState &a)
+              { return a.slots.contains(slot); });
+
   it[0].slots.set_end(slot);
   it[1].slots.truncate(slot);
 }
