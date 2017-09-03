@@ -17,18 +17,13 @@
 */
 
 
-#include <iostream>
 
-void term_tests();
-void slot_range_tests();
-void palladium_tests();
+#include "Paxos/Palladium.h"
 
-int main() {
-  term_tests();
-  slot_range_tests();
-  palladium_tests();
+using namespace Paxos;
 
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+void palladium_tests() {
+  Palladium pal(1);
+  std::cout << "Initial state: " << std::endl << pal << std::endl << std::endl;
 }
 
