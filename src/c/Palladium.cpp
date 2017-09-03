@@ -203,6 +203,12 @@ const Promise Palladium::handle_prepare(const Term &new_term) {
          and for a term no earlier than new_term, so
          no promise can be made. */
 
+      assert(any_of(sent_acceptances.cbegin(),
+                    sent_acceptances.cend(),
+                    [this, new_term](const Proposal &p)
+      { return p.slots.contains(first_unchosen_slot)
+                    && new_term <= p.term; }));
+
       promise.type = Promise::Type::none;
     }
   }
