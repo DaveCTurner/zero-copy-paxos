@@ -159,6 +159,11 @@ const Promise Palladium::handle_prepare(const Term &new_term) {
     if (maximum_acceptance == NULL) {
       /* No, first unchosen slot has not been accepted. */
 
+      assert(all_of(sent_acceptances.cbegin(),
+                    sent_acceptances.cend(),
+                    [new_end](const Proposal &p)
+                    { return new_end <= p.slots.start();}));
+
       promise.type = Promise::Type::free;
 
     } else if (maximum_acceptance->term < new_term) {
