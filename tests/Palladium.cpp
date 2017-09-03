@@ -29,5 +29,8 @@ void palladium_tests() {
 
   Palladium pal(1, 0, 0, conf);
   std::cout << "Initial state: " << std::endl << pal << std::endl << std::endl;
+
+  std::cout << "ACTIVATE(NO-OP x3) emitted:" << pal.activate({.type = Value::Type::no_op}, 3) << std::endl;
+  std::cout << pal << std::endl << std::endl;
 }
 

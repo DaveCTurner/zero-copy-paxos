@@ -37,7 +37,15 @@ std::ostream& operator<<(std::ostream &o, const Palladium &palladium) {
 }
 
 std::ostream& Palladium::write_to(std::ostream &o) const {
-  o << "node_id = " << node_id() << std::endl;
+  o << "node_id             = " << node_id()           << std::endl;
+  o << "first_unchosen_slot = " << first_unchosen_slot << std::endl;
+  o << "first_inactive_slot = " << first_inactive_slot << std::endl;
+  o << "current_term        = " << current_term        << std::endl;
+  o << "active_slot_states:" << std::endl;
+  for (const auto &a : active_slot_states) {
+    o << "  " << a.term << "@" << a.slots << ": " << a.value << std::endl;
+  }
+
   return o;
 }
 
