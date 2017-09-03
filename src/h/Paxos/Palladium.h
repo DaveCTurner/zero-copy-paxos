@@ -61,6 +61,13 @@ private:
     std::vector<Proposal> proposals;
   };
 
+  static const bool
+    search_for_quorums(std::vector<AcceptancesFromAcceptor>::const_iterator,
+                 const std::vector<AcceptancesFromAcceptor>::const_iterator&,
+                       Proposal&,
+                       Configuration::Weight,
+                 const Configuration::Weight);
+
   NodeId _node_id;
   Slot   first_unchosen_slot;
 
@@ -104,6 +111,91 @@ private:
   const Proposal *find_maximum_acceptance(Slot &promise_end_slot) const;
 
   void split_active_slot_states_at(const Slot slot);
+
+  const bool check_for_quorums(Proposal &chosen_message) const {
+
+    auto total_weight = current_configuration.total_weight();
+    if (total_weight == 0) { return false; }
+
+    for (auto acceptor_iterator  = received_acceptances.cbegin();
+              acceptor_iterator != received_acceptances.cend();
+            ++acceptor_iterator) {
+
+      auto accepted_weight = acceptor_iterator->weight;
+      if (accepted_weight == 0) {
+        continue;
+      }
+
+      for (auto &accepted_message : acceptor_iterator->proposals) {
+        if (accepted_message.slots.start() != first_unchosen_slot) {
+          continue;
+        }
+        if (accepted_message.slots.is_empty()) {
+          continue;
+        }
+        if (accepted_message.term.era + 1 < current_era) {
+          continue;
+        }
+
+        chosen_message = {
+          .slots = accepted_message.slots,
+          .term  = accepted_message.term,
+          .value = accepted_message.value,
+        };
+
+        if (search_for_quorums(acceptor_iterator,
+                               received_acceptances.cend(),
+                               chosen_message,
+                               accepted_weight,
+                               total_weight)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  void handle_chosen(const Proposal &chosen_message) {
+    const auto &slot = chosen_message.slots.end();
+
+    first_unchosen_slot = slot;
+    if (first_inactive_slot < slot) {
+      first_inactive_slot = slot;
+    }
+
+    for (auto &p : sent_acceptances) {
+      p.slots.truncate(slot);
+    }
+    sent_acceptances.erase(
+      std::remove_if(sent_acceptances.begin(),
+                     sent_acceptances.end(),
+                     [](const Proposal &p)
+                        { return p.slots.is_empty(); }),
+                     sent_acceptances.end());
+
+    for (auto &a : active_slot_states) {
+      a.slots.truncate(slot);
+    }
+    active_slot_states.erase(
+      std::remove_if(active_slot_states.begin(),
+                     active_slot_states.end(),
+                     [](const ActiveSlotState &a)
+                       { return a.slots.is_empty(); }),
+                     active_slot_states.end());
+
+    for (auto &from_acceptor : received_acceptances) {
+      auto &received_from_acceptor = from_acceptor.proposals;
+      for (auto &accepted_message : received_from_acceptor) {
+        accepted_message.slots.truncate(slot);
+      }
+      received_from_acceptor.erase(
+        std::remove_if(received_from_acceptor.begin(),
+                       received_from_acceptor.end(),
+                       [](const Proposal &a) { return a.slots.is_empty(); }),
+                       received_from_acceptor.end());
+    }
+  }
 
 public:
   Palladium(const NodeId, const Slot,
@@ -227,6 +319,25 @@ public:
       });
     }
   }
+
+  const Proposal check_for_chosen_slots() {
+    Proposal chosen_message = {
+      .slots = SlotRange(first_unchosen_slot,
+                         first_unchosen_slot),
+      .term  = current_term,
+      .value = {
+        .type = Value::Type::no_op
+      }
+    };
+
+    if (check_for_quorums(chosen_message)) {
+      handle_chosen(chosen_message);
+    } else {
+      chosen_message.slots.set_end(first_unchosen_slot);
+    }
+    return chosen_message;
+  }
+
 };
 std::ostream& operator<<(std::ostream&, const Palladium&);
 

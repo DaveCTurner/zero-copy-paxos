@@ -104,5 +104,13 @@ void palladium_tests() {
       });
   std::cout << pal << std::endl << std::endl;
 
+  while (true) {
+    auto chosen_message = pal.check_for_chosen_slots();
+    if (chosen_message.slots.is_empty()) { break; }
+
+    std::cout << "Chosen: " << chosen_message << std::endl << std::endl;
+    std::cout << pal << std::endl << std::endl;
+  }
+
 }
 

@@ -331,6 +331,56 @@ void Palladium::split_active_slot_states_at(const Slot slot) {
   it[1].slots.truncate(slot);
 }
 
+const bool Palladium::search_for_quorums
+        (std::vector<AcceptancesFromAcceptor>::const_iterator  pre_begin,
+   const std::vector<AcceptancesFromAcceptor>::const_iterator &end,
+         Proposal &chosen_message,
+         Configuration::Weight accepted_weight,
+   const Configuration::Weight total_weight) {
+
+  if (total_weight < 2 * accepted_weight) {
+    return true;
+  }
+
+  for (auto acceptor_iterator  = ++pre_begin;
+            acceptor_iterator != end;
+            acceptor_iterator++) {
+
+    const auto &this_acceptor_weight = acceptor_iterator->weight;
+    if (this_acceptor_weight == 0) { continue; }
+    accepted_weight += this_acceptor_weight;
+
+    for (auto &accepted_message : acceptor_iterator->proposals) {
+      if (accepted_message.slots.start() != chosen_message.slots.start()) {
+        continue;
+      }
+
+      if (accepted_message.slots.is_empty()) {
+        continue;
+      }
+
+      if (accepted_message.term != chosen_message.term) {
+        continue;
+      }
+
+      auto old_end = chosen_message.slots.end();
+      if (accepted_message.slots.end() < chosen_message.slots.end()) {
+        chosen_message.slots.set_end(accepted_message.slots.end());
+      }
+
+      if (search_for_quorums(acceptor_iterator, end, chosen_message, accepted_weight, total_weight)) {
+        return true;
+      }
+
+      chosen_message.slots.set_end(old_end);
+    }
+
+    accepted_weight -= this_acceptor_weight;
+  }
+
+  return false;
+}
+
 std::ostream& operator<<(std::ostream &o, const Palladium &palladium) {
   return palladium.write_to(o);
 }
