@@ -350,10 +350,13 @@ const Proposal Palladium::handle_promise
   }
 
   if (propose_first_unchosen) {
+    assert(!active_slot_states.empty());
     const auto &a = *active_slot_states.begin();
+    assert(a.slots.is_nonempty());
 
     if (a.has_proposed_value) {
       // Value is still unbound - the promise doesn't apply to these slots.
+      assert(!a.has_accepted_value);
       return {
         .slots = a.slots,
         .term  = a.term,
