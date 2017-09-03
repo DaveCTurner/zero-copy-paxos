@@ -159,6 +159,10 @@ const Proposal Palladium::handle_promise
     return empty_proposal;
   }
 
+  if (promise.type == Promise::Type::none) {
+    return empty_proposal;
+  }
+
   return empty_proposal;
 }
 
