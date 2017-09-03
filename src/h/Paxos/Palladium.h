@@ -49,6 +49,10 @@ private:
   NodeId _node_id;
   Slot   first_unchosen_slot;
 
+  /* Acceptor *****************************************************/
+  Term min_acceptable_term;
+  std::vector<Proposal> sent_acceptances;
+
   /* Proposer *****************************************************/
   Slot first_inactive_slot;
   Term current_term;
