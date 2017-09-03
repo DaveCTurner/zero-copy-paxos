@@ -400,6 +400,9 @@ const Proposal Palladium::handle_promise
  * `slot`, as long as it is in [first_unchosen_slot,
  * first_inactive_slot] */
 void Palladium::split_active_slot_states_at(const Slot slot) {
+  assert(first_unchosen_slot <= slot);
+  assert(slot <= first_inactive_slot);
+
   if (slot == first_unchosen_slot) {
     return;
   }
@@ -414,6 +417,9 @@ void Palladium::split_active_slot_states_at(const Slot slot) {
           [slot](const ActiveSlotState &a)
               { return a.slots.contains(slot); });
 
+  assert(it != active_slot_states.end());
+  assert(it->slots.contains(slot));
+
   if (slot == it[0].slots.start()) {
     return;
   }
@@ -427,8 +433,17 @@ void Palladium::split_active_slot_states_at(const Slot slot) {
           [slot](const ActiveSlotState &a)
               { return a.slots.contains(slot); });
 
+  assert(it[0].slots.contains(slot));
+  assert(it[1].slots.contains(slot));
+
   it[0].slots.set_end(slot);
   it[1].slots.truncate(slot);
+
+  assert(it[0].slots.is_nonempty());
+  assert(it[0].slots.end() == slot);
+  assert(it[1].slots.is_nonempty());
+  assert(it[1].slots.start() == slot);
+  assert(it[1].slots.contains(slot));
 }
 
 const bool Palladium::search_for_quorums
