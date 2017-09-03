@@ -167,6 +167,7 @@ private:
   void handle_chosen(const Proposal &chosen_message) {
 
     const auto &slot = chosen_message.slots.end();
+    assert(first_unchosen_slot < slot);
 
     if (is_reconfiguration(chosen_message.value.type)) {
 
