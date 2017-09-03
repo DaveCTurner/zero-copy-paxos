@@ -63,6 +63,8 @@ private:
   Slot first_inactive_slot;
   Term current_term;
 
+  std::set<NodeId> promises_for_inactive_slots;
+
   std::vector<ActiveSlotState> active_slot_states;
   /* Each ActiveSlotState is nonempty, and they are in order, contiguous and
   * disjoint. */

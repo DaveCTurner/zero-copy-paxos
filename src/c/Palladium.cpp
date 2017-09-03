@@ -214,6 +214,19 @@ const Proposal Palladium::handle_promise
     }
   }
 
+  if (promise.type == Promise::Type::multi) {
+
+    if (current_term < promise.term) {
+      // abandon
+      promises_for_inactive_slots.clear();
+      current_term        = promise.term;
+    }
+
+    if (current_term == promise.term) {
+      promises_for_inactive_slots.insert(acceptor);
+    }
+  }
+
   return empty_proposal;
 }
 
