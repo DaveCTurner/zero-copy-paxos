@@ -273,6 +273,17 @@ const Proposal Palladium::handle_promise
     split_active_slot_states_at(effective_slots.end());
   }
 
+  if (promise.type == Promise::Type::multi) {
+    assert(promise.slots.start() <= first_unchosen_slot
+
+      || (any_of(active_slot_states.cbegin(),
+                 active_slot_states.cend(),
+                 [&promise]
+                 (const ActiveSlotState &a)
+                 { return a.slots.end()
+                       == promise.slots.start();})));
+  }
+
   for (auto &a : active_slot_states) {
     if (!effective_slots.contains(a.slots.start())) { continue; }
     if (promise.term < a.term) { continue; }
