@@ -180,8 +180,38 @@ const Proposal Palladium::handle_promise
 
   split_active_slot_states_at(effective_slots.start());
 
-  if (promise.type != Promise::Type::multi) {
+  if (promise.type == Promise::Type::multi) {
+    effective_slots.set_end(first_inactive_slot);
+  } else {
     split_active_slot_states_at(effective_slots.end());
+  }
+
+  for (auto &a : active_slot_states) {
+    if (!effective_slots.contains(a.slots.start())) { continue; }
+    if (promise.term < a.term) { continue; }
+
+    if (a.term < promise.term) {
+      // abandon in favour of new proposal
+      a.promises.clear();
+      a.has_proposed_value = false;
+      a.has_accepted_value = false;
+      a.term               = promise.term;
+    }
+
+    if (!a.has_proposed_value) {
+      a.promises.insert(acceptor);
+
+      if (promise.type == Promise::Type::bound) {
+        if (!a.has_accepted_value
+            || a.max_accepted_term
+                  < promise.max_accepted_term) {
+          a.max_accepted_term       = promise.max_accepted_term;
+          a.max_accepted_term_value = promise.max_accepted_term_value;
+        }
+
+        a.has_accepted_value = true;
+      }
+    }
   }
 
   return empty_proposal;
@@ -237,6 +267,19 @@ std::ostream& Palladium::write_to(std::ostream &o) const {
   o << "active_slot_states:" << std::endl;
   for (const auto &a : active_slot_states) {
     o << "  " << a.term << "@" << a.slots << ": " << a.value << std::endl;
+    if (a.has_proposed_value) {
+      o << "    - has_proposed_value" << std::endl;
+    } else {
+      o << "    - collecting promises:";
+      for (const auto &n: a.promises) { o << ' ' << n; }
+      o << std::endl;
+    }
+    if (a.has_accepted_value) {
+      o << "    - bound to " << a.max_accepted_term
+        << " = " << a.max_accepted_term_value << std::endl;
+    } else {
+      o << "    - free" << std::endl;
+    }
   }
 
   return o;

@@ -43,6 +43,13 @@ private:
     Value            value;
     Term             term;
     SlotRange        slots;
+
+    std::set<NodeId> promises;
+    bool             has_proposed_value;
+
+    bool             has_accepted_value;
+    Term             max_accepted_term;
+    Value            max_accepted_term_value;
   };
 
   NodeId _node_id;
