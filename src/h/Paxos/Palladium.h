@@ -202,6 +202,12 @@ private:
       record_current_configuration();
     }
 
+    update_first_unchosen_slot(slot);
+  }
+
+  void update_first_unchosen_slot(const Slot &slot) {
+    assert(first_unchosen_slot < slot);
+
     first_unchosen_slot = slot;
     if (first_inactive_slot < slot) {
       first_inactive_slot = slot;
