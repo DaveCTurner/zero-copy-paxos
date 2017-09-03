@@ -35,6 +35,26 @@ Palladium::Palladium(const NodeId         id,
 void Palladium::record_current_configuration() {
   configurations.insert(std::pair<Era, Configuration>
                     (current_era, current_configuration));
+
+  for (auto it  = received_acceptances.begin();
+            it != received_acceptances.end();
+            it++) {
+
+    const auto &conf_entries = current_configuration.entries;
+    const auto entry = find_if(conf_entries.begin(),
+                               conf_entries.end(),
+                               [it](const Configuration::Entry &entry) {
+      return entry.node_id() == it->acceptor; });
+
+    it->weight = entry == conf_entries.end()
+                       ? 0
+                       : entry->weight();
+  }
+
+  received_acceptances.erase(remove_if(received_acceptances.begin(),
+                                       received_acceptances.end(),
+      [](const AcceptancesFromAcceptor &x) { return x.weight == 0; }),
+                                       received_acceptances.end());
 }
 
 /* Find the maximum term ID for which the first-unchosen slot
