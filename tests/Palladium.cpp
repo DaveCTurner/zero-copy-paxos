@@ -47,5 +47,17 @@ void palladium_tests() {
   std::cout << "PROM[0.0.1]:[0,oo)@3 emitted: " << pal.handle_promise(3,
     Promise(Promise::Type::multi, 0, 0, Term(0,0,1))) << std::endl << std::endl;
   std::cout << pal << std::endl << std::endl;
+
+  std::cout << "PROP[0.0.2]:[0,20)=NO-OP emitted: "
+    << pal.handle_proposal({
+        .slots = {
+          .start = 0,
+          .end   = 20,
+        },
+        .term  = Term(0,0,2),
+        .value = {.type = Value::Type::no_op}
+      })
+    << std::endl << std::endl;
+  std::cout << pal << std::endl << std::endl;
 }
 
