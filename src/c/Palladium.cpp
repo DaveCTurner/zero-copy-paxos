@@ -155,6 +155,10 @@ const Proposal Palladium::handle_promise
     .term = promise.term
   };
 
+  if (promise.term.owner != node_id()) {
+    return empty_proposal;
+  }
+
   return empty_proposal;
 }
 
