@@ -144,6 +144,20 @@ const Promise Palladium::handle_prepare(const Term &new_term) {
   return promise;
 }
 
+const Proposal Palladium::handle_promise
+    (const NodeId acceptor, const Promise &promise) {
+
+  Proposal empty_proposal = {
+    .slots = {
+      .start = first_unchosen_slot,
+      .end   = first_unchosen_slot
+    },
+    .term = promise.term
+  };
+
+  return empty_proposal;
+}
+
 std::ostream& operator<<(std::ostream &o, const Palladium &palladium) {
   return palladium.write_to(o);
 }

@@ -81,6 +81,7 @@ public:
   std::ostream& write_to(std::ostream &) const;
 
   const Promise handle_prepare(const Term&);
+  const Proposal handle_promise(const NodeId, const Promise&);
 
   /* Activates the next `count` slots with the given value. */
   const Proposal activate(const Value &value, const uint64_t count) {
