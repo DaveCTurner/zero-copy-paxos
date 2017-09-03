@@ -262,6 +262,9 @@ const Proposal Palladium::handle_promise
       effective_slots.end() - first_inactive_slot);
   }
 
+  assert(first_unchosen_slot <= effective_slots.start());
+  assert(effective_slots.end() <= first_inactive_slot);
+
   split_active_slot_states_at(effective_slots.start());
 
   if (promise.type == Promise::Type::multi) {
