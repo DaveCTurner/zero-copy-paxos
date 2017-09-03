@@ -135,6 +135,8 @@ const Promise Palladium::handle_prepare(const Term &new_term) {
 
   /* Send a promise that covers the first unchosen slot. */
 
+  assert_sent_acceptances_valid();
+
   if (sent_acceptances.empty()
     || sent_acceptances[0].slots.is_empty()) {
     /* Have accepted no proposals for any active slots */

@@ -222,6 +222,7 @@ private:
                      [](const Proposal &p)
                         { return p.slots.is_empty(); }),
                      sent_acceptances.end());
+      assert_sent_acceptances_valid();
 
     for (auto &a : active_slot_states) {
       a.slots.truncate(slot);
@@ -244,6 +245,18 @@ private:
                        [](const Proposal &a) { return a.slots.is_empty(); }),
                        received_from_acceptor.end());
     }
+  }
+
+  void assert_sent_acceptances_valid() {
+    assert(all_of(sent_acceptances.cbegin(),
+                  sent_acceptances.cend(),
+                  [this](const Proposal &p)
+                  { return first_unchosen_slot <= p.slots.start(); }));
+    assert(sent_acceptances.size() == 1
+        || all_of(sent_acceptances.cbegin(),
+                  sent_acceptances.cend(),
+                  [](const Proposal &p)
+                  { return p.slots.is_nonempty(); }));
   }
 
 public:
@@ -316,6 +329,7 @@ public:
           .value = proposal.value
         });
 
+    assert_sent_acceptances_valid();
     return true;
   }
 
