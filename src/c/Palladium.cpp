@@ -184,6 +184,16 @@ const Promise Palladium::handle_prepare(const Term &new_term) {
         }
       }));
 
+      assert(any_of(sent_acceptances.cbegin(),
+                    sent_acceptances.cend(),
+                    [this, maximum_acceptance, new_end]
+                    (const Proposal &p)
+      {
+        return p.slots.contains(first_unchosen_slot)
+          && p.term == maximum_acceptance->term
+          && new_end <= p.slots.end();
+      }));
+
       promise.type                    = Promise::Type::bound;
       promise.max_accepted_term       = maximum_acceptance->term;
       promise.max_accepted_term_value = maximum_acceptance->value;
