@@ -344,6 +344,14 @@ std::ostream& Palladium::write_to(std::ostream &o) const {
   o << "current_term        = " << current_term        << std::endl;
   o << "sent_acceptances:"                             << std::endl;
   for (const auto &a : sent_acceptances) { o << "  " << a << std::endl; }
+  if (is_ready_to_propose) {
+    o << "is_ready_to_propose = true" << std::endl;
+  } else {
+    o << "is_ready_to_propose = false" << std::endl;
+    o << "promises_for_inactive_slots =";
+    for (const auto &a : promises_for_inactive_slots) { o << ' ' << a; }
+    o << std::endl;
+  }
   o << "configuration       = v" << current_era
                              << ": " << current_configuration << std::endl;
   o << "configurations:" << std::endl;

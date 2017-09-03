@@ -36,8 +36,16 @@ void palladium_tests() {
   std::cout << "PREP[0.0.2] emitted: " << pal.handle_prepare(Term(0,0,2)) << std::endl << std::endl;
   std::cout << pal << std::endl << std::endl;
 
-  std::cout << "PROM[0.0.2]:[0,2)@1 emitted: " << pal.handle_promise(1,
+  std::cout << "PROM[0.0.1]:[0,2)@1 emitted: " << pal.handle_promise(1,
     Promise(Promise::Type::free, 0, 2, Term(0,0,1))) << std::endl << std::endl;
+  std::cout << pal << std::endl << std::endl;
+
+  std::cout << "PROM[0.0.1]:[1,oo)@2 emitted: " << pal.handle_promise(2,
+    Promise(Promise::Type::multi, 1, 1, Term(0,0,1))) << std::endl << std::endl;
+  std::cout << pal << std::endl << std::endl;
+
+  std::cout << "PROM[0.0.1]:[0,oo)@3 emitted: " << pal.handle_promise(3,
+    Promise(Promise::Type::multi, 0, 0, Term(0,0,1))) << std::endl << std::endl;
   std::cout << pal << std::endl << std::endl;
 }
 
