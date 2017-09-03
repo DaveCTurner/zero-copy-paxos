@@ -166,8 +166,17 @@ const Proposal Palladium::handle_promise
   auto effective_slots = promise.slots;
   effective_slots.truncate(first_unchosen_slot);
 
-  if (promise.type != Promise::Type::multi && effective_slots.is_empty()) {
-    return empty_proposal;
+  if (promise.type == Promise::Type::multi) {
+    effective_slots.set_end(effective_slots.start());
+  } else {
+    if (effective_slots.is_empty()) {
+      return empty_proposal;
+    }
+  }
+
+  if (first_inactive_slot < effective_slots.end()) {
+    activate({ .type = Value::Type::no_op },
+      effective_slots.end() - first_inactive_slot);
   }
 
   return empty_proposal;
