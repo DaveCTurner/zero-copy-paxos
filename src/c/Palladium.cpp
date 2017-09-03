@@ -266,6 +266,14 @@ const Proposal Palladium::handle_promise
     }
   }
 
+  if (active_slot_states.empty()) {
+    return empty_proposal;
+  }
+
+  if (active_slot_states.begin()->slots.is_empty()) {
+    return empty_proposal;
+  }
+
   return empty_proposal;
 }
 
