@@ -29,7 +29,10 @@ Palladium::Palladium(const NodeId         id,
   , first_unchosen_slot     (initial_slot)
   , first_inactive_slot     (initial_slot)
   , current_era             (initial_era)
-  , current_configuration   (initial_configuration) {}
+  , current_configuration   (initial_configuration) {
+  configurations.insert(std::pair<Era, Configuration>
+                    (current_era, current_configuration));
+}
 
 /* Find the maximum term ID for which the first-unchosen slot
  * has been accepted. */
@@ -277,6 +280,12 @@ std::ostream& Palladium::write_to(std::ostream &o) const {
   o << "current_term        = " << current_term        << std::endl;
   o << "sent_acceptances:"                             << std::endl;
   for (const auto &a : sent_acceptances) { o << "  " << a << std::endl; }
+  o << "configuration       = v" << current_era
+                             << ": " << current_configuration << std::endl;
+  o << "configurations:" << std::endl;
+  for (const auto &kvp : configurations) {
+    o << "  v" << kvp.first << ": " << kvp.second << std::endl;
+  }
   o << "active_slot_states:" << std::endl;
   for (const auto &a : active_slot_states) {
     o << "  " << a.term << "@" << a.slots << ": " << a.value << std::endl;

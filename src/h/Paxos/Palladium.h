@@ -24,6 +24,8 @@
 #include "Paxos/Promise.h"
 #include "Paxos/Proposal.h"
 
+#include <map>
+
 namespace Paxos {
 
 /*
@@ -64,6 +66,10 @@ private:
   Term current_term;
 
   std::set<NodeId> promises_for_inactive_slots;
+
+  std::map<Era, Configuration> configurations;
+  /* NB this is only consulted when handling promises, so not
+   * on the critical path */
 
   std::vector<ActiveSlotState> active_slot_states;
   /* Each ActiveSlotState is nonempty, and they are in order, contiguous and
