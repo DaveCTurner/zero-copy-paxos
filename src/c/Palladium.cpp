@@ -170,6 +170,20 @@ const Promise Palladium::handle_prepare(const Term &new_term) {
       /* Yes, first unchosen slot has been accepted,
          but for an earlier term than new_term. */
 
+      assert(all_of(sent_acceptances.cbegin(),
+                    sent_acceptances.cend(),
+                    [this, maximum_acceptance, new_end, new_term]
+                    (const Proposal &p)
+      {
+        if (p.slots.contains(first_unchosen_slot)) {
+          return p.term <= maximum_acceptance->term
+             &&  p.term <  new_term;
+        } else {
+          return new_end <= p.slots.start()
+              || p.term < maximum_acceptance->term;
+        }
+      }));
+
       promise.type                    = Promise::Type::bound;
       promise.max_accepted_term       = maximum_acceptance->term;
       promise.max_accepted_term_value = maximum_acceptance->value;
