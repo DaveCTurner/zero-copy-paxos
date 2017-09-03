@@ -16,9 +16,8 @@
 
 */
 
-
-
 #include "Paxos/Palladium.h"
+#include <algorithm>
 
 namespace Paxos {
 
@@ -179,7 +178,41 @@ const Proposal Palladium::handle_promise
       effective_slots.end() - first_inactive_slot);
   }
 
+  split_active_slot_states_at(effective_slots.start());
+
+  if (promise.type != Promise::Type::multi) {
+    split_active_slot_states_at(effective_slots.end());
+  }
+
   return empty_proposal;
+}
+
+/* Splits active_slot_states so as to ensure that there is a boundary at
+ * `slot`, as long as it is in [first_unchosen_slot,
+ * first_inactive_slot] */
+void Palladium::split_active_slot_states_at(const Slot slot) {
+  if (slot == first_unchosen_slot) {
+    return;
+  }
+
+  if (slot == first_inactive_slot) {
+    return;
+  }
+
+  auto it = find_if(
+          active_slot_states.begin(),
+          active_slot_states.end(),
+          [slot](const ActiveSlotState &a)
+              { return a.slots.contains(slot); });
+
+  if (slot == it[0].slots.start()) {
+    return;
+  }
+
+  active_slot_states.insert(it, *it);
+
+  it[0].slots.set_end(slot);
+  it[1].slots.truncate(slot);
 }
 
 std::ostream& operator<<(std::ostream &o, const Palladium &palladium) {

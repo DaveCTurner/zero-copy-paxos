@@ -72,6 +72,8 @@ private:
    * has been accepted. */
   const Proposal *find_maximum_acceptance(Slot &promise_end_slot) const;
 
+  void split_active_slot_states_at(const Slot slot);
+
 public:
   Palladium(const NodeId, const Slot,
             const Era, const Configuration&);
