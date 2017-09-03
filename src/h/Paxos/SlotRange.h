@@ -51,6 +51,12 @@ struct SlotRange {
   const bool is_nonempty() const {
     return _start < _end;
   }
+
+  const void truncate(const Slot &truncate_before) {
+    if (_start < truncate_before) {
+      _start = truncate_before;
+    }
+  }
 };
 std::ostream& operator<<(std::ostream&, const SlotRange&);
 

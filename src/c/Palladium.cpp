@@ -163,6 +163,13 @@ const Proposal Palladium::handle_promise
     return empty_proposal;
   }
 
+  auto effective_slots = promise.slots;
+  effective_slots.truncate(first_unchosen_slot);
+
+  if (promise.type != Promise::Type::multi && effective_slots.is_empty()) {
+    return empty_proposal;
+  }
+
   return empty_proposal;
 }
 
