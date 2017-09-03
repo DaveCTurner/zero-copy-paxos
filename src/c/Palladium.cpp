@@ -118,6 +118,8 @@ const Proposal *Palladium::find_maximum_acceptance
 
 const Promise Palladium::handle_prepare(const Term &new_term) {
 
+  assert(new_term.era <= current_era);
+
   Promise promise(Promise::Type::none,
                   first_unchosen_slot,
                   first_unchosen_slot,
