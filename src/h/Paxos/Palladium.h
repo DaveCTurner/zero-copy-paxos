@@ -25,6 +25,7 @@
 #include "Paxos/Proposal.h"
 
 #include <map>
+#include <algorithm>
 
 namespace Paxos {
 
@@ -52,6 +53,12 @@ private:
     bool             has_accepted_value;
     Term             max_accepted_term;
     Value            max_accepted_term_value;
+  };
+
+  struct AcceptancesFromAcceptor {
+    NodeId                acceptor;
+    Configuration::Weight weight;
+    std::vector<Proposal> proposals;
   };
 
   NodeId _node_id;
@@ -83,6 +90,14 @@ private:
   /* Configuration of the first unchosen slot. */
   Era           current_era;
   Configuration current_configuration;
+
+  std::vector<AcceptancesFromAcceptor> received_acceptances;
+  /* Invariant: All contained accepted messages have start slot >=
+   * first_unchosen_slot */
+  /* Invariant: All contained accepted messages are for nonempty slot
+   * ranges, or they are all for empty slot ranges and have
+   * .proposal >= .min_acceptable_term
+   */
 
   /* Find the maximum proposal ID for which the first-unchosen slot
    * has been accepted. */
@@ -161,6 +176,56 @@ public:
         });
 
     return true;
+  }
+
+  const void handle_accepted
+    (const NodeId acceptor,
+     const Proposal &accepted_message) {
+
+    if (accepted_message.term.era + 1 < current_era) {
+      return;
+    }
+
+    auto effective_slots = accepted_message.slots;
+    effective_slots.truncate(first_unchosen_slot);
+
+    if (effective_slots.is_empty()) {
+      return;
+    }
+
+    for (auto received_acceptance_it  = received_acceptances.begin();
+              received_acceptance_it != received_acceptances.end();
+              received_acceptance_it++) {
+
+      auto &received_acceptance = *received_acceptance_it;
+      if (received_acceptance.acceptor != acceptor) {
+        continue;
+      }
+
+      auto accepted_message_copy = accepted_message;
+      accepted_message_copy.slots = effective_slots;
+      received_acceptance.proposals.push_back(accepted_message_copy);
+      return;
+    }
+
+    const auto &conf_entries = current_configuration.entries;
+    auto conf_entry = find_if(
+      conf_entries.begin(),
+      conf_entries.end(),
+      [&acceptor](const Configuration::Entry &entry) {
+        return entry.node_id() == acceptor;
+      });
+
+    if (conf_entry != conf_entries.end()
+        && conf_entry->weight() > 0) {
+      auto accepted_message_copy = accepted_message;
+      accepted_message_copy.slots = effective_slots;
+      received_acceptances.push_back({
+        .acceptor  = acceptor,
+        .weight    = conf_entry->weight(),
+        .proposals = std::vector<Proposal>(1, accepted_message_copy)
+      });
+    }
   }
 };
 std::ostream& operator<<(std::ostream&, const Palladium&);

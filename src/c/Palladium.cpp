@@ -17,7 +17,6 @@
 */
 
 #include "Paxos/Palladium.h"
-#include <algorithm>
 
 namespace Paxos {
 
@@ -357,6 +356,15 @@ std::ostream& Palladium::write_to(std::ostream &o) const {
   o << "configurations:" << std::endl;
   for (const auto &kvp : configurations) {
     o << "  v" << kvp.first << ": " << kvp.second << std::endl;
+  }
+  o << "received_acceptances:" << std::endl;
+  for (const auto &from_acceptor : received_acceptances) {
+    o << "  from " << from_acceptor.acceptor
+            << "=" << (uint32_t)from_acceptor.weight << ":" << std::endl;
+    for (const auto &msg : from_acceptor.proposals) {
+      o << "    " << msg.term  << "@" << msg.slots << ": "
+                  << msg.value << std::endl;
+    }
   }
   o << "active_slot_states:" << std::endl;
   for (const auto &a : active_slot_states) {
