@@ -104,20 +104,17 @@ public:
   /* Activates the next `count` slots with the given value. */
   const Proposal activate(const Value &value, const uint64_t count) {
 
-    SlotRange activated_slots(first_inactive_slot, first_inactive_slot + count);
-
     Proposal proposal = {
         .slots = SlotRange(first_inactive_slot,
-                           first_inactive_slot),
+                           first_inactive_slot + count),
         .term  = current_term,
         .value = value
       };
+    first_inactive_slot = proposal.slots.end();
 
     if (count == 0) {
       return proposal;
     }
-
-    first_inactive_slot = activated_slots.end();
 
     // Special case: the first element of active_slot_states is for an
     // empty set of slots. This means there are no other elements; remove
@@ -131,11 +128,15 @@ public:
     active_slot_states.push_back({
         .value              = value,
         .term               = current_term,
-        .slots              = activated_slots,
+        .slots              = proposal.slots,
         .promises           = promises_for_inactive_slots,
         .has_proposed_value = is_ready_to_propose,
         .has_accepted_value = false,
       });
+
+    if (!is_ready_to_propose) {
+      proposal.slots.set_end(proposal.slots.start());
+    }
 
     return proposal;
   }
