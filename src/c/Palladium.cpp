@@ -139,6 +139,11 @@ const Promise Palladium::handle_prepare(const Term &new_term) {
     || sent_acceptances[0].slots.is_empty()) {
     /* Have accepted no proposals for any active slots */
     promise.type = Promise::Type::multi;
+
+    assert(all_of(sent_acceptances.cbegin(),
+                  sent_acceptances.cend(),
+                  [](const Proposal &p)
+                  { return p.slots.is_empty(); }));
   } else {
     /* ... else have accepted some slot >= the first unchosen. */
 
