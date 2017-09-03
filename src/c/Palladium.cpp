@@ -152,6 +152,10 @@ const Promise Palladium::handle_prepare(const Term &new_term) {
     const auto *maximum_acceptance = find_maximum_acceptance(new_end);
     promise.slots.set_end(new_end);
 
+    assert(first_unchosen_slot == promise.slots.start());
+    assert(first_unchosen_slot <  promise.slots.end());
+    assert(promise.slots.is_nonempty());
+
     if (maximum_acceptance == NULL) {
       /* No, first unchosen slot has not been accepted. */
 
