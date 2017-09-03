@@ -282,6 +282,19 @@ const Proposal Palladium::handle_promise
                  (const ActiveSlotState &a)
                  { return a.slots.end()
                        == promise.slots.start();})));
+  } else {
+    assert(any_of(active_slot_states.cbegin(),
+                  active_slot_states.cend(),
+                  [&effective_slots]
+                  (const ActiveSlotState &a)
+                  { return a.slots.start()
+                        == effective_slots.start();})
+        && any_of(active_slot_states.cbegin(),
+                  active_slot_states.cend(),
+                  [&effective_slots]
+                  (const ActiveSlotState &a)
+                  { return a.slots.end()
+                        == effective_slots.end();}));
   }
 
   for (auto &a : active_slot_states) {
