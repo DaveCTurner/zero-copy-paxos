@@ -131,7 +131,10 @@ public:
     active_slot_states.push_back({
         .value              = value,
         .term               = current_term,
-        .slots              = activated_slots
+        .slots              = activated_slots,
+        .promises           = promises_for_inactive_slots,
+        .has_proposed_value = is_ready_to_propose,
+        .has_accepted_value = false,
       });
 
     return proposal;
