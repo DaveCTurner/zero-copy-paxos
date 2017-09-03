@@ -18,12 +18,19 @@
 
 
 
-
 #include "Paxos/Palladium.h"
 
 namespace Paxos {
 
-Palladium::Palladium(const NodeId id) : _node_id(id) {}
+Palladium::Palladium(const NodeId         id,
+                     const Slot           initial_slot,
+                     const Era            initial_era,
+                     const Configuration &initial_configuration)
+  : _node_id                (id)
+  , first_unchosen_slot     (initial_slot)
+  , first_inactive_slot     (initial_slot)
+  , current_era             (initial_era)
+  , current_configuration   (initial_configuration) {}
 
 std::ostream& operator<<(std::ostream &o, const Palladium &palladium) {
   return palladium.write_to(o);

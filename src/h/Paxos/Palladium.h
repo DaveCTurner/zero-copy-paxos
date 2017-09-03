@@ -21,7 +21,9 @@
 #ifndef PAXOS_PALLADIUM_H
 #define PAXOS_PALLADIUM_H
 
-#include "Paxos/basic_types.h"
+#include "Paxos/Term.h"
+#include "Paxos/Configuration.h"
+
 #include <iostream>
 
 namespace Paxos {
@@ -38,9 +40,20 @@ struct Palladium {
 
 private:
   NodeId _node_id;
+  Slot   first_unchosen_slot;
+
+  /* Proposer *****************************************************/
+  Slot first_inactive_slot;
+  Term current_term;
+
+  /* Learner ******************************************************/
+  /* Configuration of the first unchosen slot. */
+  Era           current_era;
+  Configuration current_configuration;
 
 public:
-  Palladium(const NodeId);
+  Palladium(const NodeId, const Slot,
+            const Era, const Configuration&);
 
   const NodeId &node_id() const { return _node_id; }
 

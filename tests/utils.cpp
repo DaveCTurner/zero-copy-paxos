@@ -18,16 +18,16 @@
 
 
 
-#include "Paxos/Palladium.h"
+#include "Paxos/Configuration.h"
 
 using namespace Paxos;
 
-Configuration create_conf();
-
-void palladium_tests() {
-  auto conf = create_conf();
-
-  Palladium pal(1, 0, 0, conf);
-  std::cout << "Initial state: " << std::endl << pal << std::endl << std::endl;
+Configuration create_conf() {
+  Configuration conf(1);
+  conf.increment_weight(1);
+  conf.increment_weight(2);
+  conf.increment_weight(2);
+  conf.increment_weight(3);
+  conf.increment_weight(3);
+  return conf;
 }
-
