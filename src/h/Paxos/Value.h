@@ -75,6 +75,43 @@ std::ostream& operator<<(std::ostream&, const Value&);
 std::ostream& operator<<(std::ostream&, const Value::StreamName&);
 std::ostream& operator<<(std::ostream&, const Value::OffsetStream&);
 
+inline const bool operator==(const Value&, const Value&)
+    __attribute__((always_inline));
+
+inline const bool operator==(const Value &v1, const Value &v2) {
+  if (v1.type != v2.type) { return false; }
+
+  if (v1.type == Value::Type::no_op) { return true; }
+  if (v1.type == Value::Type::generate_node_id)
+    { return v1.payload.originator == v2.payload.originator; }
+
+  if (v1.type == Value::Type::stream_content) {
+    return  v1.payload.stream.name.owner
+         == v2.payload.stream.name.owner
+      &&    v1.payload.stream.name.id
+         == v2.payload.stream.name.id
+      &&    v1.payload.stream.offset
+         == v2.payload.stream.offset;
+  }
+
+  const auto &a1 = v1.payload.reconfiguration;
+  const auto &a2 = v2.payload.reconfiguration;
+
+  switch (v1.type) {
+    case Value::Type::reconfiguration_inc:
+    case Value::Type::reconfiguration_dec:
+      return a1.subject == a2.subject;
+
+    case Value::Type::reconfiguration_mul:
+    case Value::Type::reconfiguration_div:
+      return a1.factor == a2.factor;
+
+    default:
+      assert(false); // Other cases already handled
+      return false;
+  }
+}
+
 }
 
 #endif // ndef PAXOS_VALUE_H
