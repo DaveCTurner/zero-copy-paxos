@@ -270,11 +270,31 @@ const Proposal Palladium::handle_promise
     return empty_proposal;
   }
 
-  if (active_slot_states.begin()->slots.is_empty()) {
+  auto &a = *active_slot_states.begin();
+  if (a.slots.is_empty()) {
     return empty_proposal;
   }
 
-  return empty_proposal;
+  if (!a.has_proposed_value) {
+    const auto &conf = configurations.find(a.term.era);
+    if (conf != configurations.end()
+          && conf->second.is_quorate(a.promises)) {
+      a.promises.clear();
+      a.has_proposed_value = true;
+    }
+  }
+
+  if (a.has_proposed_value) {
+    return {
+      .slots = a.slots,
+      .term  = a.term,
+      .value = a.has_accepted_value
+                      ? a.max_accepted_term_value
+                      : a.value
+    };
+  } else {
+    return empty_proposal;
+  }
 }
 
 /* Splits active_slot_states so as to ensure that there is a boundary at
