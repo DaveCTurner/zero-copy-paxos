@@ -24,8 +24,6 @@
 #include "Paxos/Promise.h"
 #include "Paxos/Proposal.h"
 
-#include <iostream>
-
 namespace Paxos {
 
 /*
