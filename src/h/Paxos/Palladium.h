@@ -21,6 +21,7 @@
 #ifndef PAXOS_PALLADIUM_H
 #define PAXOS_PALLADIUM_H
 
+#include "Paxos/Promise.h"
 #include "Paxos/Proposal.h"
 
 #include <iostream>
@@ -69,6 +70,10 @@ private:
   Era           current_era;
   Configuration current_configuration;
 
+  /* Find the maximum proposal ID for which the first-unchosen slot
+   * has been accepted. */
+  const Proposal *find_maximum_acceptance(Slot &promise_end_slot) const;
+
 public:
   Palladium(const NodeId, const Slot,
             const Era, const Configuration&);
@@ -76,6 +81,8 @@ public:
   const NodeId &node_id() const { return _node_id; }
 
   std::ostream& write_to(std::ostream &) const;
+
+  const Promise handle_prepare(const Term&);
 
   /* Activates the next `count` slots with the given value. */
   const Proposal activate(const Value &value, const uint64_t count) {

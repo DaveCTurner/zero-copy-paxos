@@ -32,5 +32,9 @@ void palladium_tests() {
 
   std::cout << "ACTIVATE(NO-OP x3) emitted:" << pal.activate({.type = Value::Type::no_op}, 3) << std::endl;
   std::cout << pal << std::endl << std::endl;
+
+  std::cout << "PREP[0.0.2] emitted: " << pal.handle_prepare(Term(0,0,2)) << std::endl << std::endl;
+  std::cout << pal << std::endl << std::endl;
+
 }
 
