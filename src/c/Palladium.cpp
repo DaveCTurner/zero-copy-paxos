@@ -222,11 +222,22 @@ const Proposal Palladium::handle_promise
     if (current_term < promise.term) {
       // abandon
       promises_for_inactive_slots.clear();
+      is_ready_to_propose = false;
       current_term        = promise.term;
     }
 
-    if (current_term == promise.term) {
+    if (current_term == promise.term
+      && !is_ready_to_propose) {
+
       promises_for_inactive_slots.insert(acceptor);
+
+      const auto &conf = configurations.find(current_term.era);
+      if (conf != configurations.end()
+          && conf->second.is_quorate(promises_for_inactive_slots)) {
+
+        is_ready_to_propose = true;
+        promises_for_inactive_slots.clear();
+      }
     }
   }
 

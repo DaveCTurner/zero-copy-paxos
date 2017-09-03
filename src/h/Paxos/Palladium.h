@@ -65,6 +65,7 @@ private:
   Slot first_inactive_slot;
   Term current_term;
 
+  bool             is_ready_to_propose = false;
   std::set<NodeId> promises_for_inactive_slots;
 
   std::map<Era, Configuration> configurations;
