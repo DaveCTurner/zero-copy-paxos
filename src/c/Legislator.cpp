@@ -178,6 +178,17 @@ void Legislator::start_term() {
   _attempted_term.owner = _palladium.node_id();
 
   _world.prepare_term(_attempted_term);
-  // TODO handle prepare ourselves too
+  handle_prepare_term(_palladium.node_id(), _attempted_term);
 }
 
+void Legislator::handle_prepare_term(const NodeId &sender, const Term &term) {
+  auto promise = _palladium.handle_prepare(term);
+  if (promise.type == Promise::Type::multi
+      || promise.slots.is_nonempty()) {
+    if (term.owner == _palladium.node_id()) {
+      // TODO handle promise ourselves
+    } else {
+      _world.make_promise(promise);
+    }
+  }
+}

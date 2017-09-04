@@ -75,6 +75,11 @@ public:
     std::cout << "RESPONSE: prepare_term("
       << term << ")" << std::endl;
   }
+
+  void make_promise(const Promise &promise) override {
+    std::cout << "RESPONSE: make_promise("
+      << promise << ")" << std::endl;
+  }
 };
 
 void legislator_test() {
@@ -109,4 +114,9 @@ void legislator_test() {
 
   std::cout << std::endl << "TEST: handle_seek_votes_or_catch_up(2, 0)" << std::endl;
   legislator.handle_seek_votes_or_catch_up(2, 0);
+
+  std::cout << std::endl << "TEST: handle_prepare_term(2,[0.5.2])" << std::endl;
+  legislator.handle_prepare_term(2, Term(0,5,2));
+  std::cout << legislator << std::endl;
+
 }

@@ -36,6 +36,7 @@ class OutsideWorld {
     virtual void offer_vote(const NodeId&, const Term&) = 0;
     virtual void request_catch_up(const NodeId&) = 0;
     virtual void prepare_term(const Term&) = 0;
+    virtual void make_promise(const Promise&) = 0;
 };
 
 }

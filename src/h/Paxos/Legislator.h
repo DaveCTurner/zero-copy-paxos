@@ -81,6 +81,7 @@ class Legislator {
     void handle_offer_catch_up(const NodeId&);
 
     void start_term();
+    void handle_prepare_term(const NodeId&, const Term&);
 };
 std::ostream& operator<<(std::ostream&, const Legislator&);
 
