@@ -40,6 +40,10 @@ std::ostream& Paxos::operator<<(std::ostream &o, const Legislator &legislator) {
   return legislator.write_to(o);
 }
 
+std::chrono::steady_clock::duration Legislator::random_retry_delay() {
+  return std::chrono::milliseconds(rand() % _retry_delay_ms);
+}
+
 void Legislator::handle_wake_up() {
   auto &now = _world.get_current_time();
 
@@ -50,21 +54,25 @@ void Legislator::handle_wake_up() {
   switch (_role) {
     case Role::candidate:
       // TODO
+      set_next_wake_up_time(now + random_retry_delay());
       break;
 
     case Role::follower:
       _role = Role::candidate;
       // TODO
+      set_next_wake_up_time(now + random_retry_delay());
       break;
 
     case Role::leader:
       _role = Role::incumbent;
       // TODO
+      set_next_wake_up_time(now + _incumbent_timeout);
       break;
 
     case Role::incumbent:
       _role = Role::candidate;
       // TODO
+      set_next_wake_up_time(now + random_retry_delay());
       break;
   }
 }
