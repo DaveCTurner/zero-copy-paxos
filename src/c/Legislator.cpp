@@ -32,7 +32,36 @@ Legislator::Legislator(OutsideWorld  &world,
 }
 
 std::ostream &Legislator::write_to(std::ostream &o) const {
+  o << "-- palladium" << std::endl;
   o << _palladium;
+  o << "-- timeout & roles:" << std::endl;
+  o << "next_wake_up            = " <<
+    std::chrono::time_point_cast<std::chrono::milliseconds>
+      (_next_wake_up).time_since_epoch().count()
+    << "ms" << std::endl;
+  o << "retry_delay_ms          = " << _retry_delay_ms << "ms" << std::endl;
+
+  o << "role                    = " << _role << " (";
+  switch (_role) {
+    case Role::candidate:
+      o << "candidate";
+      break;
+    case Role::follower:
+      o << "follower";
+      break;
+    case Role::leader:
+      o << "leader";
+      break;
+    case Role::incumbent:
+      o << "incumbent";
+      break;
+    default:
+      o << "??";
+      break;
+  }
+  o << ")" << std::endl;
+
+  o << "-- re-election:" << std::endl;
   if (_seeking_votes) {
     o << "offered_votes           =";
     for (auto const &n : _offered_votes) {
