@@ -219,6 +219,16 @@ private:
       a.has_proposed_value = is_ready_to_propose;
       a.has_accepted_value = false;
     }
+
+    for (auto &from_acceptor : received_acceptances) {
+      auto &received_from_acceptor = from_acceptor.proposals;
+      if (received_from_acceptor.size() == 1
+        && received_from_acceptor[0].slots.is_empty()) {
+        auto &accepted_message = received_from_acceptor[0];
+        accepted_message.term  = chosen_message.term;
+        accepted_message.value = chosen_message.value;
+      }
+    }
   }
 
   void update_first_unchosen_slot(const Slot &slot) {
