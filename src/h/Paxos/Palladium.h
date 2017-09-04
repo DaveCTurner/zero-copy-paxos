@@ -210,6 +210,15 @@ private:
       only_acceptance.term  = chosen_message.term;
       only_acceptance.value = chosen_message.value;
     }
+
+    if (active_slot_states.size() == 1
+        && active_slot_states[0].slots.is_empty()) {
+      auto &a = active_slot_states[0];
+      a.term               = current_term;
+      a.promises           = promises_for_inactive_slots;
+      a.has_proposed_value = is_ready_to_propose;
+      a.has_accepted_value = false;
+    }
   }
 
   void update_first_unchosen_slot(const Slot &slot) {
