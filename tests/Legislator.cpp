@@ -119,4 +119,15 @@ void legislator_test() {
   legislator.handle_prepare_term(2, Term(0,5,2));
   std::cout << legislator << std::endl;
 
+  world.tick();
+  std::cout << std::endl << "TEST: handle_wake_up()" << std::endl;
+  legislator.handle_wake_up();
+  std::cout << std::endl << "TEST: handle_offer_vote(2,[0.5.2])" << std::endl;
+  legislator.handle_offer_vote(2, Term(0,5,2));
+
+  auto promise = Promise(Promise::Type::multi, 0, 0, Term(0,6,1));
+  std::cout << std::endl << "TEST: handle_promise(2," << promise << ")" << std::endl;
+  legislator.handle_promise(2, promise);
+  std::cout << legislator << std::endl;
+
 }

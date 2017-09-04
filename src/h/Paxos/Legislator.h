@@ -83,6 +83,11 @@ class Legislator {
     void start_term();
     void handle_prepare_term(const NodeId&, const Term&);
     void handle_promise(const NodeId&, const Promise&);
+
+    void activate_slots(const Value &value, const uint64_t count) {
+      _palladium.activate(value, count);
+      // TODO send resulting proposal to the world
+    }
 };
 std::ostream& operator<<(std::ostream&, const Legislator&);
 

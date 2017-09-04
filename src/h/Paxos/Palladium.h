@@ -380,6 +380,9 @@ public:
   const Configuration &get_current_configuration() const
     { return current_configuration; }
 
+  const bool has_active_slots() const
+    { return first_unchosen_slot < first_inactive_slot; }
+
   const NodeId &node_id() const { return _node_id; }
 
   std::ostream& write_to(std::ostream &) const;

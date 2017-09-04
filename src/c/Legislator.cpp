@@ -123,7 +123,7 @@ void Legislator::handle_wake_up() {
 
     case Role::leader:
       _role = Role::incumbent;
-      // TODO propose a no-op value
+      activate_slots(Value{.type = Value::Type::no_op}, 1);
       set_next_wake_up_time(now + _incumbent_timeout);
       break;
   }
@@ -198,4 +198,9 @@ void Legislator::handle_prepare_term(const NodeId &sender, const Term &term) {
 void Legislator::handle_promise(const NodeId &sender, const Promise &promise) {
   _palladium.handle_promise(sender, promise);
   // TODO handle resulting proposal
+
+  if (!_palladium.has_active_slots()) {
+    _palladium.activate({.type = Value::Type::no_op}, 1);
+    // TODO handle resulting proposal
+  }
 }
