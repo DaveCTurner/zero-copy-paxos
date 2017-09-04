@@ -70,6 +70,7 @@ void Legislator::handle_wake_up() {
 
     case Role::follower:
     case Role::incumbent:
+      std::cout << "Leadership timed out, becoming candidate" << std::endl;
       _role = Role::candidate;
       _retry_delay_ms = _minimum_retry_delay_ms;
       set_next_wake_up_time(now + random_retry_delay());
