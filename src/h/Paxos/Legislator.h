@@ -17,31 +17,29 @@
 */
 
 
-#include <iostream>
 
-void term_tests();
-void slot_range_tests();
-void palladium_tests();
-void palladium_random_safety_test();
-void palladium_follower_speed_test();
-void palladium_leader_speed_test();
-void legislator_test();
+#ifndef PAXOS_LEGISLATOR_H
+#define PAXOS_LEGISLATOR_H
 
-int main() {
-  srand(time(NULL));
+#include "Paxos/Palladium.h"
 
-  term_tests();
-  slot_range_tests();
-  palladium_tests();
-  for (int i = 0; i < 20; i++) {
-    palladium_random_safety_test();
-  }
-  palladium_follower_speed_test();
-  palladium_leader_speed_test();
+namespace Paxos {
 
-  legislator_test();
+class Legislator {
+  Legislator           (const Legislator&) = delete; // no copying
+  Legislator &operator=(const Legislator&) = delete; // no assignment
 
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+  private:
+    Palladium     _palladium;
+
+  public:
+    Legislator(const NodeId&,
+               const Slot&,
+               const Era&,
+               const Configuration&);
+
+};
+
 }
 
+#endif // ndef PAXOS_LEGISLATOR_H

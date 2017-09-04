@@ -17,31 +17,17 @@
 */
 
 
-#include <iostream>
+#include "Paxos/Legislator.h"
 
-void term_tests();
-void slot_range_tests();
-void palladium_tests();
-void palladium_random_safety_test();
-void palladium_follower_speed_test();
-void palladium_leader_speed_test();
-void legislator_test();
+using namespace Paxos;
 
-int main() {
-  srand(time(NULL));
+Configuration create_conf();
 
-  term_tests();
-  slot_range_tests();
-  palladium_tests();
-  for (int i = 0; i < 20; i++) {
-    palladium_random_safety_test();
-  }
-  palladium_follower_speed_test();
-  palladium_leader_speed_test();
+void legislator_test() {
+  uint32_t seed = rand();
+  std::cout << std::endl << "legislaor_test(): seed = " << seed << std::endl;
+  srand(seed);
 
-  legislator_test();
-
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+  auto conf = create_conf();
+  Legislator legislator(1, 0, 0, conf);
 }
-
