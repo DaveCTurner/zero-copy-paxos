@@ -22,6 +22,7 @@
 #define PAXOS_LEGISLATOR_H
 
 #include "Paxos/Palladium.h"
+#include "Paxos/OutsideWorld.h"
 
 namespace Paxos {
 
@@ -30,14 +31,15 @@ class Legislator {
   Legislator &operator=(const Legislator&) = delete; // no assignment
 
   private:
+    OutsideWorld &_world;
     Palladium     _palladium;
 
   public:
-    Legislator(const NodeId&,
-               const Slot&,
-               const Era&,
-               const Configuration&);
-
+    Legislator( OutsideWorld&,
+          const NodeId&,
+          const Slot&,
+          const Era&,
+          const Configuration&);
 };
 
 }

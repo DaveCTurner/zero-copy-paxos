@@ -17,18 +17,15 @@
 */
 
 
-#include "Paxos/Legislator.h"
 
-using namespace Paxos;
+#ifndef PAXOS_OUTSIDE_WORLD_H
+#define PAXOS_OUTSIDE_WORLD_H
 
-Configuration create_conf();
+namespace Paxos {
 
-void legislator_test() {
-  uint32_t seed = rand();
-  std::cout << std::endl << "legislaor_test(): seed = " << seed << std::endl;
-  srand(seed);
+class OutsideWorld {
+};
 
-  auto conf = create_conf();
-  OutsideWorld world;
-  Legislator legislator(world, 1, 0, 0, conf);
 }
+
+#endif // ndef PAXOS_OUTSIDE_WORLD_H

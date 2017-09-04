@@ -22,9 +22,11 @@
 
 using namespace Paxos;
 
-Legislator::Legislator(const NodeId        &node_id,
-                       const Slot          &initial_slot,
-                       const Era           &initial_era,
-                       const Configuration &initial_conf)
-  : _palladium(node_id, initial_slot, initial_era, initial_conf) {
+Legislator::Legislator(OutsideWorld  &world,
+                 const NodeId        &node_id,
+                 const Slot          &initial_slot,
+                 const Era           &initial_era,
+                 const Configuration &initial_conf)
+  : _world(world),
+    _palladium(node_id, initial_slot, initial_era, initial_conf) {
 }
