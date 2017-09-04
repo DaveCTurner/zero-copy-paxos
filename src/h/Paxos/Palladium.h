@@ -444,6 +444,16 @@ public:
       return false;
     }
 
+    if  (sent_acceptances.size() == 1
+      && sent_acceptances[0].value == proposal.value
+      && sent_acceptances[0].term  == proposal.term
+      && sent_acceptances[0].slots
+            .can_extend_with(effective_slots)) {
+      sent_acceptances[0].slots.extend_with(effective_slots);
+      assert_sent_acceptances_valid();
+      return true;
+    }
+
     for (auto it  = sent_acceptances.begin();
               it != sent_acceptances.end();
               it++) {
