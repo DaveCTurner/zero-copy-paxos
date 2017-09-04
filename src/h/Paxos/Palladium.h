@@ -175,7 +175,7 @@ private:
     const auto &slot = chosen_message.slots.end();
     assert(first_unchosen_slot < slot);
 
-    if (is_reconfiguration(chosen_message.value.type)) {
+    if (UNLIKELY(is_reconfiguration(chosen_message.value.type))) {
       assert(slot == first_unchosen_slot + 1);
 
       configurations.clear();
