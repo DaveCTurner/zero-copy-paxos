@@ -245,7 +245,7 @@ private:
       first_inactive_slot = slot;
     }
 
-    if (sent_acceptances.size() == 1) {
+    if (LIKELY(sent_acceptances.size() == 1)) {
       auto &only_acceptance = sent_acceptances[0];
       only_acceptance.slots.truncate(slot);
       if (only_acceptance.slots.is_empty()) {
@@ -265,7 +265,7 @@ private:
     }
     assert_sent_acceptances_valid();
 
-    if (active_slot_states.size() == 1) {
+    if (LIKELY(active_slot_states.size() == 1)) {
       auto &a = active_slot_states[0];
       a.slots.truncate(slot);
       if (a.slots.is_empty()) {
@@ -287,7 +287,7 @@ private:
 
     for (auto &from_acceptor : received_acceptances) {
       auto &received_from_acceptor = from_acceptor.proposals;
-      if (received_from_acceptor.size() == 1) {
+      if (LIKELY(received_from_acceptor.size() == 1)) {
         auto &accepted_message = received_from_acceptor[0];
         accepted_message.slots.truncate(slot);
         if (accepted_message.slots.is_empty()) {

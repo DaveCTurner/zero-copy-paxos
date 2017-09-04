@@ -32,4 +32,6 @@ typedef uint32_t NodeId;
 
 }
 
+#define   LIKELY(condition) __builtin_expect(static_cast<bool>(condition), 1)
+
 #endif // ndef PAXOS_BASIC_TYPES_H
