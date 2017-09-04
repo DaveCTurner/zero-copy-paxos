@@ -47,5 +47,21 @@ void Legislator::handle_wake_up() {
     return;
   }
 
-  // TODO
+  switch (_role) {
+    case Role::candidate:
+      // TODO
+      break;
+
+    case Role::follower:
+      // TODO
+      break;
+
+    case Role::leader:
+      // TODO
+      break;
+
+    case Role::incumbent:
+      // TODO
+      break;
+  }
 }

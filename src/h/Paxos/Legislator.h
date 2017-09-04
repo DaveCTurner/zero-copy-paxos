@@ -30,11 +30,20 @@ class Legislator {
   Legislator           (const Legislator&) = delete; // no copying
   Legislator &operator=(const Legislator&) = delete; // no assignment
 
+  public:
+    enum Role {
+      candidate,
+      follower,
+      leader,
+      incumbent
+    };
+
   private:
     OutsideWorld &_world;
     Palladium     _palladium;
 
     instant   _next_wake_up    = _world.get_current_time();
+    Role      _role            = Role::candidate;
 
   public:
     Legislator( OutsideWorld&,
