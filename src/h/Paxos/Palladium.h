@@ -452,9 +452,24 @@ public:
         continue;
       }
 
+      auto &acceptances = received_acceptance.proposals;
+      for (auto accepted_message_it  = acceptances.begin();
+                accepted_message_it != acceptances.end();
+                accepted_message_it++) {
+
+        if (   accepted_message_it->value == accepted_message.value
+            && accepted_message_it->term  == accepted_message.term
+            && accepted_message_it->slots
+                        .can_extend_with(effective_slots)) {
+
+          accepted_message_it->slots.extend_with(effective_slots);
+          return;
+        }
+      }
+
       auto accepted_message_copy = accepted_message;
       accepted_message_copy.slots = effective_slots;
-      received_acceptance.proposals.push_back(accepted_message_copy);
+      acceptances.push_back(accepted_message_copy);
       return;
     }
 
