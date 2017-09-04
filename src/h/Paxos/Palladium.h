@@ -333,6 +333,24 @@ public:
       };
     first_inactive_slot = proposal.slots.end();
 
+    auto last_active_slot = active_slot_states.rbegin();
+
+    if   (last_active_slot != active_slot_states.rend()
+      &&  last_active_slot->term               == current_term
+      &&  last_active_slot->value              == value
+      &&  last_active_slot->promises           == promises_for_inactive_slots
+      &&  last_active_slot->has_proposed_value == is_ready_to_propose
+      && !last_active_slot->has_accepted_value) {
+
+      last_active_slot->slots.set_end(first_inactive_slot);
+      assert_active_slot_states_valid();
+
+      if (!is_ready_to_propose) {
+        proposal.slots.set_end(proposal.slots.start());
+      }
+      return proposal;
+    }
+
     if (count == 0) {
       return proposal;
     }
