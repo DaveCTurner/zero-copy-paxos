@@ -135,4 +135,11 @@ void legislator_test() {
   legislator.handle_promise(2, promise);
   std::cout << legislator << std::endl;
 
+  auto prop = Proposal({
+    .slots = SlotRange(0,1),
+    .term  = Term(0,6,1),
+    .value = {.type = Value::Type::no_op }});
+  std::cout << std::endl << "TEST: handle_accepted(3," << prop << ")" << std::endl;
+  legislator.handle_accepted(3, prop);
+  std::cout << legislator << std::endl;
 }

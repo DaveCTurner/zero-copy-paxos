@@ -104,8 +104,15 @@ class Legislator {
       if (proposal.slots.is_empty()) { return; }
       _palladium.handle_accepted(sender, proposal);
 
-      // TODO check for quorums
+      for (Proposal chosen = _palladium.check_for_chosen_slots();
+                    chosen.slots.is_nonempty();
+                    chosen = _palladium.check_for_chosen_slots()) {
+        // TODO handle value chosen
+      }
+
+      // TODO update timeouts etc.
     }
+
 };
 std::ostream& operator<<(std::ostream&, const Legislator&);
 
