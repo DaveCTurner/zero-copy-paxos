@@ -368,6 +368,9 @@ public:
   const Term &next_activated_term() const
     { return current_term; }
 
+  const Slot &next_chosen_slot() const
+    { return first_unchosen_slot; }
+
   const Slot &next_activated_slot() const
     { return first_inactive_slot; }
 

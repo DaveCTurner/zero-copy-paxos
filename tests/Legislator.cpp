@@ -54,6 +54,11 @@ public:
         (current_time-start_time).count()
       << "ms)" << std::endl;
   }
+
+  void seek_votes_or_catch_up(const Slot &slot) override {
+    std::cout << "seek_votes_or_catch_up("
+      << slot << ")" << std::endl;
+  }
 };
 
 void legislator_test() {

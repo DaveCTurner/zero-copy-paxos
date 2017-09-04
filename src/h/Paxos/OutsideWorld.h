@@ -32,6 +32,7 @@ class OutsideWorld {
     virtual const instant get_current_time() = 0;
     virtual void set_next_wake_up_time(const instant &) = 0;
 
+    virtual void seek_votes_or_catch_up(const Slot&) = 0;
 };
 
 }

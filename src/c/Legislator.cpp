@@ -63,7 +63,7 @@ void Legislator::handle_wake_up() {
         _retry_delay_ms = _maximum_retry_delay_ms;
       }
 
-      // TODO seek votes from peers
+      _world.seek_votes_or_catch_up(_palladium.next_chosen_slot());
 
       set_next_wake_up_time(now + random_retry_delay());
       break;
