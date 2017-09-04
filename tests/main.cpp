@@ -23,6 +23,7 @@ void term_tests();
 void slot_range_tests();
 void palladium_tests();
 void palladium_random_safety_test();
+void palladium_follower_speed_test();
 
 int main() {
   srand(time(NULL));
@@ -30,9 +31,10 @@ int main() {
   term_tests();
   slot_range_tests();
   palladium_tests();
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 20; i++) {
     palladium_random_safety_test();
   }
+  palladium_follower_speed_test();
 
   std::cout << std::endl << "ALL OK" << std::endl << std::endl;
   return 0;
