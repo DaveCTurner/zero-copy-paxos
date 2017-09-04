@@ -46,7 +46,10 @@ class Legislator {
 
     instant   _next_wake_up      = _world.get_current_time();
     Role      _role              = Role::candidate;
+    NodeId    _leader_id         = 0; /* Not relevant if a candidate. */
     delay     _incumbent_timeout = std::chrono::milliseconds(100);
+    delay     _leader_timeout    = std::chrono::milliseconds(8000);
+    delay     _follower_timeout  = std::chrono::milliseconds(9000);
 
     const int _minimum_retry_delay_ms   = 150;
     const int _maximum_retry_delay_ms   = 60000;
@@ -104,13 +107,25 @@ class Legislator {
       if (proposal.slots.is_empty()) { return; }
       _palladium.handle_accepted(sender, proposal);
 
+      bool nothing_chosen = true;
       for (Proposal chosen = _palladium.check_for_chosen_slots();
                     chosen.slots.is_nonempty();
                     chosen = _palladium.check_for_chosen_slots()) {
+        nothing_chosen = false;
+        _leader_id = chosen.term.owner;
         // TODO handle value chosen
       }
 
-      // TODO update timeouts etc.
+      if (nothing_chosen) { return; }
+
+      instant now = _world.get_current_time();
+      if (_leader_id == _palladium.node_id()) {
+        _role = Role::leader;
+        set_next_wake_up_time(now + _leader_timeout);
+      } else {
+        _role = Role::follower;
+        set_next_wake_up_time(now + _follower_timeout);
+      }
     }
 
 };

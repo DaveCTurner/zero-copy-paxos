@@ -60,6 +60,7 @@ std::ostream &Legislator::write_to(std::ostream &o) const {
       break;
   }
   o << ")" << std::endl;
+  o << "leader                  = " << _leader_id << std::endl;
 
   o << "-- re-election:" << std::endl;
   if (_seeking_votes) {
