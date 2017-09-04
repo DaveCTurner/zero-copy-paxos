@@ -53,14 +53,17 @@ void Legislator::handle_wake_up() {
       break;
 
     case Role::follower:
+      _role = Role::candidate;
       // TODO
       break;
 
     case Role::leader:
+      _role = Role::incumbent;
       // TODO
       break;
 
     case Role::incumbent:
+      _role = Role::candidate;
       // TODO
       break;
   }
