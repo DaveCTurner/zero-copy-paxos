@@ -41,7 +41,12 @@ std::ostream& Paxos::operator<<(std::ostream &o, const Legislator &legislator) {
 }
 
 std::chrono::steady_clock::duration Legislator::random_retry_delay() {
-  return std::chrono::milliseconds(rand() % _retry_delay_ms);
+  if (_retry_delay_ms <= _minimum_retry_delay_ms) {
+    return std::chrono::milliseconds(_minimum_retry_delay_ms);
+  } else {
+    return std::chrono::milliseconds(
+         _minimum_retry_delay_ms + rand() % (_retry_delay_ms - _minimum_retry_delay_ms));
+  }
 }
 
 void Legislator::handle_wake_up() {
@@ -53,12 +58,18 @@ void Legislator::handle_wake_up() {
 
   switch (_role) {
     case Role::candidate:
+      _retry_delay_ms += _retry_delay_increment_ms;
+      if (_retry_delay_ms > _maximum_retry_delay_ms) {
+        _retry_delay_ms = _maximum_retry_delay_ms;
+      }
+
       // TODO
       set_next_wake_up_time(now + random_retry_delay());
       break;
 
     case Role::follower:
       _role = Role::candidate;
+      _retry_delay_ms = _minimum_retry_delay_ms;
       // TODO
       set_next_wake_up_time(now + random_retry_delay());
       break;
@@ -72,6 +83,7 @@ void Legislator::handle_wake_up() {
     case Role::incumbent:
       _role = Role::candidate;
       // TODO
+      _retry_delay_ms = _minimum_retry_delay_ms;
       set_next_wake_up_time(now + random_retry_delay());
       break;
   }

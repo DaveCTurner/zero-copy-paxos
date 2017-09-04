@@ -47,7 +47,11 @@ class Legislator {
     instant   _next_wake_up      = _world.get_current_time();
     Role      _role              = Role::candidate;
     delay     _incumbent_timeout = std::chrono::milliseconds(100);
-    int       _retry_delay_ms    = 1000;
+
+    const int _minimum_retry_delay_ms   = 150;
+    const int _maximum_retry_delay_ms   = 60000;
+    const int _retry_delay_increment_ms = 150;
+          int _retry_delay_ms           = _retry_delay_increment_ms;
 
     void set_next_wake_up_time(const instant &t) {
       _next_wake_up = t;
