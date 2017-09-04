@@ -126,6 +126,15 @@ void Legislator::handle_wake_up() {
   }
 }
 
+void Legislator::handle_seek_votes_or_catch_up
+      (const NodeId      &peer_id,
+       const Slot        &slot) {
+
+  if (slot == _palladium.next_chosen_slot()) {
+    _world.offer_vote(peer_id, _palladium.get_min_acceptable_term());
+  }
+}
+
 void Legislator::handle_offer_vote(const NodeId &peer_id) {
   if (_seeking_votes) {
     _offered_votes.insert(peer_id);

@@ -73,6 +73,8 @@ class Legislator {
     std::ostream &write_to(std::ostream&) const;
 
     void handle_wake_up();
+    void handle_seek_votes_or_catch_up
+      (const NodeId&, const Slot&);
     void handle_offer_vote(const NodeId&);
     void handle_offer_catch_up(const NodeId&);
 

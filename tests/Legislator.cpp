@@ -41,7 +41,7 @@ public:
 
   void set_next_wake_up_time(const instant &t) override {
     next_wake_up_time = t;
-    std::cout << "set_next_wake_up_time(" <<
+    std::cout << "RESPONSE: set_next_wake_up_time(" <<
       std::chrono::duration_cast<std::chrono::milliseconds>
         (t-start_time).count()
       << "ms)" << std::endl;
@@ -56,12 +56,18 @@ public:
   }
 
   void seek_votes_or_catch_up(const Slot &slot) override {
-    std::cout << "seek_votes_or_catch_up("
+    std::cout << "RESPONSE: seek_votes_or_catch_up("
       << slot << ")" << std::endl;
   }
 
+  void offer_vote(const NodeId &recipient, const Term &term) override {
+    std::cout << "RESPONSE: offer_vote("
+      << recipient << ", "
+      << term << ")" << std::endl;
+  }
+
   void request_catch_up(const NodeId &recipient) override {
-    std::cout << "request_catch_up("
+    std::cout << "RESPONSE: request_catch_up("
       << recipient << ")" << std::endl;
   }
 };
@@ -95,4 +101,7 @@ void legislator_test() {
   std::cout << std::endl << "TEST: handle_offer_vote(2)" << std::endl;
   legislator.handle_offer_vote(2);
   std::cout << legislator << std::endl;
+
+  std::cout << std::endl << "TEST: handle_seek_votes_or_catch_up(2, 0)" << std::endl;
+  legislator.handle_seek_votes_or_catch_up(2, 0);
 }

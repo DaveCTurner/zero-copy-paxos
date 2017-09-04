@@ -33,6 +33,7 @@ class OutsideWorld {
     virtual void set_next_wake_up_time(const instant &) = 0;
 
     virtual void seek_votes_or_catch_up(const Slot&) = 0;
+    virtual void offer_vote(const NodeId&, const Term&) = 0;
     virtual void request_catch_up(const NodeId&) = 0;
 };
 
