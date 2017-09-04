@@ -46,6 +46,14 @@ public:
         (t-start_time).count()
       << "ms)" << std::endl;
   }
+
+  void tick() {
+    current_time = next_wake_up_time;
+    std::cout << "current_time(" <<
+      std::chrono::duration_cast<std::chrono::milliseconds>
+        (current_time-start_time).count()
+      << "ms)" << std::endl;
+  }
 };
 
 void legislator_test() {
@@ -58,6 +66,7 @@ void legislator_test() {
   Legislator legislator(world, 1, 0, 0, conf);
 
   std::cout << legislator << std::endl;
+  world.tick();
   legislator.handle_wake_up();
 
   std::cout << legislator << std::endl;
