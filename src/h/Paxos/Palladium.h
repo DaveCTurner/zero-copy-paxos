@@ -394,6 +394,22 @@ public:
       return false;
     }
 
+    for (auto it  = sent_acceptances.begin();
+              it != sent_acceptances.end();
+              it++) {
+
+      Proposal &p = *it;
+
+      if (p.value == proposal.value
+       && p.term  == proposal.term
+       && p.slots.can_extend_with(effective_slots)) {
+
+        p.slots.extend_with(effective_slots);
+        assert_sent_acceptances_valid();
+        return true;
+      }
+    }
+
     sent_acceptances.push_back({
           .slots = effective_slots,
           .term  = proposal.term,

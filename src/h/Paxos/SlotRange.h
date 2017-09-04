@@ -52,6 +52,15 @@ struct SlotRange {
     return _start < _end;
   }
 
+  const bool can_extend_with(const SlotRange &other) const {
+    return _start <= other._end && other._start <= _end;
+  }
+
+  const void extend_with(const SlotRange &other) {
+    if (other._start < _start) { _start = other._start; }
+    if (_end     < other._end) { _end   = other._end;   }
+  }
+
   const void truncate(const Slot &truncate_before) {
     if (_start < truncate_before) {
       _start = truncate_before;
