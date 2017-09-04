@@ -33,6 +33,15 @@ Legislator::Legislator(OutsideWorld  &world,
 
 std::ostream &Legislator::write_to(std::ostream &o) const {
   o << _palladium;
+  if (_seeking_votes) {
+    o << "offered_votes           =";
+    for (auto const &n : _offered_votes) {
+      o << " " << n;
+    }
+    o << std::endl;
+  } else {
+    o << "offered_votes           = not_seeking" << std::endl;
+  }
   return o;
 }
 
@@ -63,6 +72,8 @@ void Legislator::handle_wake_up() {
         _retry_delay_ms = _maximum_retry_delay_ms;
       }
 
+      _offered_votes.clear();
+      _seeking_votes = true;
       _world.seek_votes_or_catch_up(_palladium.next_chosen_slot());
 
       handle_offer_vote(_palladium.node_id());
@@ -87,5 +98,12 @@ void Legislator::handle_wake_up() {
 }
 
 void Legislator::handle_offer_vote(const NodeId &peer_id) {
-  // TODO
+  if (_seeking_votes) {
+    _offered_votes.insert(peer_id);
+    if (_palladium.get_current_configuration().is_quorate(_offered_votes)) {
+      _seeking_votes = false;
+      _offered_votes.clear();
+      // TODO achieved a quorum of offers - start a new term
+    }
+  }
 }

@@ -377,6 +377,9 @@ public:
   const bool &activation_will_yield_proposals() const
     { return is_ready_to_propose; }
 
+  const Configuration &get_current_configuration() const
+    { return current_configuration; }
+
   const NodeId &node_id() const { return _node_id; }
 
   std::ostream& write_to(std::ostream &) const;

@@ -53,6 +53,9 @@ class Legislator {
     const int _retry_delay_increment_ms = 150;
           int _retry_delay_ms           = _retry_delay_increment_ms;
 
+    std::set<NodeId> _offered_votes;
+    bool             _seeking_votes = false;
+
     void set_next_wake_up_time(const instant &t) {
       _next_wake_up = t;
       _world.set_next_wake_up_time(_next_wake_up);
