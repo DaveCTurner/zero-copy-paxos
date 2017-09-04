@@ -105,7 +105,8 @@ void Legislator::handle_wake_up() {
       _seeking_votes = true;
       _world.seek_votes_or_catch_up(_palladium.next_chosen_slot());
 
-      handle_offer_vote(_palladium.node_id());
+      handle_offer_vote(_palladium.node_id(),
+                        _palladium.get_min_acceptable_term());
 
       set_next_wake_up_time(now + random_retry_delay());
       break;
@@ -137,7 +138,12 @@ void Legislator::handle_seek_votes_or_catch_up
   }
 }
 
-void Legislator::handle_offer_vote(const NodeId &peer_id) {
+void Legislator::handle_offer_vote(const NodeId &peer_id,
+                                   const Term   &min_acceptable_term) {
+  if (_minimum_term_for_peers < min_acceptable_term) {
+    _minimum_term_for_peers = min_acceptable_term;
+  }
+
   if (_seeking_votes) {
     _offered_votes.insert(peer_id);
     if (_palladium.get_current_configuration().is_quorate(_offered_votes)) {
@@ -157,6 +163,21 @@ void Legislator::handle_offer_catch_up(const NodeId &sender) {
 }
 
 void Legislator::start_term() {
-  // TODO
+  if (_attempted_term < _minimum_term_for_peers) {
+    _attempted_term = _minimum_term_for_peers;
+  }
+
+  const Term &minimum_term_for_self = _palladium.get_min_acceptable_term();
+  if (_attempted_term < minimum_term_for_self) {
+    _attempted_term = minimum_term_for_self;
+  }
+
+  if (_palladium.node_id() < _attempted_term.owner) {
+    _attempted_term.term_number += 1;
+  }
+  _attempted_term.owner = _palladium.node_id();
+
+  _world.prepare_term(_attempted_term);
+  // TODO handle prepare ourselves too
 }
 

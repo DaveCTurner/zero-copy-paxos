@@ -70,6 +70,11 @@ public:
     std::cout << "RESPONSE: request_catch_up("
       << recipient << ")" << std::endl;
   }
+
+  void prepare_term(const Term &term) override {
+    std::cout << "RESPONSE: prepare_term("
+      << term << ")" << std::endl;
+  }
 };
 
 void legislator_test() {
@@ -98,8 +103,8 @@ void legislator_test() {
   legislator.handle_wake_up();
   std::cout << legislator << std::endl;
 
-  std::cout << std::endl << "TEST: handle_offer_vote(2)" << std::endl;
-  legislator.handle_offer_vote(2);
+  std::cout << std::endl << "TEST: handle_offer_vote(2,[0.3.2])" << std::endl;
+  legislator.handle_offer_vote(2, Term(0,3,2));
   std::cout << legislator << std::endl;
 
   std::cout << std::endl << "TEST: handle_seek_votes_or_catch_up(2, 0)" << std::endl;

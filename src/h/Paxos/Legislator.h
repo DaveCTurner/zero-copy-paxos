@@ -55,6 +55,8 @@ class Legislator {
 
     std::set<NodeId> _offered_votes;
     bool             _seeking_votes = false;
+    Term             _minimum_term_for_peers;
+    Term             _attempted_term;
 
     void set_next_wake_up_time(const instant &t) {
       _next_wake_up = t;
@@ -75,7 +77,7 @@ class Legislator {
     void handle_wake_up();
     void handle_seek_votes_or_catch_up
       (const NodeId&, const Slot&);
-    void handle_offer_vote(const NodeId&);
+    void handle_offer_vote(const NodeId&, const Term&);
     void handle_offer_catch_up(const NodeId&);
 
     void start_term();
