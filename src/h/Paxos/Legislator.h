@@ -85,6 +85,7 @@ class Legislator {
     void handle_promise(const NodeId&, const Promise&);
 
     void activate_slots(const Value &value, const uint64_t count) {
+      if (_role == Role::follower) { return; }
       handle_proposal(_palladium.activate(value, count));
     }
 
