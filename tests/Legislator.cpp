@@ -68,7 +68,7 @@ public:
 
 void legislator_test() {
   uint32_t seed = rand();
-  std::cout << std::endl << "legislaor_test(): seed = " << seed << std::endl;
+  std::cout << std::endl << "legislator_test(): seed = " << seed << std::endl;
   srand(seed);
 
   auto conf = create_conf();
