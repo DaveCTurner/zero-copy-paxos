@@ -17,24 +17,8 @@
 */
 
 
-#include <iostream>
-
-void term_tests();
-void slot_range_tests();
-void palladium_tests();
-void palladium_random_safety_test();
-
-int main() {
-  srand(time(NULL));
-
-  term_tests();
-  slot_range_tests();
-  palladium_tests();
-  for (int i = 0; i < 1000; i++) {
-    palladium_random_safety_test();
-  }
-
-  std::cout << std::endl << "ALL OK" << std::endl << std::endl;
-  return 0;
+void palladium_random_safety_test() {
+  uint32_t seed = rand();
+  std::cout << "seed = " << seed << std::endl;
+  srand(seed);
 }
-
