@@ -239,15 +239,23 @@ private:
     }
     assert_sent_acceptances_valid();
 
-    for (auto &a : active_slot_states) {
+    if (active_slot_states.size() == 1) {
+      auto &a = active_slot_states[0];
       a.slots.truncate(slot);
+      if (a.slots.is_empty()) {
+        a.slots = SlotRange(slot, slot);
+      }
+    } else if (!active_slot_states.empty()) {
+      for (auto &a : active_slot_states) {
+        a.slots.truncate(slot);
+      }
+      active_slot_states.erase(
+        std::remove_if(active_slot_states.begin(),
+                       active_slot_states.end(),
+                       [](const ActiveSlotState &a)
+                         { return a.slots.is_empty(); }),
+                       active_slot_states.end());
     }
-    active_slot_states.erase(
-      std::remove_if(active_slot_states.begin(),
-                     active_slot_states.end(),
-                     [](const ActiveSlotState &a)
-                       { return a.slots.is_empty(); }),
-                     active_slot_states.end());
     assert_active_slot_states_valid();
 
     for (auto &from_acceptor : received_acceptances) {
