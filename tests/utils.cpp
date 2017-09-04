@@ -19,6 +19,9 @@
 
 
 #include "Paxos/Configuration.h"
+#include "Paxos/Proposal.h"
+
+#include <algorithm>
 
 using namespace Paxos;
 
@@ -30,4 +33,28 @@ Configuration create_conf() {
   conf.increment_weight(3);
   conf.increment_weight(3);
   return conf;
+}
+
+void assert_consistent(std::vector<Proposal> &chosens) {
+  Slot i = 0;
+  while (!chosens.empty()) {
+    const auto first_matching = find_if(chosens.cbegin(),
+                                        chosens.cend(),
+      [i](const Proposal &p) { return p.slots.contains(i); });
+
+    if (first_matching != chosens.cend()) {
+      for (const auto &p : chosens) {
+        if (p.slots.contains(i)) {
+          assert(p.value == first_matching->value);
+        }
+      }
+    }
+
+    i++;
+
+    chosens.erase(remove_if(chosens.begin(),
+                            chosens.end(),
+        [i](const Proposal &p) { return p.slots.end() <= i; }),
+                            chosens.end());
+  }
 }

@@ -26,6 +26,7 @@
 using namespace Paxos;
 
 Configuration create_conf();
+void assert_consistent(std::vector<Proposal>&);
 
 enum message_type_t {
   prepare,
@@ -46,7 +47,8 @@ struct message {
 };
 
 void process_message(const message &m, Palladium &n,
-    std::deque<message> &q, bool &made_progress) {
+    std::deque<message> &q, bool &made_progress,
+    std::vector<Proposal> &chosens) {
 
     message r;
     r.sender = n.node_id();
@@ -88,6 +90,8 @@ void process_message(const message &m, Palladium &n,
           made_progress = true;
           r.type = message_type_t::chosen;
           q.push_back(r);
+          chosens.push_back(r.proposal);
+
           r.proposal = n.check_for_chosen_slots();
         }
         break;
@@ -108,6 +112,7 @@ void palladium_random_safety_test() {
   srand(seed);
 
   std::deque<message> messages;
+  std::vector<Proposal> chosens;
   for (uint64_t iteration = 0; iteration < 50000; iteration++) {
     auto message_index = rand() % (messages.size() + 1);
     if (message_index == messages.size()) {
@@ -136,7 +141,7 @@ void palladium_random_safety_test() {
     const message &m = messages[message_index];
     auto &n = nodes[rand() % nodes.size()];
     bool made_progress = false;
-    process_message(m, *n, messages, made_progress);
+    process_message(m, *n, messages, made_progress, chosens);
   }
 
   while (!messages.empty()) {
@@ -145,7 +150,7 @@ void palladium_random_safety_test() {
     for (auto &n : nodes) {
       bool made_progress = false;
       if (rand() % 2 < 1) {
-        process_message(m, *n, messages, made_progress);
+        process_message(m, *n, messages, made_progress, chosens);
       }
     }
   }
@@ -173,8 +178,10 @@ void palladium_random_safety_test() {
       const message m = messages.front();
       messages.pop_front();
       for (auto &n : nodes) {
-        process_message(m, *n, messages, made_progress);
+        process_message(m, *n, messages, made_progress, chosens);
       }
     }
   }
+
+  assert_consistent(chosens);
 }
