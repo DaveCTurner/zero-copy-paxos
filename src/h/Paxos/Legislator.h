@@ -96,7 +96,15 @@ class Legislator {
 
       _world.proposed_and_accepted(proposal);
 
-      // TODO handle the acceptance locally
+      handle_accepted(_palladium.node_id(), proposal);
+    }
+
+  public:
+    void handle_accepted(const NodeId &sender, const Proposal &proposal) {
+      if (proposal.slots.is_empty()) { return; }
+      _palladium.handle_accepted(sender, proposal);
+
+      // TODO check for quorums
     }
 };
 std::ostream& operator<<(std::ostream&, const Legislator&);
