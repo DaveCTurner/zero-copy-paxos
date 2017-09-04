@@ -213,16 +213,24 @@ private:
       first_inactive_slot = slot;
     }
 
-    for (auto &p : sent_acceptances) {
-      p.slots.truncate(slot);
+    if (sent_acceptances.size() == 1) {
+      auto &only_acceptance = sent_acceptances[0];
+      only_acceptance.slots.truncate(slot);
+      if (only_acceptance.slots.is_empty()) {
+        only_acceptance.slots = SlotRange(slot, slot);
+      }
+    } else if (!sent_acceptances.empty()) {
+      for (auto &p : sent_acceptances) {
+        p.slots.truncate(slot);
+      }
+      sent_acceptances.erase(
+        std::remove_if(sent_acceptances.begin(),
+                       sent_acceptances.end(),
+                       [](const Proposal &p)
+                          { return p.slots.is_empty(); }),
+                       sent_acceptances.end());
     }
-    sent_acceptances.erase(
-      std::remove_if(sent_acceptances.begin(),
-                     sent_acceptances.end(),
-                     [](const Proposal &p)
-                        { return p.slots.is_empty(); }),
-                     sent_acceptances.end());
-      assert_sent_acceptances_valid();
+    assert_sent_acceptances_valid();
 
     for (auto &a : active_slot_states) {
       a.slots.truncate(slot);
