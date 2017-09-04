@@ -45,7 +45,8 @@ struct message {
   uint64_t       activate_count;
 };
 
-void process_message(const message &m, Palladium &n, std::deque<message> &q) {
+void process_message(const message &m, Palladium &n,
+    std::deque<message> &q, bool &made_progress) {
 
     message r;
     r.sender = n.node_id();
@@ -84,6 +85,7 @@ void process_message(const message &m, Palladium &n, std::deque<message> &q) {
 
         r.proposal = n.check_for_chosen_slots();
         while (r.proposal.slots.is_nonempty()) {
+          made_progress = true;
           r.type = message_type_t::chosen;
           q.push_back(r);
           r.proposal = n.check_for_chosen_slots();
@@ -133,15 +135,45 @@ void palladium_random_safety_test() {
 
     const message &m = messages[message_index];
     auto &n = nodes[rand() % nodes.size()];
-    process_message(m, *n, messages);
+    bool made_progress = false;
+    process_message(m, *n, messages, made_progress);
   }
 
   while (!messages.empty()) {
     const message m = messages.front();
     messages.pop_front();
     for (auto &n : nodes) {
+      bool made_progress = false;
       if (rand() % 2 < 1) {
-        process_message(m, *n, messages);
+        process_message(m, *n, messages, made_progress);
+      }
+    }
+  }
+
+  message final_prep;
+  final_prep.type = message_type_t::prepare;
+  final_prep.sender = 0;
+  for (const auto &n : nodes) {
+    if (final_prep.prepare < n->next_activated_term()) {
+      final_prep.prepare = n->next_activated_term();
+    }
+    if (final_prep.prepare < n->get_min_acceptable_term()) {
+      final_prep.prepare = n->get_min_acceptable_term();
+    }
+  }
+  final_prep.prepare.term_number += 1;
+
+  bool made_progress = true;
+  while (made_progress) {
+    made_progress = false;
+
+    messages.push_back(final_prep);
+
+    while (!messages.empty()) {
+      const message m = messages.front();
+      messages.pop_front();
+      for (auto &n : nodes) {
+        process_message(m, *n, messages, made_progress);
       }
     }
   }

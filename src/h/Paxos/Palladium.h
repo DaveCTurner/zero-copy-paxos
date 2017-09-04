@@ -303,6 +303,12 @@ public:
   Palladium(const NodeId, const Slot,
             const Era, const Configuration&);
 
+  const Term &get_min_acceptable_term() const
+    { return min_acceptable_term; }
+
+  const Term &next_activated_term() const
+    { return current_term; }
+
   const NodeId &node_id() const { return _node_id; }
 
   std::ostream& write_to(std::ostream &) const;
