@@ -513,6 +513,15 @@ public:
       }
 
       auto &acceptances = received_acceptance.proposals;
+      if  (acceptances.size() == 1
+        && acceptances[0].value == accepted_message.value
+        && acceptances[0].term  == accepted_message.term
+        && acceptances[0].slots
+                .can_extend_with(effective_slots)) {
+        acceptances[0].slots.extend_with(effective_slots);
+        return;
+      }
+
       for (auto accepted_message_it  = acceptances.begin();
                 accepted_message_it != acceptances.end();
                 accepted_message_it++) {
