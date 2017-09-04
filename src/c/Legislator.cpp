@@ -189,6 +189,9 @@ void Legislator::start_term(const NodeId &owner_id) {
 }
 
 void Legislator::handle_prepare_term(const NodeId &sender, const Term &term) {
+  if (_role == Role::follower && sender != _leader_id)           { return; }
+  if (is_leading()            && sender != _palladium.node_id()) { return; }
+
   auto promise = _palladium.handle_prepare(term);
   if (promise.type == Promise::Type::multi
       || promise.slots.is_nonempty()) {
