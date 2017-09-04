@@ -59,6 +59,11 @@ public:
     std::cout << "seek_votes_or_catch_up("
       << slot << ")" << std::endl;
   }
+
+  void request_catch_up(const NodeId &recipient) override {
+    std::cout << "request_catch_up("
+      << recipient << ")" << std::endl;
+  }
 };
 
 void legislator_test() {
@@ -73,9 +78,14 @@ void legislator_test() {
   std::cout << legislator << std::endl;
   world.tick();
   legislator.handle_wake_up();
-
   std::cout << legislator << std::endl;
 
+  legislator.handle_offer_catch_up(3);
+  std::cout << legislator << std::endl;
+
+  world.tick();
+  legislator.handle_wake_up();
+  std::cout << legislator << std::endl;
   legislator.handle_offer_vote(2);
   std::cout << legislator << std::endl;
 }

@@ -136,3 +136,12 @@ void Legislator::handle_offer_vote(const NodeId &peer_id) {
     }
   }
 }
+
+void Legislator::handle_offer_catch_up(const NodeId &sender) {
+  if (_seeking_votes) {
+    _seeking_votes = false;
+    _offered_votes.clear();
+    _world.request_catch_up(sender);
+  }
+}
+
