@@ -143,7 +143,7 @@ void Legislator::handle_offer_vote(const NodeId &peer_id) {
     if (_palladium.get_current_configuration().is_quorate(_offered_votes)) {
       _seeking_votes = false;
       _offered_votes.clear();
-      // TODO achieved a quorum of offers - start a new term
+      start_term();
     }
   }
 }
@@ -154,5 +154,9 @@ void Legislator::handle_offer_catch_up(const NodeId &sender) {
     _offered_votes.clear();
     _world.request_catch_up(sender);
   }
+}
+
+void Legislator::start_term() {
+  // TODO
 }
 

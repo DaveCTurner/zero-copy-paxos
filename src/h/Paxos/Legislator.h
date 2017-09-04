@@ -78,6 +78,7 @@ class Legislator {
     void handle_offer_vote(const NodeId&);
     void handle_offer_catch_up(const NodeId&);
 
+    void start_term();
 };
 std::ostream& operator<<(std::ostream&, const Legislator&);
 
