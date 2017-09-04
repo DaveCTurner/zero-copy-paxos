@@ -233,6 +233,7 @@ private:
                      [](const ActiveSlotState &a)
                        { return a.slots.is_empty(); }),
                      active_slot_states.end());
+    assert_active_slot_states_valid();
 
     for (auto &from_acceptor : received_acceptances) {
       auto &received_from_acceptor = from_acceptor.proposals;
@@ -257,6 +258,45 @@ private:
                   sent_acceptances.cend(),
                   [](const Proposal &p)
                   { return p.slots.is_nonempty(); }));
+  }
+
+  void assert_active_slot_states_valid() {
+
+    assert(first_unchosen_slot <= first_inactive_slot);
+
+    assert(all_of(active_slot_states.cbegin(),
+                  active_slot_states.cend(),
+                  [this](const ActiveSlotState &a)
+                  { return first_unchosen_slot <= a.slots.start()
+                        && a.slots.start()     <= a.slots.end()
+                        && a.slots.end()       <= first_inactive_slot; }));
+
+    assert(active_slot_states.size() == 1
+        || all_of(active_slot_states.cbegin(),
+                  active_slot_states.cend(),
+                  [](const ActiveSlotState &a)
+                  { return a.slots.is_nonempty(); }));
+
+    assert(active_slot_states.size() == 0
+        || active_slot_states.cbegin()->slots.start()
+        == first_unchosen_slot);
+
+    assert(active_slot_states.size() == 0
+        || active_slot_states.crbegin()->slots.end()
+        == first_inactive_slot);
+
+#ifndef NDEBUG
+    for (auto curr  = active_slot_states.cbegin();
+              curr != active_slot_states.cend();
+              curr++) {
+      auto next = curr;
+      next++;
+      if (next != active_slot_states.cend()) {
+        assert(curr->slots.end() == next->slots.start());
+      }
+    }
+
+#endif
   }
 
 public:
@@ -307,6 +347,7 @@ public:
       proposal.slots.set_end(proposal.slots.start());
     }
 
+    assert_active_slot_states_valid();
     return proposal;
   }
 

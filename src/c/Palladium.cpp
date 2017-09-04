@@ -367,6 +367,8 @@ const Proposal Palladium::handle_promise
     }
   }
 
+  assert_active_slot_states_valid();
+
   if (active_slot_states.empty()) {
     return empty_proposal;
   }
@@ -446,6 +448,7 @@ void Palladium::split_active_slot_states_at(const Slot slot) {
   assert(it[1].slots.is_nonempty());
   assert(it[1].slots.start() == slot);
   assert(it[1].slots.contains(slot));
+  assert_active_slot_states_valid();
 }
 
 const bool Palladium::search_for_quorums
