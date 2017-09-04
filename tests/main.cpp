@@ -24,6 +24,7 @@ void slot_range_tests();
 void palladium_tests();
 void palladium_random_safety_test();
 void palladium_follower_speed_test();
+void palladium_leader_speed_test();
 
 int main() {
   srand(time(NULL));
@@ -35,6 +36,7 @@ int main() {
     palladium_random_safety_test();
   }
   palladium_follower_speed_test();
+  palladium_leader_speed_test();
 
   std::cout << std::endl << "ALL OK" << std::endl << std::endl;
   return 0;
