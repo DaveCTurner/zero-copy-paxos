@@ -85,20 +85,23 @@ inline const bool is_reconfiguration(const Value::Type)
     __attribute__((always_inline));
 
 inline const bool operator==(const Value &v1, const Value &v2) {
+  if (LIKELY(v1.type == Value::Type::stream_content
+          && v2.type == Value::Type::stream_content
+          &&    v1.payload.stream.name.owner
+             == v2.payload.stream.name.owner
+          &&    v1.payload.stream.name.id
+             == v2.payload.stream.name.id
+          &&    v1.payload.stream.offset
+             == v2.payload.stream.offset))
+    return true;
+
+  if (v1.type == Value::Type::stream_content) { return false; }
+
   if (v1.type != v2.type) { return false; }
 
   if (v1.type == Value::Type::no_op) { return true; }
   if (v1.type == Value::Type::generate_node_id)
     { return v1.payload.originator == v2.payload.originator; }
-
-  if (v1.type == Value::Type::stream_content) {
-    return  v1.payload.stream.name.owner
-         == v2.payload.stream.name.owner
-      &&    v1.payload.stream.name.id
-         == v2.payload.stream.name.id
-      &&    v1.payload.stream.offset
-         == v2.payload.stream.offset;
-  }
 
   const auto &a1 = v1.payload.reconfiguration;
   const auto &a2 = v2.payload.reconfiguration;
@@ -123,10 +126,13 @@ inline const bool operator!=(const Value &v1, const Value &v2) {
 }
 
 inline const bool is_reconfiguration(const Value::Type type) {
+  if (LIKELY(type == Value::Type::stream_content)) {
+    return false;
+  }
+
   switch (type) {
     case Value::Type::no_op:
     case Value::Type::generate_node_id:
-    case Value::Type::stream_content:
       return false;
 
     case Value::Type::reconfiguration_inc:
