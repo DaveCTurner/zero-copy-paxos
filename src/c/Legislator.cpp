@@ -69,6 +69,7 @@ void Legislator::handle_wake_up() {
       break;
 
     case Role::follower:
+    case Role::incumbent:
       _role = Role::candidate;
       _retry_delay_ms = _minimum_retry_delay_ms;
       set_next_wake_up_time(now + random_retry_delay());
@@ -78,12 +79,6 @@ void Legislator::handle_wake_up() {
       _role = Role::incumbent;
       // TODO propose a no-op value
       set_next_wake_up_time(now + _incumbent_timeout);
-      break;
-
-    case Role::incumbent:
-      _role = Role::candidate;
-      _retry_delay_ms = _minimum_retry_delay_ms;
-      set_next_wake_up_time(now + random_retry_delay());
       break;
   }
 }
