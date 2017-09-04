@@ -66,6 +66,11 @@ public:
       << term << ")" << std::endl;
   }
 
+  void offer_catch_up(const NodeId &recipient) override {
+    std::cout << "RESPONSE: offer_catch_up("
+      << recipient << ")" << std::endl;
+  }
+
   void request_catch_up(const NodeId &recipient) override {
     std::cout << "RESPONSE: request_catch_up("
       << recipient << ")" << std::endl;
@@ -146,5 +151,9 @@ void legislator_test() {
     .value = {.type = Value::Type::no_op }});
   std::cout << std::endl << "TEST: handle_accepted(3," << prop << ")" << std::endl;
   legislator.handle_accepted(3, prop);
+  std::cout << legislator << std::endl;
+
+  std::cout << std::endl << "TEST: handle_seek_votes_or_catch_up(2, 0)" << std::endl;
+  legislator.handle_seek_votes_or_catch_up(2, 0);
   std::cout << legislator << std::endl;
 }

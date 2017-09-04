@@ -135,7 +135,7 @@ void Legislator::handle_seek_votes_or_catch_up
        const Slot        &slot) {
 
   if (slot < _palladium.next_chosen_slot()) {
-    // TODO offer catch-up
+    _world.offer_catch_up(peer_id);
   } else if (slot == _palladium.next_chosen_slot()) {
     _world.offer_vote(peer_id, _palladium.get_min_acceptable_term());
   }
