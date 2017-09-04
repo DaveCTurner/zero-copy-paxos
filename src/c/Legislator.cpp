@@ -65,6 +65,8 @@ void Legislator::handle_wake_up() {
 
       _world.seek_votes_or_catch_up(_palladium.next_chosen_slot());
 
+      handle_offer_vote(_palladium.node_id());
+
       set_next_wake_up_time(now + random_retry_delay());
       break;
 
