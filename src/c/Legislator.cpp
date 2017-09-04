@@ -63,26 +63,25 @@ void Legislator::handle_wake_up() {
         _retry_delay_ms = _maximum_retry_delay_ms;
       }
 
-      // TODO
+      // TODO seek votes from peers
+
       set_next_wake_up_time(now + random_retry_delay());
       break;
 
     case Role::follower:
       _role = Role::candidate;
       _retry_delay_ms = _minimum_retry_delay_ms;
-      // TODO
       set_next_wake_up_time(now + random_retry_delay());
       break;
 
     case Role::leader:
       _role = Role::incumbent;
-      // TODO
+      // TODO propose a no-op value
       set_next_wake_up_time(now + _incumbent_timeout);
       break;
 
     case Role::incumbent:
       _role = Role::candidate;
-      // TODO
       _retry_delay_ms = _minimum_retry_delay_ms;
       set_next_wake_up_time(now + random_retry_delay());
       break;
