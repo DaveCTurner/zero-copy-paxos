@@ -75,17 +75,24 @@ void legislator_test() {
   TracingOutsideWorld world(std::chrono::steady_clock::now());
   Legislator legislator(world, 1, 0, 0, conf);
 
+  std::cout << std::endl << "TEST: Initial state" << std::endl;
   std::cout << legislator << std::endl;
   world.tick();
+
+  std::cout << std::endl << "TEST: handle_wake_up()" << std::endl;
   legislator.handle_wake_up();
   std::cout << legislator << std::endl;
 
+  std::cout << std::endl << "TEST: handle_offer_catch_up(3)" << std::endl;
   legislator.handle_offer_catch_up(3);
   std::cout << legislator << std::endl;
 
   world.tick();
+  std::cout << std::endl << "TEST: handle_wake_up()" << std::endl;
   legislator.handle_wake_up();
   std::cout << legislator << std::endl;
+
+  std::cout << std::endl << "TEST: handle_offer_vote(2)" << std::endl;
   legislator.handle_offer_vote(2);
   std::cout << legislator << std::endl;
 }
