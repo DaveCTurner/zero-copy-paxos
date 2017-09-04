@@ -135,4 +135,14 @@ void palladium_random_safety_test() {
     auto &n = nodes[rand() % nodes.size()];
     process_message(m, *n, messages);
   }
+
+  while (!messages.empty()) {
+    const message m = messages.front();
+    messages.pop_front();
+    for (auto &n : nodes) {
+      if (rand() % 2 < 1) {
+        process_message(m, *n, messages);
+      }
+    }
+  }
 }
