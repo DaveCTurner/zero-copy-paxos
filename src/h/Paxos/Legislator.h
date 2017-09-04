@@ -82,6 +82,7 @@ class Legislator {
 
     void start_term();
     void handle_prepare_term(const NodeId&, const Term&);
+    void handle_promise(const NodeId&, const Promise&);
 };
 std::ostream& operator<<(std::ostream&, const Legislator&);
 

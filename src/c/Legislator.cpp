@@ -186,9 +186,14 @@ void Legislator::handle_prepare_term(const NodeId &sender, const Term &term) {
   if (promise.type == Promise::Type::multi
       || promise.slots.is_nonempty()) {
     if (term.owner == _palladium.node_id()) {
-      // TODO handle promise ourselves
+      handle_promise(_palladium.node_id(), promise);
     } else {
       _world.make_promise(promise);
     }
   }
+}
+
+void Legislator::handle_promise(const NodeId &sender, const Promise &promise) {
+  _palladium.handle_promise(sender, promise);
+  // TODO handle resulting proposal
 }
