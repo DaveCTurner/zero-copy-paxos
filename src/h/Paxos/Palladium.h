@@ -269,14 +269,22 @@ private:
 
     for (auto &from_acceptor : received_acceptances) {
       auto &received_from_acceptor = from_acceptor.proposals;
-      for (auto &accepted_message : received_from_acceptor) {
+      if (received_from_acceptor.size() == 1) {
+        auto &accepted_message = received_from_acceptor[0];
         accepted_message.slots.truncate(slot);
+        if (accepted_message.slots.is_empty()) {
+          accepted_message.slots = SlotRange(slot, slot);
+        }
+      } else if (!received_from_acceptor.empty()) {
+        for (auto &accepted_message : received_from_acceptor) {
+          accepted_message.slots.truncate(slot);
+        }
+        received_from_acceptor.erase(
+          std::remove_if(received_from_acceptor.begin(),
+                         received_from_acceptor.end(),
+                         [](const Proposal &a) { return a.slots.is_empty(); }),
+                         received_from_acceptor.end());
       }
-      received_from_acceptor.erase(
-        std::remove_if(received_from_acceptor.begin(),
-                       received_from_acceptor.end(),
-                       [](const Proposal &a) { return a.slots.is_empty(); }),
-                       received_from_acceptor.end());
     }
   }
 
