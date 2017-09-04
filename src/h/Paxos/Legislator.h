@@ -61,6 +61,10 @@ class Legislator {
     Term             _minimum_term_for_peers;
     Term             _attempted_term;
 
+    const bool is_leading() const {
+      return _role == Role::leader || _role == Role::incumbent;
+    }
+
     void set_next_wake_up_time(const instant &t) {
       _next_wake_up = t;
       _world.set_next_wake_up_time(_next_wake_up);
@@ -112,6 +116,9 @@ class Legislator {
                     chosen.slots.is_nonempty();
                     chosen = _palladium.check_for_chosen_slots()) {
         nothing_chosen = false;
+        if (_leader_id != chosen.term.owner) {
+          printf("Leader changed to node %u\n", chosen.term.owner);
+        }
         _leader_id = chosen.term.owner;
         // TODO handle value chosen
       }
@@ -120,10 +127,16 @@ class Legislator {
 
       instant now = _world.get_current_time();
       if (_leader_id == _palladium.node_id()) {
+        if (!is_leading()) {
+          std::cout << "This node became leader" << std::endl;
+        }
         _role = Role::leader;
         set_next_wake_up_time(now + _leader_timeout);
       } else {
-        _role = Role::follower;
+        if (_role != Role::follower) {
+          std::cout << "This node became a follower of " << _leader_id << std::endl;
+          _role = Role::follower;
+        }
         set_next_wake_up_time(now + _follower_timeout);
       }
     }
