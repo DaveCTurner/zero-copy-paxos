@@ -32,6 +32,8 @@ void palladium_follower_speed_test() {
   Palladium pal(1, 0, 0, conf);
 
   auto t1 = high_resolution_clock::now();
+  Proposal check_for_chosen_slots_result __attribute__((unused))
+    = {.slots = SlotRange(0,0)};
 
   for (Slot i = 0; i < 10000; i++) {
     pal.handle_proposal({
@@ -52,7 +54,8 @@ void palladium_follower_speed_test() {
           .value = {.type = Value::Type::no_op}
         });
 
-    pal.check_for_chosen_slots();
+    check_for_chosen_slots_result = pal.check_for_chosen_slots();
+    assert(check_for_chosen_slots_result.slots.is_empty());
 
     pal.handle_accepted(2, {
           .slots = {
@@ -63,8 +66,11 @@ void palladium_follower_speed_test() {
           .value = {.type = Value::Type::no_op}
         });
 
-    pal.check_for_chosen_slots();
-    pal.check_for_chosen_slots();
+    check_for_chosen_slots_result = pal.check_for_chosen_slots();
+    assert(check_for_chosen_slots_result.slots.is_nonempty());
+
+    check_for_chosen_slots_result = pal.check_for_chosen_slots();
+    assert(check_for_chosen_slots_result.slots.is_empty());
   }
 
   auto t2 = high_resolution_clock::now();
@@ -81,13 +87,20 @@ void palladium_leader_speed_test() {
 
   Palladium pal(1, 0, 0, conf);
 
-  pal.handle_promise(1,
+  const auto promise_result1 __attribute__((unused))
+    = pal.handle_promise(1,
       Promise(Promise::Type::multi, 0, 0, Term(0,0,1)));
+  assert(promise_result1.slots.is_empty());
 
-  pal.handle_promise(2,
+  const auto promise_result2 __attribute__((unused))
+    = pal.handle_promise(2,
       Promise(Promise::Type::multi, 0, 0, Term(0,0,1)));
+  assert(promise_result2.slots.is_empty());
 
   std::cout << "Initial state: " << std::endl << pal << std::endl << std::endl;
+
+  Proposal check_for_chosen_slots_result __attribute__((unused))
+    = {.slots = SlotRange(0,0)};
 
   auto t1 = high_resolution_clock::now();
   for (Slot i = 0; i < 10000; i++) {
@@ -96,13 +109,24 @@ void palladium_leader_speed_test() {
     value.payload.stream.name.id    = 2;
     value.payload.stream.offset     = 0;
 
+    assert(pal.activation_will_yield_proposals());
     const Slot first_activated __attribute__((unused))
                           = i * 1500;
+    assert(pal.next_activated_slot() == first_activated);
     const auto activate_result = pal.activate(value, 1500);
+    assert(activate_result.slots.start() == first_activated);
+    assert(activate_result.slots.end()   == first_activated + 1500);
+    assert(activate_result.term          == Term(0,0,1));
+    assert(activate_result.value         == value);
 
-    pal.handle_proposal(activate_result);
+    const auto proposal_result __attribute__((unused))
+      = pal.handle_proposal(activate_result);
+    assert(proposal_result);
+
     pal.handle_accepted(1, activate_result);
-    pal.check_for_chosen_slots();
+
+    check_for_chosen_slots_result = pal.check_for_chosen_slots();
+    assert(check_for_chosen_slots_result.slots.is_empty());
 
     if (i > 10) {
       const NodeId peer = (i%2==0) ? 2 : 3;
@@ -115,10 +139,12 @@ void palladium_leader_speed_test() {
         .term = pal.next_activated_term(),
         .value = value
       });
-      pal.check_for_chosen_slots();
+      check_for_chosen_slots_result = pal.check_for_chosen_slots();
+      assert(check_for_chosen_slots_result.slots.is_nonempty());
     }
 
-    pal.check_for_chosen_slots();
+    check_for_chosen_slots_result = pal.check_for_chosen_slots();
+    assert(check_for_chosen_slots_result.slots.is_empty());
   }
 
   auto t2 = high_resolution_clock::now();

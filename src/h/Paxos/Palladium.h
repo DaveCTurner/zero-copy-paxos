@@ -309,6 +309,12 @@ public:
   const Term &next_activated_term() const
     { return current_term; }
 
+  const Slot &next_activated_slot() const
+    { return first_inactive_slot; }
+
+  const bool &activation_will_yield_proposals() const
+    { return is_ready_to_propose; }
+
   const NodeId &node_id() const { return _node_id; }
 
   std::ostream& write_to(std::ostream &) const;
