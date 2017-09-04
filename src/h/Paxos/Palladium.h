@@ -443,14 +443,14 @@ public:
 
   /* Returns whether the proposal was accepted or not. */
   const bool handle_proposal(const Proposal &proposal) {
-    if (proposal.term < min_acceptable_term) {
+    if (UNLIKELY(proposal.term < min_acceptable_term)) {
       return false;
     }
 
     auto effective_slots = proposal.slots;
     effective_slots.truncate(first_unchosen_slot);
 
-    if (effective_slots.is_empty()) {
+    if (UNLIKELY(effective_slots.is_empty())) {
       return false;
     }
 
