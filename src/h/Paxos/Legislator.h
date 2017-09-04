@@ -51,6 +51,7 @@ class Legislator {
 
     void set_next_wake_up_time(const instant &t) {
       _next_wake_up = t;
+      _world.set_next_wake_up_time(_next_wake_up);
     }
 
     std::chrono::steady_clock::duration random_retry_delay();

@@ -30,6 +30,8 @@ using instant = std::chrono::steady_clock::time_point;
 class OutsideWorld {
   public:
     virtual const instant get_current_time() = 0;
+    virtual void set_next_wake_up_time(const instant &) = 0;
+
 };
 
 }

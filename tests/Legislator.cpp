@@ -26,15 +26,25 @@ Configuration create_conf();
 class TracingOutsideWorld : public OutsideWorld {
   const instant start_time;
         instant current_time;
+        instant next_wake_up_time;
 
 public:
   TracingOutsideWorld(instant current_time)
     : start_time(current_time),
-      current_time(current_time)
+      current_time(current_time),
+      next_wake_up_time(current_time)
     { }
 
   const instant get_current_time() override {
     return current_time;
+  }
+
+  void set_next_wake_up_time(const instant &t) override {
+    next_wake_up_time = t;
+    std::cout << "set_next_wake_up_time(" <<
+      std::chrono::duration_cast<std::chrono::milliseconds>
+        (t-start_time).count()
+      << "ms)" << std::endl;
   }
 };
 
