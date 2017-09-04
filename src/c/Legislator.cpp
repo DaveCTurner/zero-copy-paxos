@@ -41,5 +41,11 @@ std::ostream& Paxos::operator<<(std::ostream &o, const Legislator &legislator) {
 }
 
 void Legislator::handle_wake_up() {
+  auto &now = _world.get_current_time();
+
+  if (now < _next_wake_up) {
+    return;
+  }
+
   // TODO
 }

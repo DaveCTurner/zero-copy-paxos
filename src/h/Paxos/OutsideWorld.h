@@ -21,9 +21,15 @@
 #ifndef PAXOS_OUTSIDE_WORLD_H
 #define PAXOS_OUTSIDE_WORLD_H
 
+#include <chrono>
+
 namespace Paxos {
 
+using instant = std::chrono::steady_clock::time_point;
+
 class OutsideWorld {
+  public:
+    virtual const instant get_current_time() = 0;
 };
 
 }

@@ -34,6 +34,8 @@ class Legislator {
     OutsideWorld &_world;
     Palladium     _palladium;
 
+    instant   _next_wake_up    = _world.get_current_time();
+
   public:
     Legislator( OutsideWorld&,
           const NodeId&,
