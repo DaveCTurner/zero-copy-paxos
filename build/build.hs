@@ -27,13 +27,16 @@ optFlag "release" = "-O3"
 optFlag _         = "-Og"
 
 defineFlags :: String -> [String]
-defineFlags "release"  = ["-DNDEBUG"]
-defineFlags "debug"    = ["-g"]
+defineFlags "release"  = ["-DNDEBUG", "-DNTRACE"]
+defineFlags "debug"    = ["-DNTRACE", "-g"]
+defineFlags "trace"    = ["-g"]
 defineFlags otherLevel = error $ "Unknown level '" ++ otherLevel ++ "'"
 
 main :: IO ()
 main = shakeArgs shakeOptions $ do
-  want ["_build/debug/test", "_build/release/test"]
+  want ["_build" </> level </> "test"
+       | level <- ["release", "debug", "trace"]
+       ]
 
   phony "clean" $ do
     putNormal "Cleaning _build"

@@ -46,10 +46,34 @@ struct message {
   uint64_t       activate_count;
 };
 
+std::ostream &operator<<(std::ostream &o, const message &m) {
+  o << m.sender << ": ";
+  switch (m.type) {
+    case message_type_t::prepare:
+      return o << "PREPARE(" << m.prepare << ")";
+    case message_type_t::promised:
+      return o << "PROMISED(" << m.promise << ")";
+    case message_type_t::activate:
+      return o << "SPAWN(" << m.proposal.value << " x " << m.activate_count << ")";
+    case message_type_t::proposed:
+      return o << "PROPOSED(" << m.proposal << ")";
+    case message_type_t::accepted:
+      return o << "ACCEPTED(" << m.proposal << ")";
+    case message_type_t::chosen:
+      return o << "CHOSEN(" << m.proposal << ")";
+  }
+  assert(false);
+  return o;
+}
+
 void process_message(const message &m, Palladium &n,
     std::deque<message> &q, bool &made_progress,
     std::vector<Proposal> &chosens) {
 
+#ifndef NTRACE
+    std::cout << "node " << n.node_id()
+              << " handling: " << m << std::endl;
+#endif // ndef NTRACE
     message r;
     r.sender = n.node_id();
     switch(m.type) {
@@ -60,6 +84,10 @@ void process_message(const message &m, Palladium &n,
             && (r.promise.type == Promise::Type::multi
               || r.promise.slots.is_nonempty())) {
           q.push_back(r);
+#ifndef NTRACE
+          std::cout << "node " << n.node_id()
+                    << " yielding: " << r << std::endl;
+#endif // ndef NTRACE
         }
         break;
       case message_type_t::promised:
@@ -67,6 +95,10 @@ void process_message(const message &m, Palladium &n,
         r.proposal = n.handle_promise(m.sender, m.promise);
         if (r.proposal.slots.is_nonempty()) {
           q.push_back(r);
+#ifndef NTRACE
+          std::cout << "node " << n.node_id()
+                    << " yielding: " << r << std::endl;
+#endif // ndef NTRACE
         }
         break;
       case message_type_t::activate:
@@ -74,12 +106,20 @@ void process_message(const message &m, Palladium &n,
         r.proposal = n.activate(m.proposal.value, m.activate_count);
         if (r.proposal.slots.is_nonempty()) {
           q.push_back(r);
+#ifndef NTRACE
+          std::cout << "node " << n.node_id()
+                    << " yielding: " << r << std::endl;
+#endif // ndef NTRACE
         }
       case message_type_t::proposed:
         if (n.handle_proposal(m.proposal)) {
           r.type = message_type_t::accepted;
           r.proposal = m.proposal;
           q.push_back(r);
+#ifndef NTRACE
+          std::cout << "node " << n.node_id()
+                    << " yielding: " << r << std::endl;
+#endif // ndef NTRACE
         }
         break;
       case message_type_t::accepted:
@@ -90,6 +130,10 @@ void process_message(const message &m, Palladium &n,
           made_progress = true;
           r.type = message_type_t::chosen;
           q.push_back(r);
+#ifndef NTRACE
+          std::cout << "node " << n.node_id()
+                    << " yielding: " << r << std::endl;
+#endif // ndef NTRACE
           chosens.push_back(r.proposal);
 
           r.proposal = n.check_for_chosen_slots();
