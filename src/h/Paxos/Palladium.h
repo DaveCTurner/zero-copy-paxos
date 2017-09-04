@@ -203,6 +203,13 @@ private:
     }
 
     update_first_unchosen_slot(slot);
+
+    if (sent_acceptances.size() == 1
+        && sent_acceptances[0].slots.is_empty()) {
+      auto &only_acceptance = sent_acceptances[0];
+      only_acceptance.term  = chosen_message.term;
+      only_acceptance.value = chosen_message.value;
+    }
   }
 
   void update_first_unchosen_slot(const Slot &slot) {
