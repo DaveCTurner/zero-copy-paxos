@@ -33,7 +33,7 @@ int main() {
   term_tests();
   slot_range_tests();
   palladium_tests();
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < 1; i++) {
     palladium_random_safety_test();
   }
   palladium_follower_speed_test();
