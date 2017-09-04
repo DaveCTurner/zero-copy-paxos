@@ -71,6 +71,8 @@ std::ostream &Legislator::write_to(std::ostream &o) const {
   } else {
     o << "offered_votes           = not_seeking" << std::endl;
   }
+  o << "minimum_term_for_peers  = " << _minimum_term_for_peers << std::endl;
+  o << "attempted_term          = " << _attempted_term         << std::endl;
   return o;
 }
 
