@@ -504,14 +504,14 @@ public:
     (const NodeId acceptor,
      const Proposal &accepted_message) {
 
-    if (accepted_message.term.era + 1 < current_era) {
+    if (UNLIKELY(accepted_message.term.era + 1 < current_era)) {
       return;
     }
 
     auto effective_slots = accepted_message.slots;
     effective_slots.truncate(first_unchosen_slot);
 
-    if (effective_slots.is_empty()) {
+    if (UNLIKELY(effective_slots.is_empty())) {
       return;
     }
 
