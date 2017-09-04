@@ -42,6 +42,9 @@ class Legislator {
           const Configuration&);
 
     std::ostream &write_to(std::ostream&) const;
+
+    void handle_wake_up();
+
 };
 std::ostream& operator<<(std::ostream&, const Legislator&);
 

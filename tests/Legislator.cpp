@@ -33,4 +33,7 @@ void legislator_test() {
   Legislator legislator(world, 1, 0, 0, conf);
 
   std::cout << legislator << std::endl;
+  legislator.handle_wake_up();
+
+  std::cout << legislator << std::endl;
 }

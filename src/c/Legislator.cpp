@@ -39,3 +39,7 @@ std::ostream &Legislator::write_to(std::ostream &o) const {
 std::ostream& Paxos::operator<<(std::ostream &o, const Legislator &legislator) {
   return legislator.write_to(o);
 }
+
+void Legislator::handle_wake_up() {
+  // TODO
+}
