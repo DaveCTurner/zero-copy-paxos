@@ -35,7 +35,7 @@ void palladium_follower_speed_test() {
   Proposal check_for_chosen_slots_result __attribute__((unused))
     = {.slots = SlotRange(0,0)};
 
-  for (Slot i = 0; i < 10000; i++) {
+  for (Slot i = 0; i < 1000000; i++) {
     pal.handle_proposal({
         .slots = {
           .start =  i    * 1500,
@@ -103,7 +103,7 @@ void palladium_leader_speed_test() {
     = {.slots = SlotRange(0,0)};
 
   auto t1 = high_resolution_clock::now();
-  for (Slot i = 0; i < 10000; i++) {
+  for (Slot i = 0; i < 1000000; i++) {
     Value value = { .type = Value::Type::stream_content };
     value.payload.stream.name.owner = 1;
     value.payload.stream.name.id    = 2;
