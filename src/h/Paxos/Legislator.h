@@ -85,8 +85,17 @@ class Legislator {
     void handle_promise(const NodeId&, const Promise&);
 
     void activate_slots(const Value &value, const uint64_t count) {
-      _palladium.activate(value, count);
-      // TODO send resulting proposal to the world
+      handle_proposal(_palladium.activate(value, count));
+    }
+
+  private:
+    void handle_proposal(const Proposal &proposal) {
+      if (proposal.slots.is_empty()) { return; }
+      if (!_palladium.handle_proposal(proposal)) { return; }
+
+      _world.proposed_and_accepted(proposal);
+
+      // TODO handle the acceptance locally
     }
 };
 std::ostream& operator<<(std::ostream&, const Legislator&);

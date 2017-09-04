@@ -80,6 +80,11 @@ public:
     std::cout << "RESPONSE: make_promise("
       << promise << ")" << std::endl;
   }
+
+  void proposed_and_accepted(const Proposal &proposal) override {
+    std::cout << "RESPONSE: proposed_and_accepted("
+      << proposal << ")" << std::endl;
+  }
 };
 
 void legislator_test() {

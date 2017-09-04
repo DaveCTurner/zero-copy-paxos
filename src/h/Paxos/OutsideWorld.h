@@ -37,6 +37,7 @@ class OutsideWorld {
     virtual void request_catch_up(const NodeId&) = 0;
     virtual void prepare_term(const Term&) = 0;
     virtual void make_promise(const Promise&) = 0;
+    virtual void proposed_and_accepted(const Proposal&) = 0;
 };
 
 }
