@@ -83,3 +83,7 @@ void Legislator::handle_wake_up() {
       break;
   }
 }
+
+void Legislator::handle_offer_vote(const NodeId &peer_id) {
+  // TODO
+}

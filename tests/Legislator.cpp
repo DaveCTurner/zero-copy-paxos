@@ -74,5 +74,6 @@ void legislator_test() {
   world.tick();
   legislator.handle_wake_up();
 
+  legislator.handle_offer_vote(2);
   std::cout << legislator << std::endl;
 }

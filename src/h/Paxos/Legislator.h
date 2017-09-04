@@ -70,6 +70,7 @@ class Legislator {
     std::ostream &write_to(std::ostream&) const;
 
     void handle_wake_up();
+    void handle_offer_vote(const NodeId&);
 
 };
 std::ostream& operator<<(std::ostream&, const Legislator&);
