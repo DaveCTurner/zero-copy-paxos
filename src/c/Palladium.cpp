@@ -553,6 +553,9 @@ std::ostream& Palladium::write_to(std::ostream &o) const {
       o << "    - free" << std::endl;
     }
   }
+#ifndef NDEBUG
+  o << "slow_paths_taken        = " << slow_paths_taken << std::endl;
+#endif // ndef NDEBUG
 
   return o;
 }

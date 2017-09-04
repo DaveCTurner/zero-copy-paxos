@@ -68,6 +68,12 @@ private:
                        Configuration::Weight,
                  const Configuration::Weight);
 
+#ifndef NDEBUG
+  uint16_t                slow_paths_taken = 0;
+#define RECORD_SLOW_PATH slow_paths_taken += 1
+#else
+#define RECORD_SLOW_PATH
+#endif // ndef NDEBUG
   NodeId _node_id;
   Slot   first_unchosen_slot;
 
@@ -246,6 +252,7 @@ private:
         only_acceptance.slots = SlotRange(slot, slot);
       }
     } else if (!sent_acceptances.empty()) {
+      RECORD_SLOW_PATH;
       for (auto &p : sent_acceptances) {
         p.slots.truncate(slot);
       }
@@ -265,6 +272,7 @@ private:
         a.slots = SlotRange(slot, slot);
       }
     } else if (!active_slot_states.empty()) {
+      RECORD_SLOW_PATH;
       for (auto &a : active_slot_states) {
         a.slots.truncate(slot);
       }
@@ -286,6 +294,7 @@ private:
           accepted_message.slots = SlotRange(slot, slot);
         }
       } else if (!received_from_acceptor.empty()) {
+        RECORD_SLOW_PATH;
         for (auto &accepted_message : received_from_acceptor) {
           accepted_message.slots.truncate(slot);
         }
@@ -405,6 +414,8 @@ public:
       return proposal;
     }
 
+    RECORD_SLOW_PATH;
+
     // Special case: the first element of active_slot_states is for an
     // empty set of slots. This means there are no other elements; remove
     // it, to be replaced with a nonempty state.
@@ -453,6 +464,8 @@ public:
       assert_sent_acceptances_valid();
       return true;
     }
+
+    RECORD_SLOW_PATH;
 
     for (auto it  = sent_acceptances.begin();
               it != sent_acceptances.end();
@@ -522,6 +535,8 @@ public:
         return;
       }
 
+      RECORD_SLOW_PATH;
+
       for (auto accepted_message_it  = acceptances.begin();
                 accepted_message_it != acceptances.end();
                 accepted_message_it++) {
@@ -542,6 +557,7 @@ public:
       return;
     }
 
+    RECORD_SLOW_PATH;
     const auto &conf_entries = current_configuration.entries;
     auto conf_entry = find_if(
       conf_entries.begin(),
