@@ -193,6 +193,7 @@ void Legislator::handle_prepare_term(const NodeId &sender, const Term &term) {
   if (is_leading()            && sender != _palladium.node_id()) { return; }
 
   auto promise = _palladium.handle_prepare(term);
+  _world.record_promise(promise.term, promise.slots.start());
   if (promise.type == Promise::Type::multi
       || promise.slots.is_nonempty()) {
     if (term.owner == _palladium.node_id()) {
@@ -210,3 +211,4 @@ void Legislator::handle_promise(const NodeId &sender, const Promise &promise) {
     handle_proposal(_palladium.activate({.type = Value::Type::no_op}, 1));
   }
 }
+

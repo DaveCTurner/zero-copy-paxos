@@ -76,6 +76,11 @@ public:
       << term << ")" << std::endl;
   }
 
+  void record_promise(const Term &term, const Slot &slot) override {
+    std::cout << "RESPONSE: record_promise("
+      << term << "," << slot << ")" << std::endl;
+  }
+
   void make_promise(const Promise &promise) override {
     std::cout << "RESPONSE: make_promise("
       << promise << ")" << std::endl;
