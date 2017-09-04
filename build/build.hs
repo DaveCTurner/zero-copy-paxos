@@ -34,6 +34,7 @@ defineFlags otherLevel = error $ "Unknown level '" ++ otherLevel ++ "'"
 
 main :: IO ()
 main = shakeArgs shakeOptions $ do
+  want ["_build/test-output"]
   want ["_build" </> level </> "test"
        | level <- ["release", "debug", "trace"]
        ]
@@ -41,6 +42,11 @@ main = shakeArgs shakeOptions $ do
   phony "clean" $ do
     putNormal "Cleaning _build"
     removeFilesAfter "_build" ["//*"]
+
+  "_build/test-output" %> \out -> do
+    need ["_build/debug/test"]
+    Stdout stdout <- cmd "_build/debug/test"
+    writeFileChanged out stdout
 
   let objs level srcDir = do
         cpps <- getDirectoryFiles (".." </> srcDir) ["//*.cpp"]
