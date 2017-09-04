@@ -61,22 +61,30 @@ inline const bool operator<(const Term &t1, const Term &t2)
     __attribute__((always_inline));
 
 inline const bool operator<(const Term &t1, const Term &t2) {
+  if (LIKELY(t1 == t2)) {
+    return false;
+  } else {
 #define LT_LEX(a,b,c) (((a) == (b)) ? (c) : (((a) < (b)) ? true : false))
-  return LT_LEX(t1.era,          t2.era,
-         LT_LEX(t1.term_number,  t2.term_number,
-                t1.owner       < t2.owner));
+    return LT_LEX(t1.era,          t2.era,
+           LT_LEX(t1.term_number,  t2.term_number,
+                  t1.owner       < t2.owner));
 #undef LT_LEX
+  }
 }
 
 inline const bool operator<=(const Term &t1, const Term &t2)
     __attribute__((always_inline));
 
 inline const bool operator<=(const Term &t1, const Term &t2) {
+  if (LIKELY(t1 == t2)) {
+    return true;
+  } else {
 #define LE_LEX(a,b,c) (((a) == (b)) ? (c) : (((a) < (b)) ? true : false))
-  return LE_LEX(t1.era,           t2.era,
-         LE_LEX(t1.term_number,   t2.term_number,
-                t1.owner       <= t2.owner));
+    return LE_LEX(t1.era,           t2.era,
+           LE_LEX(t1.term_number,   t2.term_number,
+                  t1.owner       <= t2.owner));
 #undef LE_LEX
+  }
 }
 
 std::ostream& operator<<(std::ostream&, const Term&);
