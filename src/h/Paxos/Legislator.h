@@ -87,7 +87,8 @@ class Legislator {
     void handle_offer_vote(const NodeId&, const Term&);
     void handle_offer_catch_up(const NodeId&);
 
-    void start_term();
+    void abdicate_to(const NodeId&);
+    void start_term(const NodeId&);
     void handle_prepare_term(const NodeId&, const Term&);
     void handle_promise(const NodeId&, const Promise&);
 

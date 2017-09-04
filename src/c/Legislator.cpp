@@ -152,7 +152,7 @@ void Legislator::handle_offer_vote(const NodeId &peer_id,
     if (_palladium.get_current_configuration().is_quorate(_offered_votes)) {
       _seeking_votes = false;
       _offered_votes.clear();
-      start_term();
+      start_term(_palladium.node_id());
     }
   }
 }
@@ -165,7 +165,11 @@ void Legislator::handle_offer_catch_up(const NodeId &sender) {
   }
 }
 
-void Legislator::start_term() {
+void Legislator::abdicate_to(const NodeId &node_id) {
+  start_term(node_id);
+}
+
+void Legislator::start_term(const NodeId &owner_id) {
   if (_attempted_term < _minimum_term_for_peers) {
     _attempted_term = _minimum_term_for_peers;
   }
@@ -175,10 +179,10 @@ void Legislator::start_term() {
     _attempted_term = minimum_term_for_self;
   }
 
-  if (_palladium.node_id() < _attempted_term.owner) {
+  if (owner_id < _attempted_term.owner) {
     _attempted_term.term_number += 1;
   }
-  _attempted_term.owner = _palladium.node_id();
+  _attempted_term.owner = owner_id;
 
   _world.prepare_term(_attempted_term);
   handle_prepare_term(_palladium.node_id(), _attempted_term);
