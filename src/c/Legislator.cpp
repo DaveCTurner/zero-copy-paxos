@@ -30,3 +30,12 @@ Legislator::Legislator(OutsideWorld  &world,
   : _world(world),
     _palladium(node_id, initial_slot, initial_era, initial_conf) {
 }
+
+std::ostream &Legislator::write_to(std::ostream &o) const {
+  o << _palladium;
+  return o;
+}
+
+std::ostream& Paxos::operator<<(std::ostream &o, const Legislator &legislator) {
+  return legislator.write_to(o);
+}

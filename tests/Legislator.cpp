@@ -31,4 +31,6 @@ void legislator_test() {
   auto conf = create_conf();
   OutsideWorld world;
   Legislator legislator(world, 1, 0, 0, conf);
+
+  std::cout << legislator << std::endl;
 }

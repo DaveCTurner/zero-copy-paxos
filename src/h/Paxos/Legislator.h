@@ -40,7 +40,10 @@ class Legislator {
           const Slot&,
           const Era&,
           const Configuration&);
+
+    std::ostream &write_to(std::ostream&) const;
 };
+std::ostream& operator<<(std::ostream&, const Legislator&);
 
 }
 
