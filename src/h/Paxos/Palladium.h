@@ -394,13 +394,12 @@ public:
 
     auto last_active_slot = active_slot_states.rbegin();
 
-    if   (last_active_slot != active_slot_states.rend()
-      &&  last_active_slot->term               == current_term
-      &&  last_active_slot->value              == value
-      &&  last_active_slot->promises           == promises_for_inactive_slots
-      &&  last_active_slot->has_proposed_value == is_ready_to_propose
-      && !last_active_slot->has_accepted_value) {
-
+    if (LIKELY(last_active_slot != active_slot_states.rend()
+           &&  last_active_slot->term               == current_term
+           &&  last_active_slot->value              == value
+           &&  last_active_slot->promises           == promises_for_inactive_slots
+           &&  last_active_slot->has_proposed_value == is_ready_to_propose
+           && !last_active_slot->has_accepted_value)) {
       last_active_slot->slots.set_end(first_inactive_slot);
       assert_active_slot_states_valid();
 
@@ -455,11 +454,11 @@ public:
       return false;
     }
 
-    if  (sent_acceptances.size() == 1
-      && sent_acceptances[0].value == proposal.value
-      && sent_acceptances[0].term  == proposal.term
-      && sent_acceptances[0].slots
-            .can_extend_with(effective_slots)) {
+    if (LIKELY(sent_acceptances.size() == 1
+            && sent_acceptances[0].value == proposal.value
+            && sent_acceptances[0].term  == proposal.term
+            && sent_acceptances[0].slots
+                  .can_extend_with(effective_slots))) {
       sent_acceptances[0].slots.extend_with(effective_slots);
       assert_sent_acceptances_valid();
       return true;
@@ -526,11 +525,11 @@ public:
       }
 
       auto &acceptances = received_acceptance.proposals;
-      if  (acceptances.size() == 1
-        && acceptances[0].value == accepted_message.value
-        && acceptances[0].term  == accepted_message.term
-        && acceptances[0].slots
-                .can_extend_with(effective_slots)) {
+      if (LIKELY(acceptances.size() == 1
+              && acceptances[0].value == accepted_message.value
+              && acceptances[0].term  == accepted_message.term
+              && acceptances[0].slots
+                      .can_extend_with(effective_slots))) {
         acceptances[0].slots.extend_with(effective_slots);
         return;
       }
