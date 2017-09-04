@@ -408,6 +408,14 @@ public:
         assert_sent_acceptances_valid();
         return true;
       }
+
+      if (p.slots.is_empty()) {
+        p.value = proposal.value;
+        p.term  = proposal.term;
+        p.slots = effective_slots;
+        assert_sent_acceptances_valid();
+        return true;
+      }
     }
 
     sent_acceptances.push_back({
