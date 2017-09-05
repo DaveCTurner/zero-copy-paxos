@@ -85,6 +85,8 @@ public:
 
   const Paxos::instant get_current_time() override;
 
+  const Paxos::instant get_next_wake_up_time() const;
+
   void set_next_wake_up_time(const Paxos::instant &t) override;
 };
 

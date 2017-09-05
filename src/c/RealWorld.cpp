@@ -110,6 +110,10 @@ const Paxos::instant RealWorld::get_current_time() {
   return std::chrono::steady_clock::now();
 }
 
+const Paxos::instant RealWorld::get_next_wake_up_time() const {
+  return next_wake_up_time;
+}
+
 void RealWorld::set_next_wake_up_time(const Paxos::instant &t) {
   if (next_wake_up_time < t) {
     next_wake_up_time = t;

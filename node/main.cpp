@@ -17,12 +17,29 @@
 */
 
 #include "RealWorld.h"
+#include "Epoll.h"
 #include "Paxos/Legislator.h"
 
 int main(int argc, char **argv) {
   Paxos::Configuration conf(1);
   RealWorld real_world("3277f758-473b-4188-99fc-b19b0e7a940b", 1);
   Paxos::Legislator legislator(real_world, 1, 0, 0, conf);
+  Epoll::Manager manager;
 
-  return 0;
+  while (1) {
+    auto ms_to_next_wake_up
+      = std::chrono::duration_cast<std::chrono::milliseconds>
+          (real_world.get_next_wake_up_time()
+            - real_world.get_current_time()).count();
+
+    if (ms_to_next_wake_up < 0) {
+      ms_to_next_wake_up = 0;
+    }
+
+    manager.wait(ms_to_next_wake_up);
+
+    legislator.handle_wake_up();
+  }
+
+  return 1;
 }
