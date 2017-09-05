@@ -16,6 +16,13 @@
 
 */
 
+#include "RealWorld.h"
+#include "Paxos/Legislator.h"
+
 int main(int argc, char **argv) {
+  Paxos::Configuration conf(1);
+  RealWorld real_world("3277f758-473b-4188-99fc-b19b0e7a940b", 1);
+  Paxos::Legislator legislator(real_world, 1, 0, 0, conf);
+
   return 0;
 }
