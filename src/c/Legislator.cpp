@@ -204,6 +204,23 @@ void Legislator::handle_request_catch_up(const NodeId &sender) {
                        _current_stream_pos);
 }
 
+void Legislator::unsafely_stage_coup() {
+  if (_role != Role::candidate) {
+    return;
+  }
+
+  fprintf(stderr, "%s: WARNING risk of data loss\n", __PRETTY_FUNCTION__);
+
+  Configuration conf(_palladium.node_id());
+
+  handle_send_catch_up(_palladium.next_activated_slot() + 1,
+                       _palladium.get_current_era() + 2,
+                       conf,
+                       _next_generated_node_id,
+                       _current_stream,
+                       _current_stream_pos);
+}
+
 void Legislator::handle_send_catch_up
    (const Slot          &slot,
     const Era           &era,
