@@ -28,15 +28,38 @@ using delay   = std::chrono::steady_clock::duration;
 
 namespace Paxos {
 
+/* The Legislator is the layer between the Palladium and the outside world.
+The Palladium is responsible for safety; the legislator acts as an adapter
+between the pure Paxos messages used in the Palladium and the ones passed
+between nodes. It is also responsible for the liveness properties of the
+system. The terminology is taken directly from the Part Time Parliament
+paper.*/
+
 class Legislator {
   Legislator           (const Legislator&) = delete; // no copying
   Legislator &operator=(const Legislator&) = delete; // no assignment
 
   public:
+
     enum Role {
+      /* No known leader: no slot is known to have been chosen, or the
+         last-known chosen slot was more than _follower_timeout ago.
+         This node is a candidate to become leader. */
       candidate,
+
+      /* Some other node is known to be leader: it is the owner of the last
+         slot known to be chosen, which was no more than
+        _follower_timeout ago. */
       follower,
+
+      /* This node is known to be leader: it is the owner of the last slot
+         known to be chosen, which was no more than _leader_timeout ago.
+      */
       leader,
+
+      /* This node was known to be leader, but the last slot known to be
+         chosen was more than _leader_timeout ago, so it is now trying to
+         be re-elected by proposing another slot. */
       incumbent
     };
 
@@ -44,18 +67,31 @@ class Legislator {
     OutsideWorld &_world;
     Palladium     _palladium;
 
+    /* Timeout & role things */
     instant   _next_wake_up      = _world.get_current_time();
     Role      _role              = Role::candidate;
     NodeId    _leader_id         = 0; /* Not relevant if a candidate. */
+
+              /* Timeout for incumbent -> candidate transition */
     delay     _incumbent_timeout = std::chrono::milliseconds(100);
+              /* Timeout for leader -> incumbent transition
+                 (reset when a new slot is chosen) */
     delay     _leader_timeout    = std::chrono::milliseconds(8000);
+              /* Timeout for follower -> candidate transition
+                 (reset when a new slot is chosen or a catch-up occurs */
     delay     _follower_timeout  = std::chrono::milliseconds(9000);
 
+              /* Candidate wake-up interval parameters. Candidates wake
+                 up after a random-length delay in [_minimum_retry_delay_ms,
+                 _retry_delay_ms] where _retry_delay_ms increases by
+                 _retry_delay_increment_ms up to _maximum_retry_delay_ms on
+                 each failed attempt. */
     const int _minimum_retry_delay_ms   = 150;
     const int _maximum_retry_delay_ms   = 60000;
     const int _retry_delay_increment_ms = 150;
           int _retry_delay_ms           = _retry_delay_increment_ms;
 
+    /* Re-election data */
     std::set<NodeId> _offered_votes;
     bool             _seeking_votes = false;
     Term             _minimum_term_for_peers;

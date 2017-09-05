@@ -27,6 +27,9 @@ namespace Paxos {
 
 using instant = std::chrono::steady_clock::time_point;
 
+/* The OutsideWorld is an abstract base class for the interactions (sending
+messages, setting timers) with the rest of the world. */
+
 class OutsideWorld {
   public:
     virtual const instant get_current_time() = 0;
