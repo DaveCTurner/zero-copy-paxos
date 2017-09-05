@@ -26,6 +26,13 @@
 
 namespace Epoll {
 
+class Handler {
+  public:
+    virtual void handle_readable () = 0;
+    virtual void handle_writeable() = 0;
+    virtual void handle_error    (const uint32_t) = 0;
+};
+
 class Manager {
   Manager           (const Manager&) = delete; // no copying
   Manager &operator=(const Manager&) = delete; // no assignment
@@ -50,11 +57,29 @@ class Manager {
   void wait(int timeout_milliseconds) {
 #define EPOLL_EVENTS_SIZE 20
     struct epoll_event events[EPOLL_EVENTS_SIZE];
-    epoll_wait(epfd,
-               events,
-               EPOLL_EVENTS_SIZE,
-               timeout_milliseconds);
+    int event_count = epoll_wait(epfd,
+                                 events,
+                                 EPOLL_EVENTS_SIZE,
+                                 timeout_milliseconds);
 #undef EPOLL_EVENTS_SIZE
+
+    for (int i = 0; i < event_count; i++) {
+      auto &e = events[i];
+      auto event_bits = e.events;
+      auto handler = static_cast<Handler*>(e.data.ptr);
+      assert(handler != NULL);
+
+      if (event_bits & ~(EPOLLIN | EPOLLOUT)) {
+        handler->handle_error(event_bits);
+      } else {
+        if (event_bits & (EPOLLIN)) {
+          handler->handle_readable();
+        }
+        if (event_bits & EPOLLOUT) {
+          handler->handle_writeable();
+        }
+      }
+    }
   }
 };
 
