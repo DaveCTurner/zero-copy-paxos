@@ -96,6 +96,7 @@ class Legislator {
     bool             _seeking_votes = false;
     Term             _minimum_term_for_peers;
     Term             _attempted_term;
+    Term             _deferred_term;
 
     /* RSM state */
     NodeId            _next_generated_node_id = 2;
@@ -238,8 +239,13 @@ class Legislator {
 
       if (nothing_chosen) { return; }
 
-      if (old_era != _palladium.get_current_era() && is_leading()) {
-        start_term(_palladium.node_id());
+      if (UNLIKELY(old_era != _palladium.get_current_era())) {
+        if (is_leading()) {
+          start_term(_palladium.node_id());
+        } else if (_palladium.get_min_acceptable_term()
+                <= _deferred_term) {
+          handle_prepare_term(_leader_id, _deferred_term);
+        }
       }
 
       _seeking_votes = false;

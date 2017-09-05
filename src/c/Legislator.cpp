@@ -74,6 +74,7 @@ std::ostream &Legislator::write_to(std::ostream &o) const {
   }
   o << "minimum_term_for_peers  = " << _minimum_term_for_peers << std::endl;
   o << "attempted_term          = " << _attempted_term         << std::endl;
+  o << "deferred_term           = " << _deferred_term          << std::endl;
 
   o << "-- RSM state:" << std::endl;
   o << "next_generated_node_id  = " << _next_generated_node_id << std::endl;
@@ -247,14 +248,18 @@ void Legislator::handle_prepare_term(const NodeId &sender, const Term &term) {
   if (_role == Role::follower && sender != _leader_id)           { return; }
   if (is_leading()            && sender != _palladium.node_id()) { return; }
 
-  auto promise = _palladium.handle_prepare(term);
-  _world.record_promise(promise.term, promise.slots.start());
-  if (promise.type == Promise::Type::multi
-      || promise.slots.is_nonempty()) {
-    if (term.owner == _palladium.node_id()) {
-      handle_promise(_palladium.node_id(), promise);
-    } else {
-      _world.make_promise(promise);
+  if (_palladium.get_current_era() < term.era) {
+    _deferred_term = term;
+  } else {
+    auto promise = _palladium.handle_prepare(term);
+    _world.record_promise(promise.term, promise.slots.start());
+    if (promise.type == Promise::Type::multi
+        || promise.slots.is_nonempty()) {
+      if (term.owner == _palladium.node_id()) {
+        handle_promise(_palladium.node_id(), promise);
+      } else {
+        _world.make_promise(promise);
+      }
     }
   }
 }
