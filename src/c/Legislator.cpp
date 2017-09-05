@@ -104,6 +104,12 @@ void Legislator::handle_wake_up() {
     return;
   }
 
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ": " <<
+    std::chrono::time_point_cast<std::chrono::milliseconds>
+      (now).time_since_epoch().count() << std::endl;
+#endif // ndef NTRACE
+
   switch (_role) {
     case Role::candidate:
       _retry_delay_ms += _retry_delay_increment_ms;
@@ -173,6 +179,8 @@ void Legislator::handle_offer_vote(const NodeId &peer_id,
       _offered_votes.clear();
       start_term(_palladium.node_id());
     }
+  } else {
+    assert(_offered_votes.empty());
   }
 }
 
@@ -181,6 +189,8 @@ void Legislator::handle_offer_catch_up(const NodeId &sender) {
     _seeking_votes = false;
     _offered_votes.clear();
     _world.request_catch_up(sender);
+  } else {
+    assert(_offered_votes.empty());
   }
 }
 
@@ -205,12 +215,22 @@ void Legislator::handle_send_catch_up
   if (_palladium.next_chosen_slot() < slot) {
     _palladium.catch_up(slot, era, conf);
 
+    assert(_next_generated_node_id <= next_generated_node);
     _next_generated_node_id = next_generated_node;
+
+    if (current_stream.owner == _current_stream.owner
+      && current_stream.id   == _current_stream.id) {
+      assert(_current_stream_pos <= current_stream_pos);
+    }
+
     _current_stream     = current_stream;
     _current_stream_pos = current_stream_pos;
 
     instant now = _world.get_current_time();
+    if (_role != Role::candidate) {
+      std::cout << __PRETTY_FUNCTION__ << ": becoming candidate" << std::endl;
     _role = Role::candidate;
+    }
     set_next_wake_up_time(now + _follower_timeout);
   }
 }

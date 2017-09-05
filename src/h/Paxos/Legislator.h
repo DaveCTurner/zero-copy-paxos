@@ -178,6 +178,7 @@ class Legislator {
         }
         _leader_id = chosen.term.owner;
         uint64_t chosen_slot_count = chosen.slots.end() - chosen.slots.start();
+        assert(chosen_slot_count > 0);
         auto &payload = chosen.value.payload;
 
         if (LIKELY(chosen.value.type == Value::Type::stream_content)) {
