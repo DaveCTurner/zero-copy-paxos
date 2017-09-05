@@ -83,7 +83,7 @@ class Legislator {
 
     void handle_wake_up();
     void handle_seek_votes_or_catch_up
-      (const NodeId&, const Slot&);
+      (const NodeId&, const Slot&, const Term&);
     void handle_offer_vote(const NodeId&, const Term&);
     void handle_offer_catch_up(const NodeId&);
 

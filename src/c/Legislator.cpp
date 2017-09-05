@@ -106,7 +106,9 @@ void Legislator::handle_wake_up() {
 
       _offered_votes.clear();
       _seeking_votes = true;
-      _world.seek_votes_or_catch_up(_palladium.next_chosen_slot());
+      _world.seek_votes_or_catch_up
+          (_palladium.next_chosen_slot(),
+           _palladium.get_min_acceptable_term());
 
       handle_offer_vote(_palladium.node_id(),
                         _palladium.get_min_acceptable_term());
@@ -132,7 +134,17 @@ void Legislator::handle_wake_up() {
 
 void Legislator::handle_seek_votes_or_catch_up
       (const NodeId      &peer_id,
-       const Slot        &slot) {
+       const Slot        &slot,
+       const Term        &term) {
+
+  if (is_leading()) {
+    if (_minimum_term_for_peers < term) {
+      _minimum_term_for_peers = term;
+    }
+    if (_attempted_term < term) {
+      start_term(_palladium.node_id());
+    }
+  }
 
   if (slot < _palladium.next_chosen_slot()) {
     _world.offer_catch_up(peer_id);

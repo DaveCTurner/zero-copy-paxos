@@ -55,9 +55,10 @@ public:
       << "ms)" << std::endl;
   }
 
-  void seek_votes_or_catch_up(const Slot &slot) override {
+  void seek_votes_or_catch_up(const Slot &slot, const Term &term) override {
     std::cout << "RESPONSE: seek_votes_or_catch_up("
-      << slot << ")" << std::endl;
+      << slot << ", "
+      << term << ")" << std::endl;
   }
 
   void offer_vote(const NodeId &recipient, const Term &term) override {
@@ -127,8 +128,8 @@ void legislator_test() {
   legislator.handle_offer_vote(2, Term(0,3,2));
   std::cout << legislator << std::endl;
 
-  std::cout << std::endl << "TEST: handle_seek_votes_or_catch_up(2, 0)" << std::endl;
-  legislator.handle_seek_votes_or_catch_up(2, 0);
+  std::cout << std::endl << "TEST: handle_seek_votes_or_catch_up(2, 0, [0.4.2])" << std::endl;
+  legislator.handle_seek_votes_or_catch_up(2, 0, Term(0,4,2));
 
   std::cout << std::endl << "TEST: handle_prepare_term(2,[0.5.2])" << std::endl;
   legislator.handle_prepare_term(2, Term(0,5,2));
@@ -153,7 +154,7 @@ void legislator_test() {
   legislator.handle_accepted(3, prop);
   std::cout << legislator << std::endl;
 
-  std::cout << std::endl << "TEST: handle_seek_votes_or_catch_up(2, 0)" << std::endl;
-  legislator.handle_seek_votes_or_catch_up(2, 0);
+  std::cout << std::endl << "TEST: handle_seek_votes_or_catch_up(2, 0, [0.7.2])" << std::endl;
+  legislator.handle_seek_votes_or_catch_up(2, 0, Term(0,7,2));
   std::cout << legislator << std::endl;
 }
