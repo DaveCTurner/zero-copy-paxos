@@ -21,6 +21,9 @@
 #ifndef PAXOS_OUTSIDE_WORLD_H
 #define PAXOS_OUTSIDE_WORLD_H
 
+#include "Paxos/Promise.h"
+#include "Paxos/Proposal.h"
+
 #include <chrono>
 
 namespace Paxos {
