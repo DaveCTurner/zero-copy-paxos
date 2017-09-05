@@ -183,6 +183,16 @@ void Legislator::handle_offer_catch_up(const NodeId &sender) {
   }
 }
 
+void Legislator::handle_request_catch_up(const NodeId &sender) {
+  _world.send_catch_up(sender,
+                       _palladium.next_chosen_slot(),
+                       _palladium.get_current_era(),
+                       _palladium.get_current_configuration(),
+                       _next_generated_node_id,
+                       _current_stream,
+                       _current_stream_pos);
+}
+
 void Legislator::abdicate_to(const NodeId &node_id) {
   start_term(node_id);
 }

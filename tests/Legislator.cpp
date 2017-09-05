@@ -77,6 +77,23 @@ public:
       << recipient << ")" << std::endl;
   }
 
+  void send_catch_up(const NodeId          &recipient,
+                     const Slot            &slot,
+                     const Era             &era,
+                     const Configuration   &configuration,
+                     const NodeId          &last_generated_node,
+                     const Value::StreamName &current_stream,
+                     const uint64_t         current_stream_pos) override {
+    std::cout << "RESPONSE: send_catch_up("
+      << recipient            << ", "
+      << slot                 << ", "
+      << era                  << ", "
+      << configuration        << ", "
+      << last_generated_node  << ", "
+      << current_stream       << ", "
+      << current_stream_pos   << ")" << std::endl;
+  }
+
   void prepare_term(const Term &term) override {
     std::cout << "RESPONSE: prepare_term("
       << term << ")" << std::endl;

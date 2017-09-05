@@ -42,6 +42,12 @@ class OutsideWorld {
     virtual void offer_catch_up(const NodeId&) = 0;
     virtual void offer_vote(const NodeId&, const Term&) = 0;
     virtual void request_catch_up(const NodeId&) = 0;
+    virtual void send_catch_up(const NodeId&, const Slot&,
+      const Era&,
+      const Configuration&,
+      const NodeId&,
+      const Value::StreamName&,
+      const uint64_t) = 0;
     virtual void prepare_term(const Term&) = 0;
 
     virtual void record_promise(const Term&, const Slot&) = 0;

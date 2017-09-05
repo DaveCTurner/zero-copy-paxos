@@ -127,6 +127,7 @@ class Legislator {
       (const NodeId&, const Slot&, const Term&);
     void handle_offer_vote(const NodeId&, const Term&);
     void handle_offer_catch_up(const NodeId&);
+    void handle_request_catch_up(const NodeId&);
 
     void abdicate_to(const NodeId&);
     void start_term(const NodeId&);
