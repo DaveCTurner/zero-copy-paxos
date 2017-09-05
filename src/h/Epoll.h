@@ -46,15 +46,27 @@ class Manager {
       perror(__PRETTY_FUNCTION__);
       abort();
     }
+
+#ifndef NTRACE
+    printf("%s: epfd=%d\n", __PRETTY_FUNCTION__, epfd);
+#endif // ndef NTRACE
   }
 
   ~Manager() {
+#ifndef NTRACE
+    printf("%s: epfd=%d\n", __PRETTY_FUNCTION__, epfd);
+#endif // ndef NTRACE
+
     if (epfd != -1) {
       close(epfd);
     }
   }
 
   void wait(int timeout_milliseconds) {
+#ifndef NTRACE
+    printf("\n%s: timeout=%d\n", __PRETTY_FUNCTION__, timeout_milliseconds);
+#endif // ndef NTRACE
+
 #define EPOLL_EVENTS_SIZE 20
     struct epoll_event events[EPOLL_EVENTS_SIZE];
     int event_count = epoll_wait(epfd,
@@ -62,6 +74,10 @@ class Manager {
                                  EPOLL_EVENTS_SIZE,
                                  timeout_milliseconds);
 #undef EPOLL_EVENTS_SIZE
+
+#ifndef NTRACE
+    printf("%s: %d events received\n", __PRETTY_FUNCTION__, event_count);
+#endif // ndef NTRACE
 
     for (int i = 0; i < event_count; i++) {
       auto &e = events[i];
