@@ -501,6 +501,16 @@ const bool Palladium::search_for_quorums
   return false;
 }
 
+const void Palladium::catch_up(const Slot          &slot,
+                               const Era           &era,
+                               const Configuration &configuration) {
+  update_first_unchosen_slot(slot);
+  current_era = era;
+  current_configuration = configuration;
+  configurations.clear();
+  record_current_configuration();
+}
+
 std::ostream& operator<<(std::ostream &o, const Palladium &palladium) {
   return palladium.write_to(o);
 }

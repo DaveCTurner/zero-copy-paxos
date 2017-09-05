@@ -193,6 +193,27 @@ void Legislator::handle_request_catch_up(const NodeId &sender) {
                        _current_stream_pos);
 }
 
+void Legislator::handle_send_catch_up
+   (const Slot          &slot,
+    const Era           &era,
+    const Configuration &conf,
+    const NodeId        &next_generated_node,
+    const Value::StreamName &current_stream,
+    const uint64_t       current_stream_pos) {
+
+  if (_palladium.next_chosen_slot() < slot) {
+    _palladium.catch_up(slot, era, conf);
+
+    _next_generated_node_id = next_generated_node;
+    _current_stream     = current_stream;
+    _current_stream_pos = current_stream_pos;
+
+    instant now = _world.get_current_time();
+    _role = Role::candidate;
+    set_next_wake_up_time(now + _follower_timeout);
+  }
+}
+
 void Legislator::abdicate_to(const NodeId &node_id) {
   start_term(node_id);
 }

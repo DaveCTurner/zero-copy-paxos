@@ -128,6 +128,8 @@ class Legislator {
     void handle_offer_vote(const NodeId&, const Term&);
     void handle_offer_catch_up(const NodeId&);
     void handle_request_catch_up(const NodeId&);
+    void handle_send_catch_up(const Slot&, const Era&, const Configuration&,
+      const NodeId&, const Value::StreamName&, const uint64_t);
 
     void abdicate_to(const NodeId&);
     void start_term(const NodeId&);

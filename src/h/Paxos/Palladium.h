@@ -390,6 +390,7 @@ public:
 
   std::ostream& write_to(std::ostream &) const;
 
+  const void catch_up(const Slot&, const Era&, const Configuration&);
   const Promise handle_prepare(const Term&);
   const Proposal handle_promise(const NodeId, const Promise&);
 
