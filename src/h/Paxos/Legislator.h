@@ -136,6 +136,9 @@ class Legislator {
 
       if (nothing_chosen) { return; }
 
+      _seeking_votes = false;
+      _offered_votes.clear();
+
       instant now = _world.get_current_time();
       if (_leader_id == _palladium.node_id()) {
         if (!is_leading()) {
