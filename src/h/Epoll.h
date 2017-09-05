@@ -39,6 +39,21 @@ class Manager {
 
   const int epfd;
 
+  void ctl_and_verify(int op,
+                      int fd,
+                      Handler *handler,
+                      uint32_t events) {
+    struct epoll_event event;
+    event.events = events;
+    event.data.ptr = static_cast<void*>(handler);
+    if (epoll_ctl(epfd, op, fd, &event) == -1) {
+      perror(__PRETTY_FUNCTION__);
+      fprintf(stderr, "%s: epoll_ctl(%d, %d, %d, %u/%p) failed\n",
+        __PRETTY_FUNCTION__, epfd, op, fd, event.events, event.data.ptr);
+      abort();
+    }
+  }
+
   public:
   Manager()
       : epfd(epoll_create(1)) {
@@ -60,6 +75,18 @@ class Manager {
     if (epfd != -1) {
       close(epfd);
     }
+  }
+
+  void register_handler(int fd, Handler *handler, uint32_t events) {
+    ctl_and_verify(EPOLL_CTL_ADD, fd, handler, events);
+  }
+
+  void modify_handler(int fd, Handler *handler, uint32_t events) {
+    ctl_and_verify(EPOLL_CTL_MOD, fd, handler, events);
+  }
+
+  void deregister_handler(int fd) {
+    ctl_and_verify(EPOLL_CTL_DEL, fd, NULL, 0);
   }
 
   void wait(int timeout_milliseconds) {
