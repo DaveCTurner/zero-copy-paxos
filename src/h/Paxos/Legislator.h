@@ -61,6 +61,9 @@ class Legislator {
     Term             _minimum_term_for_peers;
     Term             _attempted_term;
 
+    /* RSM state */
+    NodeId            _next_generated_node_id = 2;
+
     const bool is_leading() const {
       return _role == Role::leader || _role == Role::incumbent;
     }
@@ -131,7 +134,29 @@ class Legislator {
           printf("Leader changed to node %u\n", chosen.term.owner);
         }
         _leader_id = chosen.term.owner;
-        // TODO handle value chosen
+        uint64_t chosen_slot_count = chosen.slots.end() - chosen.slots.start();
+
+        switch(chosen.value.type) {
+          case (Value::Type::generate_node_id):
+            if (chosen.value.payload.originator == _palladium.node_id()) {
+              _world.chosen_generate_node_ids(chosen,
+                                              _next_generated_node_id);
+            }
+            _next_generated_node_id += chosen_slot_count;
+            break;
+
+          case (Value::Type::no_op):
+            break;
+
+          case (Value::Type::stream_content):
+            // TODO
+            break;
+
+          default:
+            assert(chosen_slot_count == 1);
+            assert(is_reconfiguration(chosen.value.type));
+            // TODO reconfiguration
+        }
       }
 
       if (nothing_chosen) { return; }

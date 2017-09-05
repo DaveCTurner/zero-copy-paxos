@@ -101,6 +101,10 @@ public:
     std::cout << "RESPONSE: accepted("
       << proposal << ")" << std::endl;
   }
+
+  void chosen_generate_node_ids(const Proposal &proposal, NodeId) override {
+    std::cout << "RESPONSE: chosen(" << proposal << ")" << std::endl;
+  }
 };
 
 void legislator_test() {

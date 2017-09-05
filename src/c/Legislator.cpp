@@ -74,6 +74,7 @@ std::ostream &Legislator::write_to(std::ostream &o) const {
   }
   o << "minimum_term_for_peers  = " << _minimum_term_for_peers << std::endl;
   o << "attempted_term          = " << _attempted_term         << std::endl;
+  o << "next_generated_node_id  = " << _next_generated_node_id << std::endl;
   return o;
 }
 
