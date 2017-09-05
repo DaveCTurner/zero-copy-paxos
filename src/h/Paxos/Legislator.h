@@ -98,6 +98,12 @@ class Legislator {
     Term             _attempted_term;
     Term             _deferred_term;
 
+    /* Restricting new eras */
+    bool             _change_era_restricted_by_slot      = false;
+    bool             _change_era_restricted_by_term      = false;
+    Slot             _change_era_after_slot              = 0;
+    Era              _change_era_after_proposal_from_era = 0;
+
     /* RSM state */
     NodeId            _next_generated_node_id = 2;
     Value::StreamName _current_stream = {.owner = 0, .id = 0};
@@ -138,7 +144,9 @@ class Legislator {
     void handle_promise(const NodeId&, const Promise&);
 
     void activate_slots(const Value &value, const uint64_t count) {
-      if (_role == Role::follower) { return; }
+      if (UNLIKELY(_role == Role::follower))        { return; }
+      if (UNLIKELY(_change_era_restricted_by_slot)) { return; }
+      if (UNLIKELY(_change_era_restricted_by_term)) { return; }
       handle_proposal(_palladium.activate(value, count), true);
     }
 
@@ -160,6 +168,12 @@ class Legislator {
       }
 
       handle_accepted(_palladium.node_id(), proposal);
+
+      if (UNLIKELY(_change_era_restricted_by_term
+        && proposal.term.era <= _change_era_after_proposal_from_era)) {
+        _change_era_restricted_by_term = false;
+        assert(!_change_era_restricted_by_slot);
+      }
     }
 
   public:
@@ -247,6 +261,16 @@ class Legislator {
                 <= _deferred_term) {
           handle_prepare_term(_leader_id, _deferred_term);
         }
+      }
+
+      if (UNLIKELY(_change_era_restricted_by_slot
+        && _change_era_after_slot
+              < _palladium.next_chosen_slot())) {
+
+        assert(!_change_era_restricted_by_term);
+        _change_era_restricted_by_slot = false;
+        _change_era_restricted_by_term = true;
+        _change_era_after_proposal_from_era = _palladium.get_current_era();
       }
 
       _seeking_votes = false;
