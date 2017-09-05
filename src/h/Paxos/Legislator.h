@@ -166,6 +166,7 @@ class Legislator {
       if (proposal.slots.is_empty()) { return; }
       _palladium.handle_accepted(sender, proposal);
 
+      Era old_era = _palladium.get_current_era();
       bool nothing_chosen = true;
       for (Proposal chosen = _palladium.check_for_chosen_slots();
                     chosen.slots.is_nonempty();
@@ -236,6 +237,10 @@ class Legislator {
       }
 
       if (nothing_chosen) { return; }
+
+      if (old_era != _palladium.get_current_era() && is_leading()) {
+        start_term(_palladium.node_id());
+      }
 
       _seeking_votes = false;
       _offered_votes.clear();

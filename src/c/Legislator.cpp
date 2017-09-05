@@ -219,6 +219,12 @@ void Legislator::abdicate_to(const NodeId &node_id) {
 }
 
 void Legislator::start_term(const NodeId &owner_id) {
+  if (_attempted_term.era < _palladium.get_current_era()) {
+    _attempted_term.era         = _palladium.get_current_era();
+    _attempted_term.term_number = 0;
+    _attempted_term.owner       = owner_id;
+  }
+
   if (_attempted_term < _minimum_term_for_peers) {
     _attempted_term = _minimum_term_for_peers;
   }
