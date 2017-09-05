@@ -75,6 +75,9 @@ std::ostream &Legislator::write_to(std::ostream &o) const {
   o << "minimum_term_for_peers  = " << _minimum_term_for_peers << std::endl;
   o << "attempted_term          = " << _attempted_term         << std::endl;
   o << "next_generated_node_id  = " << _next_generated_node_id << std::endl;
+  o << "current_stream.owner    = " << _current_stream.owner   << std::endl;
+  o << "current_stream.id       = " << _current_stream.id      << std::endl;
+  o << "current_stream_pos      = " << _current_stream_pos     << std::endl;
   return o;
 }
 

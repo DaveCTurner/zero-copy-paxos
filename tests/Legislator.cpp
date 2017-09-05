@@ -102,6 +102,20 @@ public:
       << proposal << ")" << std::endl;
   }
 
+  void chosen_stream_content(const Proposal &proposal) override {
+    chosen(proposal);
+  }
+
+  void chosen_non_contiguous_stream_content
+      (const Proposal &proposal, uint64_t, uint64_t) override {
+    chosen(proposal);
+  }
+
+  void chosen_unknown_stream_content
+      (const Proposal &proposal, Value::StreamName, uint64_t) override {
+    chosen(proposal);
+  }
+
   void chosen_generate_node_ids(const Proposal &proposal, NodeId) override {
     chosen(proposal);
   }

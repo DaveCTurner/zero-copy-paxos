@@ -63,6 +63,8 @@ class Legislator {
 
     /* RSM state */
     NodeId            _next_generated_node_id = 2;
+    Value::StreamName _current_stream = {.owner = 0, .id = 0};
+    uint64_t          _current_stream_pos     = 0;
 
     const bool is_leading() const {
       return _role == Role::leader || _role == Role::incumbent;
@@ -135,31 +137,62 @@ class Legislator {
         }
         _leader_id = chosen.term.owner;
         uint64_t chosen_slot_count = chosen.slots.end() - chosen.slots.start();
+        auto &payload = chosen.value.payload;
 
-        switch(chosen.value.type) {
-          case (Value::Type::generate_node_id):
-            if (chosen.value.payload.originator == _palladium.node_id()) {
-              _world.chosen_generate_node_ids(chosen,
-                                              _next_generated_node_id);
+        if (LIKELY(chosen.value.type == Value::Type::stream_content)) {
+          uint64_t first_written_stream_pos
+            = chosen.slots.start() - chosen.value.payload.stream.offset;
+
+          if (LIKELY(payload.stream.name.owner == _current_stream.owner
+                  && payload.stream.name.id    == _current_stream.id)) {
+
+            if (LIKELY(_current_stream_pos == first_written_stream_pos)) {
+              _current_stream_pos += chosen_slot_count;
+              _world.chosen_stream_content(chosen);
+            } else {
+              _world.chosen_non_contiguous_stream_content
+                  (chosen,
+                   _current_stream_pos,
+                   first_written_stream_pos);
+
+              _current_stream_pos = 0; // Need a new stream.
             }
-            _next_generated_node_id += chosen_slot_count;
-            break;
 
-          case (Value::Type::no_op):
-            break;
+          } else {
 
-          case (Value::Type::stream_content):
-            // TODO
-            break;
+            if (first_written_stream_pos == 0) {
+              _current_stream     = payload.stream.name;
+              _current_stream_pos = chosen_slot_count;
+              _world.chosen_stream_content(chosen);
+            } else {
+              _world.chosen_unknown_stream_content
+                  (chosen, _current_stream,
+                   first_written_stream_pos);
+            }
+          }
 
-          default:
-            assert(chosen_slot_count == 1);
-            assert(is_reconfiguration(chosen.value.type));
-            _world.chosen_new_configuration
-              (chosen,
-              _palladium.get_current_era(),
-              _palladium.get_current_configuration());
-            break;
+        } else {
+          switch(chosen.value.type) {
+            case (Value::Type::generate_node_id):
+              if (payload.originator == _palladium.node_id()) {
+                _world.chosen_generate_node_ids(chosen,
+                                                _next_generated_node_id);
+              }
+              _next_generated_node_id += chosen_slot_count;
+              break;
+
+            case (Value::Type::no_op):
+              break;
+
+            default:
+              assert(chosen_slot_count == 1);
+              assert(is_reconfiguration(chosen.value.type));
+              _world.chosen_new_configuration
+                (chosen,
+                _palladium.get_current_era(),
+                _palladium.get_current_configuration());
+              break;
+          }
         }
       }
 
