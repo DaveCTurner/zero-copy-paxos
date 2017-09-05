@@ -380,6 +380,9 @@ public:
   const Configuration &get_current_configuration() const
     { return current_configuration; }
 
+  const Era &get_current_era() const
+    { return current_era; }
+
   const bool has_active_slots() const
     { return first_unchosen_slot < first_inactive_slot; }
 

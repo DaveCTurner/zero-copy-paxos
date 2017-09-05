@@ -155,7 +155,11 @@ class Legislator {
           default:
             assert(chosen_slot_count == 1);
             assert(is_reconfiguration(chosen.value.type));
-            // TODO reconfiguration
+            _world.chosen_new_configuration
+              (chosen,
+              _palladium.get_current_era(),
+              _palladium.get_current_configuration());
+            break;
         }
       }
 

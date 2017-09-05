@@ -47,6 +47,13 @@ class OutsideWorld {
        happens when a new node is registering. The new ID should be
        sent onto the waiting node. */
     virtual void chosen_generate_node_ids(const Proposal&, NodeId) = 0;
+
+    /* A new configuration was chosen. This should be durably written
+       so that the recorded acceptances can be checked for quorums
+       after a crash. */
+    virtual void chosen_new_configuration
+              (const Proposal&, const Era&, const Configuration&) = 0;
+
 };
 
 }

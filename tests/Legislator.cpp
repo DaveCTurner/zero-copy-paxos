@@ -103,6 +103,15 @@ public:
   }
 
   void chosen_generate_node_ids(const Proposal &proposal, NodeId) override {
+    chosen(proposal);
+  }
+
+  void chosen_new_configuration(const Proposal &proposal,
+                                const Era&, const Configuration&) override {
+    chosen(proposal);
+  }
+
+  void chosen(const Proposal &proposal) {
     std::cout << "RESPONSE: chosen(" << proposal << ")" << std::endl;
   }
 };
