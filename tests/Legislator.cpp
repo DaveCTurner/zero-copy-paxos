@@ -96,6 +96,11 @@ public:
     std::cout << "RESPONSE: proposed_and_accepted("
       << proposal << ")" << std::endl;
   }
+
+  void accepted(const Proposal &proposal) override {
+    std::cout << "RESPONSE: accepted("
+      << proposal << ")" << std::endl;
+  }
 };
 
 void legislator_test() {
@@ -156,5 +161,20 @@ void legislator_test() {
 
   std::cout << std::endl << "TEST: handle_seek_votes_or_catch_up(2, 0, [0.7.2])" << std::endl;
   legislator.handle_seek_votes_or_catch_up(2, 0, Term(0,7,2));
+  std::cout << legislator << std::endl;
+
+  world.tick();
+  std::cout << std::endl << "TEST: handle_wake_up()" << std::endl;
+  legislator.handle_wake_up();
+  world.tick();
+  std::cout << std::endl << "TEST: handle_wake_up()" << std::endl;
+  legislator.handle_wake_up();
+
+  prop = Proposal({
+    .slots = SlotRange(0,2),
+    .term  = Term(0,8,3),
+    .value = {.type = Value::Type::no_op }});
+  std::cout << std::endl << "TEST: handle_proposed_and_accepted(3," << prop << ")" << std::endl;
+  legislator.handle_proposed_and_accepted(3, prop);
   std::cout << legislator << std::endl;
 }

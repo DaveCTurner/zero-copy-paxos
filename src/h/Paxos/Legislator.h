@@ -94,15 +94,25 @@ class Legislator {
 
     void activate_slots(const Value &value, const uint64_t count) {
       if (_role == Role::follower) { return; }
-      handle_proposal(_palladium.activate(value, count));
+      handle_proposal(_palladium.activate(value, count), true);
+    }
+
+    void handle_proposed_and_accepted(const NodeId   &sender,
+                                      const Proposal &proposal) {
+      handle_proposal(proposal, false);
+      handle_accepted(sender, proposal);
     }
 
   private:
-    void handle_proposal(const Proposal &proposal) {
+    void handle_proposal(const Proposal &proposal, bool send_proposal) {
       if (proposal.slots.is_empty()) { return; }
       if (!_palladium.handle_proposal(proposal)) { return; }
 
-      _world.proposed_and_accepted(proposal);
+      if (send_proposal) {
+        _world.proposed_and_accepted(proposal);
+      } else {
+        _world.accepted(proposal);
+      }
 
       handle_accepted(_palladium.node_id(), proposal);
     }

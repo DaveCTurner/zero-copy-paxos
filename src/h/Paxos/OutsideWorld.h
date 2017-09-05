@@ -41,6 +41,7 @@ class OutsideWorld {
     virtual void record_promise(const Term&, const Slot&) = 0;
     virtual void make_promise(const Promise&) = 0;
     virtual void proposed_and_accepted(const Proposal&) = 0;
+    virtual void accepted(const Proposal&) = 0;
 };
 
 }

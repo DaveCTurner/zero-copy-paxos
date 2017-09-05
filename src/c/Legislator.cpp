@@ -217,10 +217,10 @@ void Legislator::handle_prepare_term(const NodeId &sender, const Term &term) {
 }
 
 void Legislator::handle_promise(const NodeId &sender, const Promise &promise) {
-  handle_proposal(_palladium.handle_promise(sender, promise));
+  handle_proposal(_palladium.handle_promise(sender, promise), true);
 
   if (!_palladium.has_active_slots()) {
-    handle_proposal(_palladium.activate({.type = Value::Type::no_op}, 1));
+    handle_proposal(_palladium.activate({.type = Value::Type::no_op}, 1), true);
   }
 }
 
