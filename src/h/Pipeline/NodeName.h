@@ -18,26 +18,25 @@
 
 
 
-#include "Pipeline/Client/Listener.h"
+#ifndef PIPELINE_NODE_NAME_H
+#define PIPELINE_NODE_NAME_H
 
-#include <sys/socket.h>
-#include <netdb.h>
+#include "Paxos/basic_types.h"
+#include <string>
 
 namespace Pipeline {
-namespace Client {
 
-void Listener::handle_accept(int client_fd) {
-  printf("TODO\n");
-  abort();
-}
+struct NodeName {
+  const std::string   &cluster;
+  const Paxos::NodeId  id;
 
-Listener::Listener(Epoll::Manager    &manager,
-                   Paxos::Legislator &legislator,
-                   const NodeName    &node_name,
-                   const char        *port)
-  : AbstractListener(manager, port),
-    legislator(legislator),
-    node_name(node_name) {}
+  NodeName(const std::string &cluster, const Paxos::NodeId id)
+    : cluster(cluster), id(id) {}
+
+  NodeName           (const NodeName&) = delete;
+  NodeName &operator=(const NodeName&) = delete;
+};
 
 }
-}
+
+#endif // ndef PIPELINE_NODE_NAME_H

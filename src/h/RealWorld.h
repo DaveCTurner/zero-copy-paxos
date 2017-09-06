@@ -22,6 +22,7 @@
 #define REAL_WORLD_H
 
 #include "Paxos/OutsideWorld.h"
+#include "Pipeline/NodeName.h"
 
 class RealWorld : public Paxos::OutsideWorld {
   RealWorld           (const RealWorld&) = delete; // no copying
@@ -29,15 +30,14 @@ class RealWorld : public Paxos::OutsideWorld {
 
   Paxos::instant next_wake_up_time = std::chrono::steady_clock::now();
 
-  const std::string &cluster_name;
-  const Paxos::NodeId node_id;
+  const Pipeline::NodeName     &node_name;
 
   int log_fd = -1;
   void write_log_line(std::ostringstream&);
   void record_non_stream_content_acceptance(const Paxos::Proposal&);
 
 public:
-  RealWorld(const std::string&, const Paxos::NodeId);
+  RealWorld(const Pipeline::NodeName&);
 
   ~RealWorld();
 

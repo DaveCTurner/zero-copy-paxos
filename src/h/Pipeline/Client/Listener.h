@@ -24,6 +24,7 @@
 #include "Pipeline/AbstractListener.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
+#include "Pipeline/NodeName.h"
 
 #include <memory>
 #include <string.h>
@@ -34,8 +35,7 @@ namespace Client {
 class Listener : public AbstractListener {
 
   Paxos::Legislator &legislator;
-  const std::string &cluster_name;
-  const Paxos::NodeId node_id;
+  const NodeName    &node_name;
   Paxos::Value::StreamId next_stream_id = 0;
 
   protected:
@@ -43,7 +43,7 @@ class Listener : public AbstractListener {
 
   public:
     Listener(Epoll::Manager&, Paxos::Legislator&,
-             const std::string&, const Paxos::NodeId, const char*);
+             const NodeName&, const char*);
 };
 
 }

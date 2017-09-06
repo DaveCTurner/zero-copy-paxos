@@ -31,30 +31,28 @@
 #include <unistd.h>
 
 RealWorld::RealWorld(
-      const std::string &cluster_name,
-      const Paxos::NodeId node_id)
-  : cluster_name(cluster_name),
-    node_id(node_id) {
+      const Pipeline::NodeName &node_name)
+  : node_name(node_name) {
 
   ensure_directory(".", "data");
 
   char path[PATH_MAX];
   ensure_length(snprintf(path, PATH_MAX,
           "data/clu_%s",
-          cluster_name.c_str()));
+          node_name.cluster.c_str()));
   ensure_directory("data", path);
 
   char parent[PATH_MAX];
   strncpy(parent, path, PATH_MAX);
   ensure_length(snprintf(path, PATH_MAX,
           "data/clu_%s/n_%08x",
-          cluster_name.c_str(), node_id));
+          node_name.cluster.c_str(), node_name.id));
   ensure_directory(parent, path);
 
   strncpy(parent, path, PATH_MAX);
   ensure_length(snprintf(path, PATH_MAX,
           "data/clu_%s/n_%08x/n_%08x.log",
-          cluster_name.c_str(), node_id, node_id));
+          node_name.cluster.c_str(), node_name.id, node_name.id));
 
   log_fd = open(path, O_WRONLY | O_CREAT, 0644);
   if (log_fd == -1) {
