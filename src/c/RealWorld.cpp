@@ -64,6 +64,13 @@ RealWorld::RealWorld(
   }
 }
 
+RealWorld::~RealWorld() {
+  if (log_fd != -1) {
+    close(log_fd);
+    log_fd = -1;
+  }
+}
+
 void RealWorld::seek_votes_or_catch_up(
       const Paxos::Slot &first_unchosen_slot,
       const Paxos::Term &min_acceptable_term) {

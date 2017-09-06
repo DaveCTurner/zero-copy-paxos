@@ -38,6 +38,8 @@ class RealWorld : public Paxos::OutsideWorld {
 public:
   RealWorld(const std::string&, const Paxos::NodeId);
 
+  ~RealWorld();
+
   void seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
                               const Paxos::Term &min_acceptable_term) override;
 
