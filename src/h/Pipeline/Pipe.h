@@ -79,7 +79,10 @@ public:
   bool is_shutdown() const;
   void close_write_end();
   void handle_readable();
-
+ 
+ const int get_write_end_fd() const {
+    return pipe_fds[1];
+  }
 };
 
 }

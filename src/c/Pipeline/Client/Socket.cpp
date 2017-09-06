@@ -53,11 +53,21 @@ bool Socket::is_shutdown() const {
 }
 
 void Socket::handle_readable() {
-  fprintf(stderr, "%s (fd=%d): TODO\n",
-                  __PRETTY_FUNCTION__, fd);
-  abort();
-}
+  ssize_t splice_result = splice(
+    fd, NULL, pipe.get_write_end_fd(), NULL,
+    (1<<20), SPLICE_F_MOVE | SPLICE_F_NONBLOCK | SPLICE_F_MORE);
 
+  if (splice_result == -1) {
+    perror(__PRETTY_FUNCTION__);
+    fprintf(stderr, "%s: splice() failed\n", __PRETTY_FUNCTION__);
+    abort();
+  } else if (splice_result == 0) {
+    printf("%s: EOF\n", __PRETTY_FUNCTION__);
+    shutdown();
+  } else {
+    assert(splice_result > 0);
+  }
+}
 void Socket::handle_writeable() {
   fprintf(stderr, "%s (fd=%d): unexpected\n",
                   __PRETTY_FUNCTION__, fd);
