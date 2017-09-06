@@ -32,6 +32,9 @@ class RealWorld : public Paxos::OutsideWorld {
   const std::string &cluster_name;
   const Paxos::NodeId node_id;
 
+  int log_fd = -1;
+  void write_log_line(std::ostringstream&);
+
 public:
   RealWorld(const std::string&, const Paxos::NodeId);
 
