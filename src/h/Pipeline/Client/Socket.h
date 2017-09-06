@@ -21,7 +21,7 @@
 #ifndef PIPELINE_CLIENT_SOCKET_H
 #define PIPELINE_CLIENT_SOCKET_H
 
-#include "Pipeline/NodeName.h"
+#include "Pipeline/Pipe.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 
@@ -39,6 +39,7 @@ private:
   const NodeName                  &node_name;
   const Paxos::Value::StreamName   stream;
 
+        Pipe                       pipe;
         int                        fd;
 
   void shutdown();

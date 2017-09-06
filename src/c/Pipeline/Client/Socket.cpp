@@ -24,6 +24,7 @@ namespace Pipeline {
 namespace Client {
 
 void Socket::shutdown() {
+  pipe.close_write_end();
   manager.deregister_close_and_clear(fd);
 }
 
@@ -37,6 +38,7 @@ Socket::Socket
     legislator      (legislator),
     node_name       (node_name),
     stream          (stream),
+    pipe            (manager, node_name, stream),
     fd              (fd) {
 
   manager.register_handler(fd, this, EPOLLIN);
