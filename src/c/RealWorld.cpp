@@ -152,11 +152,74 @@ void RealWorld::make_promise(const Paxos::Promise &promise) {
   //TODO
 }
 
+void RealWorld::record_non_stream_content_acceptance(const Paxos::Proposal &proposal) {
+
+  const auto &slots = proposal.slots;
+  const auto &term = proposal.term;
+  const auto &payload = proposal.value.payload;
+
+  std::ostringstream os;
+  os << "proposal accepted for slots ["
+     << std::hex << std::setfill('0') << std::setw(16) << slots.start() << ','
+     << std::hex << std::setfill('0') << std::setw(16) << slots.end() << ')'
+     << " at term "
+     << std::hex << std::setfill('0') << std::setw(8) << term.era         << '.'
+     << std::hex << std::setfill('0') << std::setw(8) << term.term_number << '.'
+     << std::hex << std::setfill('0') << std::setw(8) << term.owner
+     << ": ";
+
+  switch (proposal.value.type) {
+    case Paxos::Value::Type::no_op:
+      os << "no-op";
+      break;
+    case Paxos::Value::Type::generate_node_id:
+      os << "generate-node-id "
+         << std::hex << std::setfill('0') << std::setw(8)
+         << payload.originator;
+      break;
+    case Paxos::Value::Type::reconfiguration_inc:
+      os << "reconfiguration_inc "
+         << std::hex << std::setfill('0') << std::setw(8)
+         << payload.reconfiguration.subject;
+      break;
+    case Paxos::Value::Type::reconfiguration_dec:
+      os << "reconfiguration_dec "
+         << std::hex << std::setfill('0') << std::setw(8)
+         << payload.reconfiguration.subject;
+      break;
+    case Paxos::Value::Type::reconfiguration_mul:
+      os << "reconfiguration_mul "
+         << std::hex << std::setfill('0') << std::setw(2)
+         << ((uint32_t)payload.reconfiguration.factor);
+      break;
+    case Paxos::Value::Type::reconfiguration_div:
+      os << "reconfiguration_div "
+         << std::hex << std::setfill('0') << std::setw(2)
+         << ((uint32_t)payload.reconfiguration.factor);
+      break;
+    default:
+      fprintf(stderr, "%s: unexpected proposal type: %d\n",
+        __PRETTY_FUNCTION__, proposal.value.type);
+      abort();
+  }
+
+  os << std::endl;
+  write_log_line(os);
+}
+
 void RealWorld::proposed_and_accepted(const Paxos::Proposal &proposal) {
+  if (proposal.value.type != Paxos::Value::Type::stream_content) {
+    record_non_stream_content_acceptance(proposal);
+  }
+
   //TODO
 }
 
 void RealWorld::accepted(const Paxos::Proposal &proposal) {
+  if (proposal.value.type != Paxos::Value::Type::stream_content) {
+    record_non_stream_content_acceptance(proposal);
+  }
+
   //TODO
 }
 

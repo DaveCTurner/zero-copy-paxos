@@ -34,6 +34,7 @@ class RealWorld : public Paxos::OutsideWorld {
 
   int log_fd = -1;
   void write_log_line(std::ostringstream&);
+  void record_non_stream_content_acceptance(const Paxos::Proposal&);
 
 public:
   RealWorld(const std::string&, const Paxos::NodeId);
