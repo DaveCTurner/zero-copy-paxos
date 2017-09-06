@@ -17,14 +17,19 @@
 */
 
 #include "RealWorld.h"
+#include "Pipeline/Client/Listener.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 
 int main(int argc, char **argv) {
+  std::string cluster_name("3277f758-473b-4188-99fc-b19b0e7a940b");
+  Paxos::NodeId node_id(1);
   Paxos::Configuration conf(1);
-  RealWorld real_world("3277f758-473b-4188-99fc-b19b0e7a940b", 1);
-  Paxos::Legislator legislator(real_world, 1, 0, 0, conf);
+  RealWorld real_world(cluster_name, node_id);
+  Paxos::Legislator legislator(real_world, node_id, 0, 0, conf);
   Epoll::Manager manager;
+  Pipeline::Client::Listener client_listener
+    (manager, legislator, cluster_name, node_id, "41715");
 
   while (1) {
     auto ms_to_next_wake_up
