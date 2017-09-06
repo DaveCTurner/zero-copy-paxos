@@ -113,10 +113,7 @@ AbstractListener::~AbstractListener() {
 #ifndef NTRACE
   printf("%s: fd=%d\n", __PRETTY_FUNCTION__, fd);
 #endif // ndef NTRACE
-  if (fd != -1) {
-    manager.deregister_handler(fd);
-    close(fd);
-  }
+  manager.deregister_close_and_clear(fd);
 }
 
 void AbstractListener::handle_writeable() {

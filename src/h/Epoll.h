@@ -92,6 +92,14 @@ class Manager {
     ctl_and_verify(EPOLL_CTL_DEL, fd, NULL, 0);
   }
 
+  void deregister_close_and_clear(int &fd) {
+    if (fd != -1) {
+      deregister_handler(fd);
+      close(fd);
+      fd = -1;
+    }
+  }
+
   void wait(int timeout_milliseconds) {
 #ifndef NTRACE
     printf("\n%s: timeout=%d\n", __PRETTY_FUNCTION__, timeout_milliseconds);

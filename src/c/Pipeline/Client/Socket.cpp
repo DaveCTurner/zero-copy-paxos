@@ -24,11 +24,7 @@ namespace Pipeline {
 namespace Client {
 
 void Socket::shutdown() {
-  if (fd != -1) {
-    manager.deregister_handler(fd);
-    close(fd);
-    fd = -1;
-  }
+  manager.deregister_close_and_clear(fd);
 }
 
 Socket::Socket
