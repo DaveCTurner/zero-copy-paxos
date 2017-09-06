@@ -25,6 +25,7 @@
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 #include "Pipeline/NodeName.h"
+#include "Pipeline/Client/Socket.h"
 
 #include <memory>
 #include <string.h>
@@ -37,6 +38,7 @@ class Listener : public AbstractListener {
   Paxos::Legislator &legislator;
   const NodeName    &node_name;
   Paxos::Value::StreamId next_stream_id = 0;
+  std::vector<std::unique_ptr<Socket>> client_sockets;
 
   protected:
   void handle_accept(int client_fd) override;

@@ -27,8 +27,21 @@ namespace Pipeline {
 namespace Client {
 
 void Listener::handle_accept(int client_fd) {
-  printf("TODO\n");
-  abort();
+  client_sockets.erase(std::remove_if(
+    client_sockets.begin(),
+    client_sockets.end(),
+    [](const std::unique_ptr<Socket> &c) {
+      return c->is_shutdown(); }),
+    client_sockets.end());
+
+  if (client_sockets.size() > 0) {
+    close(client_fd);
+  } else {
+    Paxos::Value::StreamName stream
+      = { .owner = node_name.id, .id = next_stream_id++ };
+    client_sockets.push_back(std::move(std::unique_ptr<Socket>
+      (new Socket(manager, legislator, node_name, stream, client_fd))));
+  }
 }
 
 Listener::Listener(Epoll::Manager    &manager,
