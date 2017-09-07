@@ -92,6 +92,24 @@ void Socket::downstream_became_writeable() {
   manager.modify_handler(fd, this, EPOLLIN);
 }
 
+bool Socket::ok_to_write_data() const {
+  return legislator.activation_will_yield_proposals();
+}
+
+void Socket::downstream_wrote_bytes(uint64_t start_pos, uint64_t byte_count) {
+  Paxos::Value value = { .type = Paxos::Value::Type::stream_content };
+
+  uint64_t next_slot = legislator.get_next_activated_slot();
+  assert(start_pos <= next_slot);
+
+  value.payload.stream = {
+    .name = stream,
+    .offset = next_slot - start_pos
+  };
+
+  legislator.activate_slots(value, byte_count);
+}
+
 const Paxos::Term &Socket::get_term_for_next_write() const {
   return legislator.get_next_activated_term();
 }

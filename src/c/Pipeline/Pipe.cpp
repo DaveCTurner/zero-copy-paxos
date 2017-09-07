@@ -68,6 +68,14 @@ void Pipe<Upstream>::WriteEnd::handle_error(const uint32_t events) {
 
 template<class Upstream>
 void Pipe<Upstream>::handle_readable() {
+  if (!upstream.ok_to_write_data()) {
+    fprintf(stderr, "%s: cancelled by upstream\n", __PRETTY_FUNCTION__);
+    close_current_segment();
+    manager.deregister_close_and_clear(pipe_fds[1]);
+    manager.deregister_close_and_clear(pipe_fds[0]);
+    return;
+  }
+
   const Paxos::Term &term_for_next_write
     = upstream.get_term_for_next_write();
   const Paxos::Value::StreamOffset offset_for_next_write
@@ -101,12 +109,15 @@ void Pipe<Upstream>::handle_readable() {
   } else {
     assert(splice_result > 0);
     uint64_t bytes_sent = splice_result;
+    uint64_t old_next_stream_pos = next_stream_pos;
     next_stream_pos += bytes_sent;
     current_segment->record_bytes_in(bytes_sent);
 
     if (current_segment->is_shutdown()) {
       close_current_segment();
     }
+
+    upstream.downstream_wrote_bytes(old_next_stream_pos, bytes_sent);
   }
 }
 

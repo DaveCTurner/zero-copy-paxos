@@ -137,6 +137,13 @@ class Legislator {
       return _palladium.next_activated_slot();
     }
 
+    bool activation_will_yield_proposals() const {
+      return is_leading()
+           && _palladium.activation_will_yield_proposals()
+           && _palladium.get_min_acceptable_term()
+                <= _palladium.next_activated_term();
+    }
+
     void handle_wake_up();
     void handle_seek_votes_or_catch_up
       (const NodeId&, const Slot&, const Term&);

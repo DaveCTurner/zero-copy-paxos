@@ -59,10 +59,12 @@ public:
   void handle_writeable() override;
   void handle_error(const uint32_t) override;
 
+  bool ok_to_write_data() const;
   const Paxos::Term &get_term_for_next_write() const;
   const Paxos::Value::StreamOffset get_offset_for_next_write(uint64_t) const;
 
   void downstream_became_writeable();
+  void downstream_wrote_bytes(uint64_t, uint64_t);
 };
 
 }
