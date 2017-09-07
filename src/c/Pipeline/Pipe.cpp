@@ -73,6 +73,7 @@ void Pipe<Upstream>::handle_readable() {
     close_current_segment();
     manager.deregister_close_and_clear(pipe_fds[1]);
     manager.deregister_close_and_clear(pipe_fds[0]);
+    upstream.downstream_closed();
     return;
   }
 
@@ -106,6 +107,7 @@ void Pipe<Upstream>::handle_readable() {
   } else if (splice_result == 0) {
     printf("%s: EOF\n", __PRETTY_FUNCTION__);
     shutdown();
+    upstream.downstream_closed();
   } else {
     assert(splice_result > 0);
     uint64_t bytes_sent = splice_result;

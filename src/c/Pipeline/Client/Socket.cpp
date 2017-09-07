@@ -116,6 +116,12 @@ void Socket::downstream_became_writeable() {
   waiting_for_downstream = false;
 }
 
+void Socket::downstream_closed() {
+  fprintf(stderr, "%s (fd=%d) unexpected\n",
+                  __PRETTY_FUNCTION__, fd);
+  shutdown();
+}
+
 bool Socket::ok_to_write_data() const {
   return legislator.activation_will_yield_proposals();
 }

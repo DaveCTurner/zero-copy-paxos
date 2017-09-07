@@ -79,6 +79,7 @@ public:
   const Paxos::Value::StreamOffset get_offset_for_next_write(uint64_t) const;
 
   void downstream_became_writeable();
+  void downstream_closed();
   void downstream_wrote_bytes(uint64_t, uint64_t);
 
   void send_pending_acknowledgement(bool);
