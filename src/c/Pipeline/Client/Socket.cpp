@@ -61,6 +61,8 @@ bool Socket::is_shutdown() const {
 }
 
 void Socket::handle_readable() {
+  assert(pipe.get_next_stream_pos_write() == read_stream_pos);
+
   ssize_t splice_result = splice(
     fd, NULL, pipe.get_write_end_fd(), NULL,
     (1<<20), SPLICE_F_MOVE | SPLICE_F_NONBLOCK | SPLICE_F_MORE);
@@ -86,6 +88,9 @@ void Socket::handle_readable() {
 #endif // ndef NTRACE
     assert(splice_result > 0);
     uint64_t bytes_sent = splice_result;
+#ifndef NDEBUG
+    read_stream_pos += bytes_sent;
+#endif // ndef NDEBUG
     pipe.record_bytes_in(bytes_sent);
   }
 }
@@ -111,6 +116,17 @@ bool Socket::ok_to_write_data() const {
 }
 
 void Socket::downstream_wrote_bytes(uint64_t start_pos, uint64_t byte_count) {
+  assert(written_stream_pos == start_pos);
+#ifndef NDEBUG
+  written_stream_pos += byte_count;
+#endif // ndef NDEBUG
+
+#ifndef NTRACE
+  printf("%s: written_stream_pos updated by %lu from %lu to %lu\n",
+          __PRETTY_FUNCTION__, byte_count, start_pos, written_stream_pos);
+#endif // def NTRACE
+  assert(legislator.activation_will_yield_proposals());
+
   Paxos::Value value = { .type = Paxos::Value::Type::stream_content };
 
   uint64_t next_slot = legislator.get_next_activated_slot();

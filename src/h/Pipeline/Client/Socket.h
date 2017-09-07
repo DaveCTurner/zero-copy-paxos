@@ -40,6 +40,15 @@ private:
   const Paxos::Value::StreamName   stream;
 
         Pipe<Socket>               pipe;
+
+  /* Stream positions */
+#ifndef NDEBUG
+        /* Next position to be read from the client */
+        uint64_t                   read_stream_pos         = 0;
+        /* Next position to be confirmed as durably written */
+        uint64_t                   written_stream_pos      = 0;
+#endif // ndef NDEBUG
+
         int                        fd;
 
   void shutdown();

@@ -88,6 +88,12 @@ public:
   void close_write_end();
   void handle_readable();
  
+#ifndef NDEBUG
+  const uint64_t get_next_stream_pos_write() const {
+    return next_stream_pos + bytes_in_pipe;
+  }
+#endif // ndef NDEBUG
+
  const int get_write_end_fd() const {
     return pipe_fds[1];
   }
