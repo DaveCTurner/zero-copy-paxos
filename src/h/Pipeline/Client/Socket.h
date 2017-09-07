@@ -80,7 +80,7 @@ public:
   void downstream_became_writeable();
   void downstream_wrote_bytes(uint64_t, uint64_t);
 
-  void send_pending_acknowledgement();
+  void send_pending_acknowledgement(bool);
 
   void handle_stream_content(const Paxos::Proposal&);
   void handle_unknown_stream_content(const Paxos::Proposal&);

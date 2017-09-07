@@ -24,6 +24,7 @@ namespace Pipeline {
 namespace Client {
 
 void Socket::shutdown() {
+  send_pending_acknowledgement(false);
   pipe.close_write_end();
   manager.deregister_close_and_clear(fd);
 }
@@ -138,10 +139,10 @@ void Socket::downstream_wrote_bytes(uint64_t start_pos, uint64_t byte_count) {
   };
 
   legislator.activate_slots(value, byte_count);
-  send_pending_acknowledgement();
+  send_pending_acknowledgement(true);
 }
 
-void Socket::send_pending_acknowledgement() {
+void Socket::send_pending_acknowledgement(bool shutdown_on_error) {
   if (fd == -1) {
     return;
   }
@@ -161,7 +162,9 @@ void Socket::send_pending_acknowledgement() {
     if (write_result == -1) {
       perror(__PRETTY_FUNCTION__);
       fprintf(stderr, "%s (fd=%d): write failed\n", __PRETTY_FUNCTION__, fd);
-      shutdown();
+      if (shutdown_on_error) {
+        shutdown();
+      }
       return;
     } else {
       if (write_result != sizeof wire_value) {
@@ -192,7 +195,7 @@ void Socket::handle_stream_content(const Paxos::Proposal &proposal) {
   committed_stream_pos = proposal.slots.end()
                        - proposal.value.payload.stream.offset;
 
-  send_pending_acknowledgement();
+  send_pending_acknowledgement(true);
 }
 
 void Socket::handle_unknown_stream_content(const Paxos::Proposal &proposal) {
@@ -206,7 +209,6 @@ void Socket::handle_non_contiguous_stream_content(const Paxos::Proposal &proposa
 void Socket::shutdown_if_self(const Paxos::Proposal &proposal) {
   if  (proposal.value.payload.stream.name.owner == stream.owner
     && proposal.value.payload.stream.name.id    == stream.id) {
-    send_pending_acknowledgement();
     shutdown();
   }
 }
