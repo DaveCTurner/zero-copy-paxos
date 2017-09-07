@@ -138,6 +138,44 @@ void Socket::downstream_wrote_bytes(uint64_t start_pos, uint64_t byte_count) {
   };
 
   legislator.activate_slots(value, byte_count);
+  send_pending_acknowledgement();
+}
+
+void Socket::send_pending_acknowledgement() {
+  if (fd == -1) {
+    return;
+  }
+
+  assert(committed_stream_pos <= written_stream_pos);
+  assert(acknowledged_stream_pos <= committed_stream_pos);
+
+  const uint32_t max_acknowledgement = 0xffffffff;
+
+  while (acknowledged_stream_pos < committed_stream_pos) {
+    uint64_t acknowledgement_size = committed_stream_pos
+                                  - acknowledged_stream_pos;
+    uint32_t wire_value = acknowledgement_size <= max_acknowledgement
+                        ? acknowledgement_size :  max_acknowledgement;
+
+    ssize_t write_result = write(fd, &wire_value, sizeof wire_value);
+    if (write_result == -1) {
+      perror(__PRETTY_FUNCTION__);
+      fprintf(stderr, "%s (fd=%d): write failed\n", __PRETTY_FUNCTION__, fd);
+      shutdown();
+      return;
+    } else {
+      if (write_result != sizeof wire_value) {
+        fprintf(stderr, "%s: write only sent %ld bytes of %lu\n",
+            __PRETTY_FUNCTION__,
+            write_result,
+            sizeof wire_value);
+        shutdown();
+        return;
+      } else {
+        acknowledged_stream_pos += acknowledgement_size;
+      }
+    }
+  }
 }
 
 void Socket::handle_stream_content(const Paxos::Proposal &proposal) {
@@ -151,7 +189,10 @@ void Socket::handle_stream_content(const Paxos::Proposal &proposal) {
     return;
   }
 
-  // TODO send acknowledgement
+  committed_stream_pos = proposal.slots.end()
+                       - proposal.value.payload.stream.offset;
+
+  send_pending_acknowledgement();
 }
 
 void Socket::handle_unknown_stream_content(const Paxos::Proposal &proposal) {
@@ -165,6 +206,7 @@ void Socket::handle_non_contiguous_stream_content(const Paxos::Proposal &proposa
 void Socket::shutdown_if_self(const Paxos::Proposal &proposal) {
   if  (proposal.value.payload.stream.name.owner == stream.owner
     && proposal.value.payload.stream.name.id    == stream.id) {
+    send_pending_acknowledgement();
     shutdown();
   }
 }

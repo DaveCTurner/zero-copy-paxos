@@ -48,6 +48,10 @@ private:
         /* Next position to be confirmed as durably written */
         uint64_t                   written_stream_pos      = 0;
 #endif // ndef NDEBUG
+        /* Next position to be acknowledged to the client */
+        uint64_t                   acknowledged_stream_pos = 0;
+        /* Next position to be committed/chosen */
+        uint64_t                   committed_stream_pos    = 0;
 
         int                        fd;
 
@@ -76,9 +80,12 @@ public:
   void downstream_became_writeable();
   void downstream_wrote_bytes(uint64_t, uint64_t);
 
+  void send_pending_acknowledgement();
+
   void handle_stream_content(const Paxos::Proposal&);
   void handle_unknown_stream_content(const Paxos::Proposal&);
   void handle_non_contiguous_stream_content(const Paxos::Proposal&);
+
 };
 
 }
