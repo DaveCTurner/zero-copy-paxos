@@ -39,7 +39,7 @@ private:
   const NodeName                  &node_name;
   const Paxos::Value::StreamName   stream;
 
-        Pipe                       pipe;
+        Pipe<Socket>               pipe;
         int                        fd;
 
   void shutdown();

@@ -21,6 +21,7 @@
 #ifndef PIPELINE_PIPE_H
 #define PIPELINE_PIPE_H
 
+#include "Pipeline/Segment.h"
 #include "Epoll.h"
 #include "Paxos/Value.h"
 #include "Pipeline/NodeName.h"
@@ -29,6 +30,7 @@
 
 namespace Pipeline {
 
+template <class Upstream>
 class Pipe {
   Pipe           (const Pipe&) = delete; // no copying
   Pipe &operator=(const Pipe&) = delete; // no assignment
@@ -57,6 +59,7 @@ private:
   };
 
         Epoll::Manager            &manager;
+        Upstream                  &upstream;
 
   const NodeName                  &node_name;
   const Paxos::Value::StreamName   stream;
@@ -72,6 +75,7 @@ private:
 
 public:
   Pipe (Epoll::Manager&,
+        Upstream&,
         const NodeName&,
         const Paxos::Value::StreamName&);
 
