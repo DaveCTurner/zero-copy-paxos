@@ -58,9 +58,17 @@ void Socket::handle_readable() {
     (1<<20), SPLICE_F_MOVE | SPLICE_F_NONBLOCK | SPLICE_F_MORE);
 
   if (splice_result == -1) {
-    perror(__PRETTY_FUNCTION__);
-    fprintf(stderr, "%s: splice() failed\n", __PRETTY_FUNCTION__);
-    abort();
+    if (errno == EAGAIN) {
+#ifndef NTRACE
+      printf("%s: EAGAIN (fd=%d)\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+      pipe.wait_until_writeable();
+      manager.modify_handler(fd, this, 0);
+    } else {
+      perror(__PRETTY_FUNCTION__);
+      fprintf(stderr, "%s: splice() failed\n", __PRETTY_FUNCTION__);
+      abort();
+    }
   } else if (splice_result == 0) {
     printf("%s: EOF\n", __PRETTY_FUNCTION__);
     shutdown();
@@ -78,6 +86,10 @@ void Socket::handle_error(const uint32_t events) {
   fprintf(stderr, "%s (fd=%d, events=%x): unexpected\n",
                   __PRETTY_FUNCTION__, fd, events);
   shutdown();
+}
+
+void Socket::downstream_became_writeable() {
+  manager.modify_handler(fd, this, EPOLLIN);
 }
 
 const Paxos::Term &Socket::get_term_for_next_write() const {

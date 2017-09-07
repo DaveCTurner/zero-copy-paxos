@@ -61,6 +61,8 @@ public:
 
   const Paxos::Term &get_term_for_next_write() const;
   const Paxos::Value::StreamOffset get_offset_for_next_write(uint64_t) const;
+
+  void downstream_became_writeable();
 };
 
 }

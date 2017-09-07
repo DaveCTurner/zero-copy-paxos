@@ -173,6 +173,13 @@ void Pipe<Upstream>::close_write_end() {
   manager.deregister_close_and_clear(pipe_fds[1]);
 }
 
+template<class Upstream>
+void Pipe<Upstream>::wait_until_writeable() {
+  assert(!is_shutdown());
+  assert(pipe_fds[1] != -1);
+  manager.modify_handler(pipe_fds[1], &write_end, EPOLLOUT);
+}
+
 template class Pipe<Client::Socket>;
 
 }

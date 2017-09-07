@@ -89,6 +89,8 @@ public:
  const int get_write_end_fd() const {
     return pipe_fds[1];
   }
+
+  void wait_until_writeable();
 };
 
 }
