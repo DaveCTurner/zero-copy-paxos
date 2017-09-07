@@ -70,9 +70,7 @@ template<class Upstream>
 void Pipe<Upstream>::handle_readable() {
   if (!upstream.ok_to_write_data()) {
     fprintf(stderr, "%s: cancelled by upstream\n", __PRETTY_FUNCTION__);
-    close_current_segment();
-    manager.deregister_close_and_clear(pipe_fds[1]);
-    manager.deregister_close_and_clear(pipe_fds[0]);
+    unclean_shutdown();
     upstream.downstream_closed();
     return;
   }
@@ -148,6 +146,17 @@ void Pipe<Upstream>::shutdown () {
   assert(bytes_in_pipe == 0);
   manager.deregister_close_and_clear(pipe_fds[1]);
   manager.deregister_close_and_clear(pipe_fds[0]);
+}
+
+template<class Upstream>
+void Pipe<Upstream>::unclean_shutdown () {
+#ifndef NTRACE
+  printf("%s: fds=[%d,%d]\n", __PRETTY_FUNCTION__, pipe_fds[0], pipe_fds[1]);
+#endif // ndef NTRACE
+  close_current_segment();
+  manager.deregister_close_and_clear(pipe_fds[1]);
+  manager.deregister_close_and_clear(pipe_fds[0]);
+  bytes_in_pipe = 0;
 }
 
 template<class Upstream>

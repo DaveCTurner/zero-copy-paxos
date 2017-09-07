@@ -75,6 +75,7 @@ private:
   void handle_writeable();
   void close_current_segment();
   void shutdown();
+  void unclean_shutdown();
 
 public:
   Pipe (Epoll::Manager&,
