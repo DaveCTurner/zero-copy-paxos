@@ -83,15 +83,26 @@ Segment::Segment
   }
 
   sync_directory(parent);
+
+#ifndef NTRACE
+  printf("%s: opened segment file %s with fd %d\n",
+    __PRETTY_FUNCTION__, path, fd);
+#endif // ndef NTRACE
 }
 
 Segment::~Segment() {
   shutdown();
+#ifndef NTRACE
+  printf("%s\n", __PRETTY_FUNCTION__);
+#endif // ndef NTRACE
 }
 
 void Segment::shutdown() {
   if (fd != -1) {
     close(fd);
+#ifndef NTRACE
+    printf("%s: fd=%d\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
     fd = -1;
   }
 }
