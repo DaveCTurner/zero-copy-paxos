@@ -165,12 +165,22 @@ Pipe<Upstream>::Pipe
     abort();
   }
 
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ": "
+            << stream << " "
+            << "fds=[" << pipe_fds[0] << "," << pipe_fds[1] << "]"
+            << std::endl;
+#endif // ndef NTRACE
+
   manager.register_handler(pipe_fds[0], &read_end,  EPOLLIN);
   manager.register_handler(pipe_fds[1], &write_end, 0);
 }
 
 template<class Upstream>
 Pipe<Upstream>::~Pipe() {
+#ifndef NTRACE
+  printf("%s: fds=[%d,%d]\n", __PRETTY_FUNCTION__, pipe_fds[0], pipe_fds[1]);
+#endif // ndef NTRACE
   shutdown();
 }
 
@@ -181,6 +191,9 @@ bool Pipe<Upstream>::is_shutdown() const {
 
 template<class Upstream>
 void Pipe<Upstream>::close_write_end() {
+#ifndef NTRACE
+  printf("%s: write end fd=%d\n", __PRETTY_FUNCTION__, pipe_fds[1]);
+#endif // ndef NTRACE
   manager.deregister_close_and_clear(pipe_fds[1]);
 }
 

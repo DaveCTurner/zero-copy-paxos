@@ -42,9 +42,17 @@ Socket::Socket
     fd              (fd) {
 
   manager.register_handler(fd, this, EPOLLIN);
+
+#ifndef NTRACE
+  printf("%s: fd=%d\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
 }
 
 Socket::~Socket() {
+#ifndef NTRACE
+  printf("%s: fd=%d\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+
   shutdown();
 }
 
@@ -73,9 +81,13 @@ void Socket::handle_readable() {
     printf("%s: EOF\n", __PRETTY_FUNCTION__);
     shutdown();
   } else {
+#ifndef NTRACE
+    printf("%s: splice_result=%ld (fd=%d)\n", __PRETTY_FUNCTION__, splice_result, fd);
+#endif // ndef NTRACE
     assert(splice_result > 0);
   }
 }
+
 void Socket::handle_writeable() {
   fprintf(stderr, "%s (fd=%d): unexpected\n",
                   __PRETTY_FUNCTION__, fd);
