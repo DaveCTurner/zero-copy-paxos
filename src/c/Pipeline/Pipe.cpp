@@ -68,6 +68,11 @@ void Pipe<Upstream>::WriteEnd::handle_error(const uint32_t events) {
 
 template<class Upstream>
 void Pipe<Upstream>::handle_readable() {
+  if (pipe_fds[0] == -1) {
+    fprintf(stderr, "%s: readable, but fd == -1\n", __PRETTY_FUNCTION__);
+    return;
+  }
+
   if (!upstream.ok_to_write_data()) {
     fprintf(stderr, "%s: cancelled by upstream\n", __PRETTY_FUNCTION__);
     unclean_shutdown();
@@ -91,7 +96,11 @@ void Pipe<Upstream>::handle_readable() {
     Paxos::Value::OffsetStream os = {.name = stream, .offset = offset_for_next_write};
     current_segment = new Segment(node_name, os,
         term_for_next_write, next_stream_pos);
+  } else {
+    assert(!current_segment->is_shutdown());
   }
+
+  assert(current_segment->get_next_stream_pos() == next_stream_pos);
 
   ssize_t splice_result = splice(
     pipe_fds[0], NULL, current_segment->get_fd(), NULL,
@@ -99,6 +108,9 @@ void Pipe<Upstream>::handle_readable() {
     SPLICE_F_MOVE | SPLICE_F_NONBLOCK | SPLICE_F_MORE);
 
   if (splice_result == -1) {
+    if (errno == EAGAIN) {
+      return;
+    }
     perror(__PRETTY_FUNCTION__);
     fprintf(stderr, "%s: splice() failed\n", __PRETTY_FUNCTION__);
     abort();
