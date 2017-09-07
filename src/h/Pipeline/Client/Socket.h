@@ -51,6 +51,7 @@ private:
 
         int                        fd;
 
+  void shutdown_if_self(const Paxos::Proposal&);
   void shutdown();
 
 public:
@@ -74,6 +75,10 @@ public:
 
   void downstream_became_writeable();
   void downstream_wrote_bytes(uint64_t, uint64_t);
+
+  void handle_stream_content(const Paxos::Proposal&);
+  void handle_unknown_stream_content(const Paxos::Proposal&);
+  void handle_non_contiguous_stream_content(const Paxos::Proposal&);
 };
 
 }

@@ -22,6 +22,7 @@
 #define PIPELINE_CLIENT_LISTENER_H
 
 #include "Pipeline/AbstractListener.h"
+#include "Pipeline/Client/ChosenStreamContentHandler.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 #include "Pipeline/NodeName.h"
@@ -33,7 +34,8 @@
 namespace Pipeline {
 namespace Client {
 
-class Listener : public AbstractListener {
+class Listener : public AbstractListener,
+                 public ChosenStreamContentHandler {
 
   Paxos::Legislator &legislator;
   const NodeName    &node_name;
@@ -46,6 +48,9 @@ class Listener : public AbstractListener {
   public:
     Listener(Epoll::Manager&, Paxos::Legislator&,
              const NodeName&, const char*);
+    void handle_stream_content(const Paxos::Proposal&);
+    void handle_unknown_stream_content(const Paxos::Proposal&);
+    void handle_non_contiguous_stream_content(const Paxos::Proposal&);
 };
 
 }

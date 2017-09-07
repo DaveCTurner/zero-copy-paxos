@@ -52,5 +52,26 @@ Listener::Listener(Epoll::Manager    &manager,
     legislator(legislator),
     node_name(node_name) {}
 
+void Listener::handle_stream_content
+    (const Paxos::Proposal &proposal) {
+  for (const auto &s : client_sockets) {
+    s->handle_stream_content(proposal);
+  }
+}
+
+void Listener::handle_unknown_stream_content
+    (const Paxos::Proposal &proposal) {
+  for (const auto &s : client_sockets) {
+    s->handle_unknown_stream_content(proposal);
+  }
+}
+
+void Listener::handle_non_contiguous_stream_content
+    (const Paxos::Proposal &proposal) {
+  for (const auto &s : client_sockets) {
+    s->handle_non_contiguous_stream_content(proposal);
+  }
+}
+
 }
 }

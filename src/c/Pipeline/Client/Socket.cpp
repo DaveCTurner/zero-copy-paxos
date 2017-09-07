@@ -140,6 +140,35 @@ void Socket::downstream_wrote_bytes(uint64_t start_pos, uint64_t byte_count) {
   legislator.activate_slots(value, byte_count);
 }
 
+void Socket::handle_stream_content(const Paxos::Proposal &proposal) {
+  if (proposal.value.payload.stream.name.owner != stream.owner) {
+    shutdown();
+    return;
+  }
+
+  if (proposal.value.payload.stream.name.id != stream.id) {
+    shutdown();
+    return;
+  }
+
+  // TODO send acknowledgement
+}
+
+void Socket::handle_unknown_stream_content(const Paxos::Proposal &proposal) {
+  shutdown_if_self(proposal);
+}
+
+void Socket::handle_non_contiguous_stream_content(const Paxos::Proposal &proposal) {
+  shutdown_if_self(proposal);
+}
+
+void Socket::shutdown_if_self(const Paxos::Proposal &proposal) {
+  if  (proposal.value.payload.stream.name.owner == stream.owner
+    && proposal.value.payload.stream.name.id    == stream.id) {
+    shutdown();
+  }
+}
+
 const Paxos::Term &Socket::get_term_for_next_write() const {
   return legislator.get_next_activated_term();
 }

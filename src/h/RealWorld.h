@@ -22,13 +22,17 @@
 #define REAL_WORLD_H
 
 #include "Paxos/OutsideWorld.h"
+#include "Pipeline/Client/ChosenStreamContentHandler.h"
 #include "Pipeline/NodeName.h"
+
 
 class RealWorld : public Paxos::OutsideWorld {
   RealWorld           (const RealWorld&) = delete; // no copying
   RealWorld &operator=(const RealWorld&) = delete; // no assignment
 
   Paxos::instant next_wake_up_time = std::chrono::steady_clock::now();
+
+  std::vector<Pipeline::Client::ChosenStreamContentHandler*> chosen_stream_content_handlers;
 
   const Pipeline::NodeName     &node_name;
 
@@ -40,6 +44,8 @@ public:
   RealWorld(const Pipeline::NodeName&);
 
   ~RealWorld();
+
+  void add_chosen_value_handler(Pipeline::Client::ChosenStreamContentHandler *handler);
 
   void seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
                               const Paxos::Term &min_acceptable_term) override;

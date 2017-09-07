@@ -32,6 +32,8 @@ int main(int argc, char **argv) {
   Pipeline::Client::Listener client_listener
     (manager, legislator, node_name, "41715");
 
+  real_world.add_chosen_value_handler(&client_listener);
+
   while (1) {
     auto ms_to_next_wake_up
       = std::chrono::duration_cast<std::chrono::milliseconds>

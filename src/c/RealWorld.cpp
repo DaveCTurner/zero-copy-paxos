@@ -69,6 +69,10 @@ RealWorld::~RealWorld() {
   }
 }
 
+void RealWorld::add_chosen_value_handler(Pipeline::Client::ChosenStreamContentHandler *handler) {
+  chosen_stream_content_handlers.push_back(handler);
+}
+
 void RealWorld::seek_votes_or_catch_up(
       const Paxos::Slot &first_unchosen_slot,
       const Paxos::Term &min_acceptable_term) {
@@ -222,21 +226,27 @@ void RealWorld::accepted(const Paxos::Proposal &proposal) {
 }
 
 void RealWorld::chosen_stream_content(const Paxos::Proposal &proposal) {
-  //TODO
+  for (auto h : chosen_stream_content_handlers) {
+    h->handle_stream_content(proposal);
+  }
 }
 
 void RealWorld::chosen_non_contiguous_stream_content
       (const Paxos::Proposal &proposal,
        uint64_t expected_stream_pos,
        uint64_t actual_stream_pos) {
-  //TODO
+  for (auto h : chosen_stream_content_handlers) {
+    h->handle_non_contiguous_stream_content(proposal);
+  }
 }
 
 void RealWorld::chosen_unknown_stream_content
       (const Paxos::Proposal &proposal,
        Paxos::Value::StreamName expected_stream,
        uint64_t               first_stream_pos) {
-  //TODO
+  for (auto h : chosen_stream_content_handlers) {
+    h->handle_unknown_stream_content(proposal);
+  }
 }
 
 void RealWorld::chosen_generate_node_ids(const Paxos::Proposal &p, Paxos::NodeId n) {
