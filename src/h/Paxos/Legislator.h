@@ -129,6 +129,14 @@ class Legislator {
 
     std::ostream &write_to(std::ostream&) const;
 
+    const Term &get_next_activated_term() const {
+      return _palladium.next_activated_term();
+    }
+
+    const Slot get_next_activated_slot() const {
+      return _palladium.next_activated_slot();
+    }
+
     void handle_wake_up();
     void handle_seek_votes_or_catch_up
       (const NodeId&, const Slot&, const Term&);

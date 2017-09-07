@@ -80,5 +80,16 @@ void Socket::handle_error(const uint32_t events) {
   shutdown();
 }
 
+const Paxos::Term &Socket::get_term_for_next_write() const {
+  return legislator.get_next_activated_term();
+}
+
+const Paxos::Value::StreamOffset Socket::get_offset_for_next_write
+                                      (uint64_t next_stream_pos) const {
+  Paxos::Slot next_activated_slot = legislator.get_next_activated_slot();
+  assert(next_stream_pos <= next_activated_slot);
+  return next_activated_slot - next_stream_pos;
+}
+
 }
 }

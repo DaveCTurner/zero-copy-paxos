@@ -58,6 +58,9 @@ public:
   void handle_readable() override;
   void handle_writeable() override;
   void handle_error(const uint32_t) override;
+
+  const Paxos::Term &get_term_for_next_write() const;
+  const Paxos::Value::StreamOffset get_offset_for_next_write(uint64_t) const;
 };
 
 }

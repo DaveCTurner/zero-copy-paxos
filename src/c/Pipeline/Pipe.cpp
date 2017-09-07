@@ -68,8 +68,47 @@ void Pipe<Upstream>::WriteEnd::handle_error(const uint32_t events) {
 
 template<class Upstream>
 void Pipe<Upstream>::handle_readable() {
-  fprintf(stderr, "%s: TODO\n", __PRETTY_FUNCTION__);
-  abort();
+  const Paxos::Term &term_for_next_write
+    = upstream.get_term_for_next_write();
+  const Paxos::Value::StreamOffset offset_for_next_write
+    = upstream.get_offset_for_next_write(next_stream_pos);
+
+  if (current_segment != NULL
+        && (current_segment->get_term()          != term_for_next_write
+         || current_segment->get_stream_offset() != offset_for_next_write)) {
+    delete current_segment;
+    current_segment = NULL;
+  }
+
+  if (current_segment == NULL) {
+    Paxos::Value::OffsetStream os = {.name = stream, .offset = offset_for_next_write};
+    current_segment = new Segment(node_name, os,
+        term_for_next_write, next_stream_pos);
+  }
+
+  ssize_t splice_result = splice(
+    pipe_fds[0], NULL, current_segment->get_fd(), NULL,
+    current_segment->get_remaining_space(),
+    SPLICE_F_MOVE | SPLICE_F_NONBLOCK | SPLICE_F_MORE);
+
+  if (splice_result == -1) {
+    perror(__PRETTY_FUNCTION__);
+    fprintf(stderr, "%s: splice() failed\n", __PRETTY_FUNCTION__);
+    abort();
+  } else if (splice_result == 0) {
+    printf("%s: EOF\n", __PRETTY_FUNCTION__);
+    shutdown();
+  } else {
+    assert(splice_result > 0);
+    uint64_t bytes_sent = splice_result;
+    next_stream_pos += bytes_sent;
+    current_segment->record_bytes_in(bytes_sent);
+
+    if (current_segment->is_shutdown()) {
+      delete current_segment;
+      current_segment = NULL;
+    }
+  }
 }
 
 template<class Upstream>
