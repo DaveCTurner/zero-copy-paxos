@@ -60,6 +60,8 @@ RealWorld::RealWorld(
     fprintf(stderr, "%s: open(%s) failed\n", __PRETTY_FUNCTION__, path);
     abort();
   }
+
+  sync_directory(parent);
 }
 
 RealWorld::~RealWorld() {
@@ -127,6 +129,14 @@ void RealWorld::write_log_line(std::ostringstream &os) {
       bytes_to_write -= bytes_written;
       buf += bytes_written;
     }
+  }
+
+  int fsync_result = fsync(log_fd);
+  if (fsync_result == -1) {
+    perror(__PRETTY_FUNCTION__);
+    fprintf(stderr, "%s: fsync() failed\n",
+      __PRETTY_FUNCTION__);
+    abort();
   }
 }
 
