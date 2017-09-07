@@ -21,6 +21,8 @@
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 
+#include <signal.h>
+
 int main(int argc, char **argv) {
   std::string cluster_id = "3277f758-473b-4188-99fc-b19b0e7a940b";
   Pipeline::NodeName node_name(cluster_id, 1);
@@ -33,6 +35,8 @@ int main(int argc, char **argv) {
     (manager, legislator, node_name, "41715");
 
   real_world.add_chosen_value_handler(&client_listener);
+
+  signal(SIGPIPE, SIG_IGN);
 
   while (1) {
     auto ms_to_next_wake_up
