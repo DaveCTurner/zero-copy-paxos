@@ -105,8 +105,7 @@ void Pipe<Upstream>::handle_readable() {
     current_segment->record_bytes_in(bytes_sent);
 
     if (current_segment->is_shutdown()) {
-      delete current_segment;
-      current_segment = NULL;
+      close_current_segment();
     }
   }
 }
@@ -118,7 +117,19 @@ void Pipe<Upstream>::handle_writeable() {
 }
 
 template<class Upstream>
+void Pipe<Upstream>::close_current_segment() {
+  if (current_segment != NULL) {
+    delete current_segment;
+    current_segment = NULL;
+  }
+}
+
+template<class Upstream>
 void Pipe<Upstream>::shutdown () {
+#ifndef NTRACE
+  printf("%s: fds=[%d,%d]\n", __PRETTY_FUNCTION__, pipe_fds[0], pipe_fds[1]);
+#endif // ndef NTRACE
+  close_current_segment();
   manager.deregister_close_and_clear(pipe_fds[1]);
   manager.deregister_close_and_clear(pipe_fds[0]);
 }

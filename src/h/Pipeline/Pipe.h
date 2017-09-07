@@ -71,6 +71,7 @@ private:
         WriteEnd                   write_end;
 
   void handle_writeable();
+  void close_current_segment();
   void shutdown();
 
 public:
