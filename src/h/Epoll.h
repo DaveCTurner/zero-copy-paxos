@@ -123,10 +123,10 @@ class Manager {
       auto handler = static_cast<Handler*>(e.data.ptr);
       assert(handler != NULL);
 
-      if (event_bits & ~(EPOLLIN | EPOLLOUT)) {
+      if (event_bits & ~(EPOLLIN | EPOLLOUT | EPOLLHUP | EPOLLRDHUP)) {
         handler->handle_error(event_bits);
       } else {
-        if (event_bits & (EPOLLIN)) {
+        if (event_bits & (EPOLLIN | EPOLLHUP | EPOLLRDHUP)) {
           handler->handle_readable();
         }
         if (event_bits & EPOLLOUT) {
