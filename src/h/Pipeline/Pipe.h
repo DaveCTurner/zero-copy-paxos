@@ -66,6 +66,8 @@ private:
 
         Segment                   *current_segment = NULL;
         uint64_t                   next_stream_pos;
+        uint64_t                   bytes_in_pipe = 0;
+
         int                        pipe_fds[2];
         ReadEnd                    read_end;
         WriteEnd                   write_end;
@@ -91,6 +93,8 @@ public:
   }
 
   void wait_until_writeable();
+
+  void record_bytes_in(uint64_t);
 };
 
 }

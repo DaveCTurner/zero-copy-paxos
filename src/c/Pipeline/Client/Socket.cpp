@@ -85,6 +85,8 @@ void Socket::handle_readable() {
     printf("%s: splice_result=%ld (fd=%d)\n", __PRETTY_FUNCTION__, splice_result, fd);
 #endif // ndef NTRACE
     assert(splice_result > 0);
+    uint64_t bytes_sent = splice_result;
+    pipe.record_bytes_in(bytes_sent);
   }
 }
 

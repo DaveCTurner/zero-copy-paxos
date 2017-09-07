@@ -109,6 +109,8 @@ void Pipe<Upstream>::handle_readable() {
   } else {
     assert(splice_result > 0);
     uint64_t bytes_sent = splice_result;
+    assert(bytes_sent <= bytes_in_pipe);
+    bytes_in_pipe -= bytes_sent;
     uint64_t old_next_stream_pos = next_stream_pos;
     next_stream_pos += bytes_sent;
     current_segment->record_bytes_in(bytes_sent);
@@ -141,6 +143,7 @@ void Pipe<Upstream>::shutdown () {
   printf("%s: fds=[%d,%d]\n", __PRETTY_FUNCTION__, pipe_fds[0], pipe_fds[1]);
 #endif // ndef NTRACE
   close_current_segment();
+  assert(bytes_in_pipe == 0);
   manager.deregister_close_and_clear(pipe_fds[1]);
   manager.deregister_close_and_clear(pipe_fds[0]);
 }
@@ -202,6 +205,12 @@ void Pipe<Upstream>::wait_until_writeable() {
   assert(!is_shutdown());
   assert(pipe_fds[1] != -1);
   manager.modify_handler(pipe_fds[1], &write_end, EPOLLOUT);
+}
+
+template<class Upstream>
+void Pipe<Upstream>::record_bytes_in(uint64_t bytes) {
+  assert(!is_shutdown());
+  bytes_in_pipe += bytes;
 }
 
 template class Pipe<Client::Socket>;
