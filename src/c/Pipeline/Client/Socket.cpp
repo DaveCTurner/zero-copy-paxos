@@ -62,6 +62,7 @@ bool Socket::is_shutdown() const {
 }
 
 void Socket::handle_readable() {
+  if (waiting_for_downstream) { return; }
   assert(pipe.get_next_stream_pos_write() == read_stream_pos);
 
   ssize_t splice_result = splice(
@@ -75,6 +76,7 @@ void Socket::handle_readable() {
 #endif // ndef NTRACE
       pipe.wait_until_writeable();
       manager.modify_handler(fd, this, 0);
+      waiting_for_downstream = true;
     } else {
       perror(__PRETTY_FUNCTION__);
       fprintf(stderr, "%s: splice() failed\n", __PRETTY_FUNCTION__);
@@ -109,7 +111,9 @@ void Socket::handle_error(const uint32_t events) {
 }
 
 void Socket::downstream_became_writeable() {
+  assert(waiting_for_downstream);
   manager.modify_handler(fd, this, EPOLLIN);
+  waiting_for_downstream = false;
 }
 
 bool Socket::ok_to_write_data() const {

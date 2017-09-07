@@ -54,6 +54,7 @@ private:
         uint64_t                   committed_stream_pos    = 0;
 
         int                        fd;
+        bool                       waiting_for_downstream = false;
 
   void shutdown_if_self(const Paxos::Proposal&);
   void shutdown();
