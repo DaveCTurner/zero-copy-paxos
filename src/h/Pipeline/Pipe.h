@@ -61,6 +61,7 @@ private:
   const NodeName                  &node_name;
   const Paxos::Value::StreamName   stream;
 
+        Segment                   *current_segment = NULL;
         uint64_t                   next_stream_pos;
         int                        pipe_fds[2];
         ReadEnd                    read_end;

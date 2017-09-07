@@ -76,12 +76,14 @@ void Pipe::shutdown () {
 }
 
 Pipe::Pipe
-       (Epoll::Manager                  &manager,
-        const NodeName                  &node_name,
-        const Paxos::Value::StreamName  &stream)
+       (Epoll::Manager                   &manager,
+        const NodeName                   &node_name,
+        const Paxos::Value::OffsetStream &stream,
+        const Paxos::Term                &term)
   : manager         (manager),
     node_name       (node_name),
     stream          (stream),
+    term            (term),
     next_stream_pos (0),
     read_end        (ReadEnd(*this)),
     write_end       (WriteEnd(*this)) {
