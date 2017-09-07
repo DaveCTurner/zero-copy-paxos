@@ -236,6 +236,12 @@ void RealWorld::accepted(const Paxos::Proposal &proposal) {
 }
 
 void RealWorld::chosen_stream_content(const Paxos::Proposal &proposal) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__
+    << " proposal=" << proposal
+    << std::endl;
+#endif
+
   for (auto h : chosen_stream_content_handlers) {
     h->handle_stream_content(proposal);
   }
@@ -245,6 +251,14 @@ void RealWorld::chosen_non_contiguous_stream_content
       (const Paxos::Proposal &proposal,
        uint64_t expected_stream_pos,
        uint64_t actual_stream_pos) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__
+    << " proposal=" << proposal
+    << " expected=" << expected_stream_pos
+    << " actual="   << actual_stream_pos
+    << std::endl;
+#endif
+
   for (auto h : chosen_stream_content_handlers) {
     h->handle_non_contiguous_stream_content(proposal);
   }
@@ -254,12 +268,30 @@ void RealWorld::chosen_unknown_stream_content
       (const Paxos::Proposal &proposal,
        Paxos::Value::StreamName expected_stream,
        uint64_t               first_stream_pos) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__
+    << " proposal=" << proposal
+    << " expected=" << expected_stream
+    << " first_stream_pos=" << first_stream_pos
+    << std::endl;
+#endif
+
   for (auto h : chosen_stream_content_handlers) {
     h->handle_unknown_stream_content(proposal);
   }
 }
 
 void RealWorld::chosen_generate_node_ids(const Paxos::Proposal &p, Paxos::NodeId n) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__
+    << " proposal=" << p
+    << " node_id="  << n
+    << std::endl;
+#endif
+
+  assert(p.value.type == Paxos::Value::Type::generate_node_id);
+  assert(p.value.payload.originator == node_name.id);
+
   //TODO
 }
 
@@ -275,12 +307,15 @@ void RealWorld::chosen_new_configuration
     << std::endl;
 #endif
 
+  Paxos::Slot slot = proposal.slots.start();
+  assert(proposal.slots.end() == slot + 1);
+
   std::ostringstream os;
 
   os << "configuration changed to era "
      << std::hex << std::setfill('0') << std::setw(8) << era
      << " at slot "
-     << std::hex << std::setfill('0') << std::setw(16) << proposal.slots.start()
+     << std::hex << std::setfill('0') << std::setw(16) << slot
      << ':';
 
   for (const auto &e : conf.entries) {
@@ -290,6 +325,7 @@ void RealWorld::chosen_new_configuration
        << std::hex << std::setfill('0') << std::setw(2) << ((uint32_t)e.weight());
   }
   os << std::endl;
+
   write_log_line(os);
 }
 
