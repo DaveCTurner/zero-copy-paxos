@@ -125,8 +125,8 @@ void Pipe<Upstream>::handle_readable() {
 
 template<class Upstream>
 void Pipe<Upstream>::handle_writeable() {
-  fprintf(stderr, "%s: TODO\n", __PRETTY_FUNCTION__);
-  abort();
+  manager.modify_handler(pipe_fds[1], &write_end, 0);
+  upstream.downstream_became_writeable();
 }
 
 template<class Upstream>
