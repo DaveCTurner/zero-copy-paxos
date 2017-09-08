@@ -141,6 +141,7 @@ void Socket::downstream_wrote_bytes(uint64_t start_pos, uint64_t byte_count) {
   printf("%s: written_stream_pos updated by %lu from %lu to %lu\n",
           __PRETTY_FUNCTION__, byte_count, start_pos, written_stream_pos);
 #endif // def NTRACE
+  assert(committed_stream_pos <= written_stream_pos);
   assert(legislator.activation_will_yield_proposals());
 
   Paxos::Value value = { .type = Paxos::Value::Type::stream_content };
@@ -197,6 +198,8 @@ void Socket::send_pending_acknowledgement(bool shutdown_on_error) {
 }
 
 void Socket::handle_stream_content(const Paxos::Proposal &proposal) {
+  assert(proposal.value.type == Paxos::Value::Type::stream_content);
+
   if (proposal.value.payload.stream.name.owner != stream.owner) {
     shutdown();
     return;
@@ -207,8 +210,12 @@ void Socket::handle_stream_content(const Paxos::Proposal &proposal) {
     return;
   }
 
+  assert(proposal.slots.start() - proposal.value.payload.stream.offset
+           == committed_stream_pos);
+
   committed_stream_pos = proposal.slots.end()
                        - proposal.value.payload.stream.offset;
+  assert(committed_stream_pos <= written_stream_pos);
 
   send_pending_acknowledgement(true);
 }
@@ -222,6 +229,8 @@ void Socket::handle_non_contiguous_stream_content(const Paxos::Proposal &proposa
 }
 
 void Socket::shutdown_if_self(const Paxos::Proposal &proposal) {
+  assert(proposal.value.type == Paxos::Value::Type::stream_content);
+
   if  (proposal.value.payload.stream.name.owner == stream.owner
     && proposal.value.payload.stream.name.id    == stream.id) {
     shutdown();
