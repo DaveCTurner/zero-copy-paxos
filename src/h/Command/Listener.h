@@ -96,6 +96,36 @@ public:
         if (word == "stat") {
           response << "cluster: " << node_name.cluster << std::endl
                    << legislator << std::endl;
+        } else if (word == "inc" || word == "dec"
+                || word == "mul" || word == "div") {
+
+          Paxos::Value value;
+          if (word == "inc") {
+            value.type = Paxos::Value::Type::reconfiguration_inc;
+            command >> value.payload.reconfiguration.subject;
+          } else if (word == "dec") {
+            value.type = Paxos::Value::Type::reconfiguration_dec;
+            command >> value.payload.reconfiguration.subject;
+          } else if (word == "mul") {
+            value.type = Paxos::Value::Type::reconfiguration_mul;
+            uint32_t factor;
+            command >> factor;
+            value.payload.reconfiguration.factor = factor;
+          } else if (word == "div") {
+            value.type = Paxos::Value::Type::reconfiguration_div;
+            uint32_t factor;
+            command >> factor;
+            value.payload.reconfiguration.factor = factor;
+          }
+          std::string expect_eof;
+          command >> expect_eof;
+
+          if (expect_eof == "EOF") {
+            response << "OK proposing reconfiguration: " << value << std::endl;
+            legislator.activate_slots(value, 1);
+          } else {
+            response << "expected '" << word << " <NUM> EOF'" << std::endl;
+          }
         }
         response << "EOF" << std::endl;
 
