@@ -128,6 +128,7 @@ class Legislator {
           const Configuration&);
 
     std::ostream &write_to(std::ostream&) const;
+    std::ostream &write_configuration_to(std::ostream&) const;
 
     const Term &get_next_activated_term() const {
       return _palladium.next_activated_term();

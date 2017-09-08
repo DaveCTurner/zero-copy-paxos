@@ -88,6 +88,12 @@ std::ostream& Paxos::operator<<(std::ostream &o, const Legislator &legislator) {
   return legislator.write_to(o);
 }
 
+std::ostream &Legislator::write_configuration_to(std::ostream &o) const {
+  return o << "v" << _palladium.get_current_era()
+           << ": " << _palladium.get_current_configuration()
+           << std::endl;
+}
+
 std::chrono::steady_clock::duration Legislator::random_retry_delay() {
   if (_retry_delay_ms <= _minimum_retry_delay_ms) {
     return std::chrono::milliseconds(_minimum_retry_delay_ms);

@@ -96,6 +96,8 @@ public:
         if (word == "stat") {
           response << "cluster: " << node_name.cluster << std::endl
                    << legislator << std::endl;
+        } else if (word == "conf") {
+          legislator.write_configuration_to(response);
         } else if (word == "inc" || word == "dec"
                 || word == "mul" || word == "div") {
 
