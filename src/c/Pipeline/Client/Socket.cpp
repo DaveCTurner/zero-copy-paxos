@@ -19,6 +19,7 @@
 
 
 #include "Pipeline/Client/Socket.h"
+#include <fcntl.h>
 
 namespace Pipeline {
 namespace Client {

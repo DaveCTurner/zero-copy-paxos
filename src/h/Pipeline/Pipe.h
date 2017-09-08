@@ -24,9 +24,6 @@
 #include "Pipeline/Segment.h"
 #include "Epoll.h"
 #include "Paxos/Value.h"
-#include "Pipeline/NodeName.h"
-
-#include <fcntl.h>
 
 namespace Pipeline {
 

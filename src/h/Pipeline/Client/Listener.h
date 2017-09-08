@@ -25,7 +25,6 @@
 #include "Pipeline/Client/ChosenStreamContentHandler.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
-#include "Pipeline/NodeName.h"
 #include "Pipeline/Client/Socket.h"
 
 #include <memory>
