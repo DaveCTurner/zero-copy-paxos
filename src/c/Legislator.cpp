@@ -252,7 +252,7 @@ void Legislator::handle_send_catch_up
     instant now = _world.get_current_time();
     if (_role != Role::candidate) {
       std::cout << __PRETTY_FUNCTION__ << ": becoming candidate" << std::endl;
-    _role = Role::candidate;
+      _role = Role::candidate;
     }
     set_next_wake_up_time(now + _follower_timeout);
   }
