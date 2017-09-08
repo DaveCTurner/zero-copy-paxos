@@ -126,6 +126,8 @@ public:
           } else {
             response << "expected '" << word << " <NUM> EOF'" << std::endl;
           }
+        } else {
+          response << "unknown command '" << word << "'" << std::endl;
         }
         response << "EOF" << std::endl;
 
