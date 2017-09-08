@@ -160,9 +160,11 @@ class Legislator {
     void handle_promise(const NodeId&, const Promise&);
 
     void activate_slots(const Value &value, const uint64_t count) {
-      if (UNLIKELY(_role == Role::follower))        { return; }
-      if (UNLIKELY(_change_era_restricted_by_slot)) { return; }
-      if (UNLIKELY(_change_era_restricted_by_term)) { return; }
+      if (UNLIKELY(_role == Role::follower)) { return; }
+      if (UNLIKELY(is_reconfiguration(value.type))) {
+        if (_change_era_restricted_by_slot) { return; }
+        if (_change_era_restricted_by_term) { return; }
+      }
       handle_proposal(_palladium.activate(value, count), true);
     }
 
