@@ -123,7 +123,12 @@ void Socket::downstream_closed() {
 }
 
 bool Socket::ok_to_write_data() const {
-  return legislator.activation_will_yield_proposals();
+  if (!legislator.activation_will_yield_proposals()) {
+    printf("%s: cannot propose\n", __PRETTY_FUNCTION__);
+    return false;
+  }
+
+  return true;
 }
 
 void Socket::downstream_wrote_bytes(uint64_t start_pos, uint64_t byte_count) {
