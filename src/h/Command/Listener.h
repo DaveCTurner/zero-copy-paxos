@@ -136,9 +136,13 @@ public:
           } else {
             response << "expected '" << word << " <NUM> EOF'" << std::endl;
           }
+        } else if (word == "unsafe-stage-coup") {
+          response << "OK unsafely staging a coup" << std::endl;
+          legislator.unsafely_stage_coup();
         } else {
           response << "unknown command '" << word << "'" << std::endl;
         }
+
         response << "EOF" << std::endl;
 
         std::string response_string = response.str();
