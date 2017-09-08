@@ -37,7 +37,7 @@ main = shakeArgs shakeOptions $ do
   want ["_build/test-output"]
   want ["_build" </> level </> executable
        | level <- ["release", "debug", "trace"]
-       , executable <- ["test", "node"]
+       , executable <- ["test", "node", "client"]
        ]
 
   phony "clean" $ do
@@ -55,6 +55,12 @@ main = shakeArgs shakeOptions $ do
                    | c <- cpps]
         need objs
         return objs
+
+  "_build/*/client" %> \out -> do
+    let level = takeDirectory1 $ dropDirectory1 out
+    objs1 <- objs level "client"
+    cmd "g++" [optFlag level] "-Wall -Werror -pthread -o" [out]
+        (defineFlags level) objs1
 
   "_build/*/node" %> \out -> do
     let level = takeDirectory1 $ dropDirectory1 out
