@@ -16,6 +16,7 @@
 
 */
 
+#include "Command/Listener.h"
 #include "RealWorld.h"
 #include "Pipeline/Client/Listener.h"
 #include "Epoll.h"
@@ -33,6 +34,8 @@ int main(int argc, char **argv) {
   Epoll::Manager manager;
   Pipeline::Client::Listener client_listener
     (manager, legislator, node_name, "41715");
+  Command::Listener command_listener
+    (manager, legislator, node_name, "41716");
 
   real_world.add_chosen_value_handler(&client_listener);
 
