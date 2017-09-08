@@ -215,6 +215,10 @@ void Socket::handle_stream_content(const Paxos::Proposal &proposal) {
 
   committed_stream_pos = proposal.slots.end()
                        - proposal.value.payload.stream.offset;
+#ifndef NTRACE
+  printf("%s: committed_stream_pos updated to %lu\n",
+          __PRETTY_FUNCTION__, committed_stream_pos);
+#endif // def NTRACE
   assert(committed_stream_pos <= written_stream_pos);
 
   send_pending_acknowledgement(true);
