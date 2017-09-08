@@ -126,6 +126,16 @@ public:
           } else {
             response << "expected '" << word << " <NUM> EOF'" << std::endl;
           }
+        } else if (word == "abdicate") {
+          Paxos::NodeId new_leader;
+          std::string expect_eof;
+          command >> new_leader >> expect_eof;
+          if (expect_eof == "EOF") {
+            response << "OK abdicating to " << new_leader << std::endl;
+            legislator.abdicate_to(new_leader);
+          } else {
+            response << "expected '" << word << " <NUM> EOF'" << std::endl;
+          }
         } else {
           response << "unknown command '" << word << "'" << std::endl;
         }
