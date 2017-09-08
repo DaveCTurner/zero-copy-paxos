@@ -58,7 +58,7 @@ Socket::~Socket() {
 }
 
 bool Socket::is_shutdown() const {
-  return fd == -1;
+  return fd == -1 && pipe.is_shutdown();
 }
 
 void Socket::handle_readable() {
