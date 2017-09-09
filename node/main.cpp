@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
     (manager, legislator, node_name, "41716");
 
   real_world.add_chosen_value_handler(&client_listener);
+  real_world.set_node_id_generation_handler(&command_listener);
 
   signal(SIGPIPE, SIG_IGN);
 

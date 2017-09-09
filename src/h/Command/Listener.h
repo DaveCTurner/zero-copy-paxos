@@ -21,6 +21,7 @@
 #ifndef COMMAND_LISTENER_H
 #define COMMAND_LISTENER_H
 
+#include "Command/NodeIdGenerationHandler.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 #include "Pipeline/AbstractListener.h"
@@ -41,6 +42,7 @@ class Socket : public Epoll::Handler {
   Paxos::Legislator     &legislator;
   const NodeName        &node_name;
   int                    fd = -1;
+  Paxos::Slot            node_id_generation_slot = 0;
 
   void shutdown() {
     manager.deregister_close_and_clear(fd);
@@ -98,6 +100,17 @@ public:
                    << legislator << std::endl;
         } else if (word == "conf") {
           legislator.write_configuration_to(response);
+        } else if (word == "new") {
+          if (node_id_generation_slot == 0) {
+            Paxos::Value value = { .type = Paxos::Value::Type::generate_node_id };
+            value.payload.originator = node_name.id;
+            node_id_generation_slot = legislator.get_next_activated_slot();
+            legislator.activate_slots(value, 1);
+            assert(node_id_generation_slot + 1 == legislator.get_next_activated_slot());
+            return;
+          } else {
+            response << "new already in progress" << std::endl;
+          }
         } else if (word == "inc" || word == "dec"
                 || word == "mul" || word == "div") {
 
@@ -168,9 +181,33 @@ public:
                     __PRETTY_FUNCTION__, fd, events);
     shutdown();
   }
+
+  void handle_node_id_generation(Paxos::Slot slot, Paxos::NodeId new_node_id) {
+    if (is_shutdown()) { return; }
+    if (slot < node_id_generation_slot) { return; }
+
+    std::basic_ostringstream<char> response;
+
+    if (slot == node_id_generation_slot) {
+      response << "OK" << std::endl;
+      response << "cluster " << node_name.cluster
+               << " node " << new_node_id
+               << " EOF" << std::endl;
+    } else {
+      response << "node id generation failed" << std::endl;
+    }
+
+    std::string response_string = response.str();
+    ssize_t write_result = write(fd, response_string.c_str(), (size_t)(response_string.length()));
+    if (write_result == -1) {
+      perror(__PRETTY_FUNCTION__);
+      fprintf(stderr, "%s: write() failed\n", __PRETTY_FUNCTION__);
+    }
+    shutdown();
+  }
 };
 
-class Listener : public Pipeline::AbstractListener {
+class Listener : public Pipeline::AbstractListener, public NodeIdGenerationHandler {
   Listener           (const Listener&) = delete; // no copying
   Listener &operator=(const Listener&) = delete; // no assignment
 
@@ -199,6 +236,12 @@ public:
     : AbstractListener(manager, port),
       legislator(legislator),
       node_name(node_name) {}
+
+  void handle_node_id_generation(Paxos::Slot slot, Paxos::NodeId new_node_id) override {
+    for (auto &socket : sockets) {
+      socket->handle_node_id_generation(slot, new_node_id);
+    }
+  }
 };
 
 }

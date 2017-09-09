@@ -23,6 +23,7 @@
 
 #include "Paxos/OutsideWorld.h"
 #include "Pipeline/Client/ChosenStreamContentHandler.h"
+#include "Command/NodeIdGenerationHandler.h"
 #include "Pipeline/NodeName.h"
 
 
@@ -36,6 +37,7 @@ class RealWorld : public Paxos::OutsideWorld {
 
   const Pipeline::NodeName     &node_name;
 
+  Command::NodeIdGenerationHandler *node_id_generation_handler = NULL;
   int log_fd = -1;
   void write_log_line(std::ostringstream&);
   void record_non_stream_content_acceptance(const Paxos::Proposal&);
@@ -44,6 +46,8 @@ public:
   RealWorld(const Pipeline::NodeName&);
 
   ~RealWorld();
+
+  void set_node_id_generation_handler(Command::NodeIdGenerationHandler*);
 
   void add_chosen_value_handler(Pipeline::Client::ChosenStreamContentHandler *handler);
 

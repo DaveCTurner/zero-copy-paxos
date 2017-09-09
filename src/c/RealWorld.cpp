@@ -292,7 +292,13 @@ void RealWorld::chosen_generate_node_ids(const Paxos::Proposal &p, Paxos::NodeId
   assert(p.value.type == Paxos::Value::Type::generate_node_id);
   assert(p.value.payload.originator == node_name.id);
 
-  //TODO
+  if (node_id_generation_handler != NULL) {
+    for (Paxos::Slot s = p.slots.start();
+                     s < p.slots.end();
+                     s++) {
+      node_id_generation_handler->handle_node_id_generation(s, n++);
+    }
+  }
 }
 
 void RealWorld::chosen_new_configuration
@@ -346,4 +352,9 @@ void RealWorld::set_next_wake_up_time(const Paxos::instant &t) {
 #endif // ndef NTRACE
     next_wake_up_time = t;
   }
+}
+
+void RealWorld::set_node_id_generation_handler(Command::NodeIdGenerationHandler *h) {
+  assert(node_id_generation_handler == NULL);
+  node_id_generation_handler = h;
 }
