@@ -34,12 +34,18 @@ Target::Address::Address(const char *host, const char *port)
 
 void Target::shutdown() {
   manager.deregister_close_and_clear(fd);
+  received_handshake_bytes = 0;
+  peer_id = 0;
 }
 
 void Target::start_connection() {
   if (fd != -1) {
     return;
   }
+
+  sent_handshake = false;
+  received_handshake_bytes = 0;
+  peer_id = 0;
 
   struct addrinfo hints;
   memset(&hints, 0, sizeof hints);
@@ -102,9 +108,36 @@ Target::Target(const Address           &address,
 }
 
 void Target::handle_readable() {
-  fprintf(stderr, "%s: TODO\n",
-                  __PRETTY_FUNCTION__);
-  abort();
+  if (fd == -1) {
+    return;
+  }
+
+  if (received_handshake_bytes < sizeof received_handshake) {
+    switch(Protocol::receive_handshake(fd,
+                                       received_handshake, received_handshake_bytes,
+                                       node_name.cluster)) {
+      case RECEIVE_HANDSHAKE_ERROR:
+      case RECEIVE_HANDSHAKE_EOF:
+      case RECEIVE_HANDSHAKE_INVALID:
+        shutdown();
+        break;
+
+      case RECEIVE_HANDSHAKE_INCOMPLETE:
+        break;
+
+      case RECEIVE_HANDSHAKE_SUCCESS:
+        peer_id = received_handshake.node_id;
+#ifndef NTRACE
+        printf("%s (fd=%d): connected to %d\n", __PRETTY_FUNCTION__,
+                                                fd, peer_id);
+#endif // ndef NTRACE
+        break;
+    }
+  } else {
+    fprintf(stderr, "%s (fd=%d): unexpected\n",
+                    __PRETTY_FUNCTION__, fd);
+    shutdown();
+  }
 }
 
 void Target::handle_writeable() {

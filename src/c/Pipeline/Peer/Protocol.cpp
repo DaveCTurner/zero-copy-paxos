@@ -49,4 +49,54 @@ void send_handshake(int fd, const NodeName &node_name) {
   // TODO more graceful handling of partial writes?
 }
 
+int receive_handshake(int fd, Handshake &handshake, size_t &received_bytes,
+                      const std::string &cluster_id) {
+  ssize_t read_result = read(fd,
+      reinterpret_cast<uint8_t*>(&handshake) + received_bytes,
+      sizeof handshake - received_bytes);
+
+  if (read_result == -1) {
+    perror(__PRETTY_FUNCTION__);
+    fprintf(stderr, "%s (fd=%d): read(handshake) failed\n",
+                    __PRETTY_FUNCTION__, fd);
+    return RECEIVE_HANDSHAKE_ERROR;
+  }
+
+  if (read_result == 0) {
+    return RECEIVE_HANDSHAKE_EOF;
+  }
+
+  assert(read_result > 0);
+  received_bytes += read_result;
+
+  assert(received_bytes <= sizeof handshake);
+  if (received_bytes < sizeof handshake) {
+    return RECEIVE_HANDSHAKE_INCOMPLETE;
+  }
+
+  if (handshake.protocol_version != 1) {
+    fprintf(stderr, "%s (fd=%d): protocol version mismatch: %u != %u\n",
+      __PRETTY_FUNCTION__, fd,
+      handshake.protocol_version, PROTOCOL_VERSION);
+    return RECEIVE_HANDSHAKE_INVALID;
+  }
+
+  if (handshake.cluster_id[CLUSTER_ID_LENGTH] != '\0') {
+    fprintf(stderr, "%s (fd=%d): cluster ID missing null terminator\n",
+      __PRETTY_FUNCTION__, fd);
+    return RECEIVE_HANDSHAKE_INVALID;
+  }
+
+  if (strncmp(cluster_id.c_str(), handshake.cluster_id,
+                     CLUSTER_ID_LENGTH) != 0) {
+
+    fprintf(stderr, "%s (fd=%d): cluster ID mismatch: %s != %s\n",
+      __PRETTY_FUNCTION__, fd,
+      handshake.cluster_id, cluster_id.c_str());
+    return RECEIVE_HANDSHAKE_INVALID;
+  }
+
+  return RECEIVE_HANDSHAKE_SUCCESS;
+}
+
 }}}

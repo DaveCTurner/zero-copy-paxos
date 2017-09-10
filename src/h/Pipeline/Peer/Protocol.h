@@ -38,6 +38,14 @@ struct Handshake {
 
 void send_handshake(int, const NodeName&);
 
+#define RECEIVE_HANDSHAKE_ERROR       0
+#define RECEIVE_HANDSHAKE_INCOMPLETE  1
+#define RECEIVE_HANDSHAKE_EOF         2
+#define RECEIVE_HANDSHAKE_INVALID     3
+#define RECEIVE_HANDSHAKE_SUCCESS     4
+
+int receive_handshake(int, Handshake&, size_t&, const std::string&);
+
 }}}
 
 

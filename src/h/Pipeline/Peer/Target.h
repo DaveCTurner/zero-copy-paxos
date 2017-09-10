@@ -23,7 +23,7 @@
 
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
-#include "Pipeline/NodeName.h"
+#include "Pipeline/Peer/Protocol.h"
 
 namespace Pipeline {
 namespace Peer {
@@ -46,9 +46,13 @@ private:
         Epoll::Manager     &manager;
         Paxos::Legislator  &legislator;
   const NodeName           &node_name;
+        Paxos::NodeId       peer_id = 0;
 
         int                 fd = -1;
+
         bool                sent_handshake = false;
+        Protocol::Handshake received_handshake;
+        size_t              received_handshake_bytes = 0;
 
   void shutdown();
 
