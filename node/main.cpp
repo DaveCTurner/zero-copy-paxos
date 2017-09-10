@@ -16,26 +16,113 @@
 
 */
 
+#include "Command/Registration.h"
 #include "Command/Listener.h"
 #include "RealWorld.h"
 #include "Pipeline/Client/Listener.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 
+#include <getopt.h>
 #include <signal.h>
 
+struct option long_options[] =
+  {
+    {"client-port",   required_argument, 0, 'c'},
+    {"command-port",  required_argument, 0, 'm'},
+    {"register-at",   required_argument, 0, 'r'},
+    {0, 0, 0, 0}
+  };
+
 int main(int argc, char **argv) {
-  std::string cluster_id = "3277f758-473b-4188-99fc-b19b0e7a940b";
-  Pipeline::NodeName node_name(cluster_id, 1);
+  const char *client_port   = NULL;
+  const char *command_port  = NULL;
+  std::vector<Command::Registration::Address>  registration_addresses;
+
+  while (1) {
+    int option_index = 0;
+    int getopt_result = getopt_long(argc, argv, "c:m:r:",
+                                    long_options, &option_index);
+
+    if (getopt_result == -1) { break; }
+
+    char *target, *p;
+
+    switch (getopt_result) {
+      case 'c':
+        if (client_port != NULL) {
+          fprintf(stderr, "--client-port repeated\n");
+          abort();
+        }
+        client_port = strdup(optarg);
+        if (client_port == NULL) {
+          perror("getopt: client_port");
+          abort();
+        }
+        break;
+      case 'm':
+        if (command_port != NULL) {
+          fprintf(stderr, "--command-port repeated\n");
+          abort();
+        }
+        command_port = strdup(optarg);
+        if (command_port == NULL) {
+          perror("getopt: command_port");
+          abort();
+        }
+        break;
+      case 'r':
+        target = strdup(optarg);
+        if (target == NULL) {
+          perror("getopt: register_at");
+          abort();
+        }
+        p = target;
+        while (*p) {
+          if (*p == ':') {
+            *p = '\0';
+            registration_addresses.push_back(
+              Command::Registration::Address(target, p+1));
+            break;
+          }
+          p++;
+        }
+        free(target);
+        break;
+
+      default:
+        fprintf(stderr, "unknown option\n");
+        abort();
+    }
+  }
+
+  if (client_port == NULL) {
+    fprintf(stderr, "option --client-port is required\n");
+    abort();
+  }
+
+  if (command_port == NULL) {
+    fprintf(stderr, "option --command-port is required\n");
+    abort();
+  }
+
+  std::string cluster_name;
+  Paxos::NodeId node_id;
+  Command::Registration::get_node_name(cluster_name, node_id,
+                                       registration_addresses);
+  const Pipeline::NodeName node_name(cluster_name, node_id);
+
+  printf("Starting as cluster %s node %d\n", node_name.cluster.c_str(),
+                                             node_name.id);
 
   Paxos::Configuration conf(1);
   RealWorld real_world(node_name);
   Paxos::Legislator legislator(real_world, node_name.id, 0, 0, conf);
   Epoll::Manager manager;
   Pipeline::Client::Listener client_listener
-    (manager, legislator, node_name, "41715");
+    (manager, legislator, node_name, client_port);
   Command::Listener command_listener
-    (manager, legislator, node_name, "41716");
+    (manager, legislator, node_name, command_port);
 
   real_world.add_chosen_value_handler(&client_listener);
   real_world.set_node_id_generation_handler(&command_listener);
