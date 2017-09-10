@@ -16,10 +16,13 @@
 
 */
 
+
+
 #include "Command/Registration.h"
 #include "Command/Listener.h"
 #include "RealWorld.h"
 #include "Pipeline/Client/Listener.h"
+#include "Pipeline/Peer/Listener.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 
@@ -29,6 +32,7 @@
 struct option long_options[] =
   {
     {"client-port",   required_argument, 0, 'c'},
+    {"peer-port",     required_argument, 0, 'p'},
     {"command-port",  required_argument, 0, 'm'},
     {"register-at",   required_argument, 0, 'r'},
     {0, 0, 0, 0}
@@ -36,12 +40,13 @@ struct option long_options[] =
 
 int main(int argc, char **argv) {
   const char *client_port   = NULL;
+  const char *peer_port     = NULL;
   const char *command_port  = NULL;
   std::vector<Command::Registration::Address>  registration_addresses;
 
   while (1) {
     int option_index = 0;
-    int getopt_result = getopt_long(argc, argv, "c:m:r:",
+    int getopt_result = getopt_long(argc, argv, "c:p:m:r:",
                                     long_options, &option_index);
 
     if (getopt_result == -1) { break; }
@@ -57,6 +62,17 @@ int main(int argc, char **argv) {
         client_port = strdup(optarg);
         if (client_port == NULL) {
           perror("getopt: client_port");
+          abort();
+        }
+        break;
+      case 'p':
+        if (peer_port != NULL) {
+          fprintf(stderr, "--peer-port repeated\n");
+          abort();
+        }
+        peer_port = strdup(optarg);
+        if (peer_port == NULL) {
+          perror("getopt: peer_port");
           abort();
         }
         break;
@@ -101,6 +117,11 @@ int main(int argc, char **argv) {
     abort();
   }
 
+  if (peer_port == NULL) {
+    fprintf(stderr, "option --peer-port is required\n");
+    abort();
+  }
+
   if (command_port == NULL) {
     fprintf(stderr, "option --command-port is required\n");
     abort();
@@ -121,6 +142,8 @@ int main(int argc, char **argv) {
   Epoll::Manager manager;
   Pipeline::Client::Listener client_listener
     (manager, legislator, node_name, client_port);
+  Pipeline::Peer::Listener peer_listener
+    (manager, legislator, node_name, peer_port);
   Command::Listener command_listener
     (manager, legislator, node_name, command_port);
 
