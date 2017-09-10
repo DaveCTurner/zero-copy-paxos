@@ -19,6 +19,7 @@
 
 
 #include "Pipeline/Peer/Target.h"
+#include "Pipeline/Peer/Protocol.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -107,6 +108,19 @@ void Target::handle_readable() {
 }
 
 void Target::handle_writeable() {
+  if (fd == -1) {
+    return;
+  }
+
+  if (!sent_handshake) {
+    printf("%s (fd=%d): connected\n", __PRETTY_FUNCTION__, fd);
+    assert(fd != -1);
+    Protocol::send_handshake(fd, node_name);
+    manager.modify_handler(fd, this, EPOLLIN);
+    sent_handshake = true;
+    return;
+  }
+
   fprintf(stderr, "%s: TODO\n",
                   __PRETTY_FUNCTION__);
   abort();

@@ -48,6 +48,7 @@ private:
   const NodeName           &node_name;
 
         int                 fd = -1;
+        bool                sent_handshake = false;
 
   void shutdown();
 
