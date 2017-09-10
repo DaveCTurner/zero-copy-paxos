@@ -20,6 +20,7 @@
 
 #include "Command/Registration.h"
 #include "Command/Listener.h"
+#include "Pipeline/Peer/Target.h"
 #include "RealWorld.h"
 #include "Pipeline/Client/Listener.h"
 #include "Pipeline/Peer/Listener.h"
@@ -34,6 +35,7 @@ struct option long_options[] =
     {"client-port",   required_argument, 0, 'c'},
     {"peer-port",     required_argument, 0, 'p'},
     {"command-port",  required_argument, 0, 'm'},
+    {"target",        required_argument, 0, 't'},
     {"register-at",   required_argument, 0, 'r'},
     {0, 0, 0, 0}
   };
@@ -42,11 +44,12 @@ int main(int argc, char **argv) {
   const char *client_port   = NULL;
   const char *peer_port     = NULL;
   const char *command_port  = NULL;
+  std::vector<Pipeline::Peer::Target::Address> target_addresses;
   std::vector<Command::Registration::Address>  registration_addresses;
 
   while (1) {
     int option_index = 0;
-    int getopt_result = getopt_long(argc, argv, "c:p:m:r:",
+    int getopt_result = getopt_long(argc, argv, "c:p:m:t:r:",
                                     long_options, &option_index);
 
     if (getopt_result == -1) { break; }
@@ -87,6 +90,25 @@ int main(int argc, char **argv) {
           abort();
         }
         break;
+      case 't':
+        target = strdup(optarg);
+        if (target == NULL) {
+          perror("getopt: target");
+          abort();
+        }
+        p = target;
+        while (*p) {
+          if (*p == ':') {
+            *p = '\0';
+            target_addresses.push_back(
+              Pipeline::Peer::Target::Address(target, p+1));
+            break;
+          }
+          p++;
+        }
+        free(target);
+        break;
+
       case 'r':
         target = strdup(optarg);
         if (target == NULL) {
@@ -136,6 +158,11 @@ int main(int argc, char **argv) {
   printf("Starting as cluster %s node %d\n", node_name.cluster.c_str(),
                                              node_name.id);
 
+  std::cout << "Targets:" << std::endl;
+  for (const auto &address : target_addresses) {
+    std::cout << address.host << " port " << address.port << std::endl;
+  }
+
   Paxos::Configuration conf(1);
   RealWorld real_world(node_name);
   Paxos::Legislator legislator(real_world, node_name.id, 0, 0, conf);
@@ -149,6 +176,12 @@ int main(int argc, char **argv) {
 
   real_world.add_chosen_value_handler(&client_listener);
   real_world.set_node_id_generation_handler(&command_listener);
+
+  std::vector<std::unique_ptr<Pipeline::Peer::Target>> targets;
+  for (const auto &address : target_addresses) {
+    targets.push_back(std::move(std::unique_ptr<Pipeline::Peer::Target>
+      (new Pipeline::Peer::Target(address, manager, legislator, node_name))));
+  }
 
   signal(SIGPIPE, SIG_IGN);
 
