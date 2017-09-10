@@ -177,7 +177,26 @@ void Target::handle_writeable() {
       iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message.type);
     }
 
+#ifndef NTRACE
+    size_t total_len = 0;
+    printf("%s (fd=%d): sending", __PRETTY_FUNCTION__, fd);
+    for (int i = 0; i < iovcnt; i++) {
+      printf(" /");
+      uint8_t *p = reinterpret_cast<uint8_t*>(iov[i].iov_base);
+      total_len += iov[i].iov_len;
+      for (size_t j = 0; j < iov[i].iov_len; j++) {
+        printf(" %02x", *p);
+        p++;
+      }
+    }
+    printf(" = %lu bytes\n", total_len);
+#endif // ndef NTRACE
+
     ssize_t writev_result = writev(fd, iov, iovcnt);
+
+#ifndef NTRACE
+    printf("%s: writev returned %ld\n", __PRETTY_FUNCTION__, writev_result);
+#endif // ndef NTRACE
 
     if (writev_result == -1) {
       if (errno == EAGAIN) {
