@@ -97,8 +97,83 @@ void Socket::handle_readable() {
     return;
   }
 
-  fprintf(stderr, "%s: TODO\n", __PRETTY_FUNCTION__);
-  abort();
+  struct iovec iov[2];
+  int iovcnt;
+  if (size_received == 0) {
+    iovcnt = 2;
+    iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message_type);
+    iov[1].iov_base = reinterpret_cast<uint8_t*>(&current_message);
+    iov[0].iov_len  = 1;
+    iov[1].iov_len  = sizeof(Protocol::Message);
+  } else {
+    assert(size_received < 1 + sizeof(Protocol::Message));
+    iovcnt = 1;
+    iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message)
+                    + (size_received - 1);
+    iov[0].iov_len  = sizeof(Protocol::Message)
+                    - (size_received - 1);
+  }
+
+  int readv_result = readv(fd, iov, iovcnt);
+  if (readv_result == -1) {
+    perror(__PRETTY_FUNCTION__);
+    fprintf(stderr, "%s (fd=%d,peer=%d): readv() failed\n",
+                    __PRETTY_FUNCTION__, fd, peer_id);
+    shutdown();
+    return;
+  }
+
+  if (readv_result == 0) {
+#ifndef NTRACE
+    printf("%s (fd=%d,peer=%d): EOF in readv()\n",
+            __PRETTY_FUNCTION__, fd, peer_id);
+#endif // ndef NTRACE
+    shutdown();
+    return;
+  }
+
+  assert(readv_result > 0);
+  size_received += readv_result;
+  assert(size_received <= 1 + sizeof(Protocol::Message));
+
+  if (size_received < 1 + sizeof(Protocol::Message)) {
+    return;
+  }
+
+#ifndef NTRACE
+  printf("%s (fd=%d,peer=%d): receiving message type=%02x\n",
+    __PRETTY_FUNCTION__, fd, peer_id,
+    current_message_type);
+#endif // ndef NTRACE
+
+  switch (current_message_type) {
+
+    case MESSAGE_TYPE_SEEK_VOTES_OR_CATCH_UP:
+    {
+      const auto &payload = current_message.seek_votes_or_catch_up;
+      const auto term = payload.term.get_paxos_term();
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received seek_votes_or_catch_up("
+        << payload.slot << ", "
+        << term << ")"
+        << std::endl;
+#endif // ndef NTRACE
+      legislator.handle_seek_votes_or_catch_up(peer_id,
+           payload.slot,
+           term);
+      size_received = 0;
+      return;
+    }
+
+    default:
+      fprintf(stderr, "%s (fd=%d): unknown message type=%02x\n",
+          __PRETTY_FUNCTION__, fd,
+          current_message_type);
+      shutdown();
+      return;
+  }
 }
 
 void Socket::handle_writeable() {

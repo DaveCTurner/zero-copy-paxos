@@ -99,6 +99,10 @@ int receive_handshake(int fd, Handshake &handshake, size_t &received_bytes,
   return RECEIVE_HANDSHAKE_SUCCESS;
 }
 
+Paxos::Term Term::get_paxos_term() const {
+  return Paxos::Term(era, term_number, owner);
+}
+
 void Term::copy_from(const Paxos::Term &src) {
   era         = src.era;
   term_number = src.term_number;

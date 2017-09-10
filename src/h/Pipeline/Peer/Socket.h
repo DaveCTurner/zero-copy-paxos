@@ -46,6 +46,10 @@ private:
   Protocol::Handshake received_handshake;
   size_t              received_handshake_size = 0;
 
+  uint8_t           current_message_type = 0;
+  Protocol::Message current_message;
+  size_t            size_received = 0;
+
   void shutdown();
 
 public:

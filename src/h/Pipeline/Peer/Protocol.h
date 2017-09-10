@@ -65,6 +65,8 @@ struct Term {
   Paxos::Era        era;
   Paxos::TermNumber term_number;
   Paxos::NodeId     owner;
+
+  Paxos::Term get_paxos_term() const;
   void copy_from(const Paxos::Term&);
 } __attribute__((packed));
 
