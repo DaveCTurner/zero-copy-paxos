@@ -64,6 +64,39 @@ bool Socket::is_shutdown() const {
 void Socket::handle_readable() {
   assert(fd != -1);
 
+  if (received_handshake_size < sizeof received_handshake) {
+    assert(peer_id == 0);
+
+    switch(Protocol::receive_handshake(fd,
+                                       received_handshake,
+                                       received_handshake_size,
+                                       node_name.cluster)) {
+
+      case RECEIVE_HANDSHAKE_ERROR:
+      case RECEIVE_HANDSHAKE_EOF:
+      case RECEIVE_HANDSHAKE_INVALID:
+        shutdown();
+        break;
+
+      case RECEIVE_HANDSHAKE_INCOMPLETE:
+        break;
+
+      case RECEIVE_HANDSHAKE_SUCCESS:
+        peer_id = received_handshake.node_id;
+
+#ifndef NTRACE
+        printf("%s (fd=%d): accepted handshake version %d cluster %s node %d\n",
+          __PRETTY_FUNCTION__, fd,
+          received_handshake.protocol_version,
+          received_handshake.cluster_id,
+          received_handshake.node_id);
+#endif // ndef NTRACE
+        break;
+    }
+
+    return;
+  }
+
   fprintf(stderr, "%s: TODO\n", __PRETTY_FUNCTION__);
   abort();
 }

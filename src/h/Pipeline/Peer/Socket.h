@@ -42,6 +42,10 @@ private:
 
         int                        fd;
 
+  Paxos::NodeId       peer_id = 0;
+  Protocol::Handshake received_handshake;
+  size_t              received_handshake_size = 0;
+
   void shutdown();
 
 public:
