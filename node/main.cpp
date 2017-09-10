@@ -163,8 +163,9 @@ int main(int argc, char **argv) {
     std::cout << address.host << " port " << address.port << std::endl;
   }
 
+  std::vector<std::unique_ptr<Pipeline::Peer::Target>> targets;
   Paxos::Configuration conf(1);
-  RealWorld real_world(node_name);
+  RealWorld real_world(node_name, targets);
   Paxos::Legislator legislator(real_world, node_name.id, 0, 0, conf);
   Epoll::Manager manager;
   Pipeline::Client::Listener client_listener
@@ -177,7 +178,6 @@ int main(int argc, char **argv) {
   real_world.add_chosen_value_handler(&client_listener);
   real_world.set_node_id_generation_handler(&command_listener);
 
-  std::vector<std::unique_ptr<Pipeline::Peer::Target>> targets;
   for (const auto &address : target_addresses) {
     targets.push_back(std::move(std::unique_ptr<Pipeline::Peer::Target>
       (new Pipeline::Peer::Target(address, manager, legislator, node_name))));

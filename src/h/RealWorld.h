@@ -22,10 +22,12 @@
 #define REAL_WORLD_H
 
 #include "Paxos/OutsideWorld.h"
+#include "Pipeline/Peer/Target.h"
 #include "Pipeline/Client/ChosenStreamContentHandler.h"
 #include "Command/NodeIdGenerationHandler.h"
 #include "Pipeline/NodeName.h"
 
+#include <memory>
 
 class RealWorld : public Paxos::OutsideWorld {
   RealWorld           (const RealWorld&) = delete; // no copying
@@ -36,6 +38,7 @@ class RealWorld : public Paxos::OutsideWorld {
   std::vector<Pipeline::Client::ChosenStreamContentHandler*> chosen_stream_content_handlers;
 
   const Pipeline::NodeName     &node_name;
+  std::vector<std::unique_ptr<Pipeline::Peer::Target>> &targets;
 
   Command::NodeIdGenerationHandler *node_id_generation_handler = NULL;
   int log_fd = -1;
@@ -43,7 +46,8 @@ class RealWorld : public Paxos::OutsideWorld {
   void record_non_stream_content_acceptance(const Paxos::Proposal&);
 
 public:
-  RealWorld(const Pipeline::NodeName&);
+  RealWorld(const Pipeline::NodeName&,
+                  std::vector<std::unique_ptr<Pipeline::Peer::Target>>&);
 
   ~RealWorld();
 

@@ -31,8 +31,10 @@
 #include <unistd.h>
 
 RealWorld::RealWorld(
-      const Pipeline::NodeName &node_name)
-  : node_name(node_name) {
+      const Pipeline::NodeName &node_name,
+      std::vector<std::unique_ptr<Pipeline::Peer::Target>> &targets)
+  : node_name(node_name),
+    targets(targets) {
 
   ensure_directory(".", "data");
 
