@@ -159,6 +159,16 @@ void Target::handle_writeable() {
   abort();
 }
 
+void Target::seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
+                            const Paxos::Term &min_acceptable_term) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ":"
+            << " " << first_unchosen_slot
+            << " " << min_acceptable_term
+            << std::endl;
+#endif //ndef NTRACE
+}
+
 void Target::handle_error(const uint32_t events) {
   fprintf(stderr, "%s (fd=%d, events=%x): unexpected\n",
                   __PRETTY_FUNCTION__, fd, events);

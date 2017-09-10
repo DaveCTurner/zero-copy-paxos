@@ -80,7 +80,9 @@ void RealWorld::add_chosen_value_handler(Pipeline::Client::ChosenStreamContentHa
 void RealWorld::seek_votes_or_catch_up(
       const Paxos::Slot &first_unchosen_slot,
       const Paxos::Term &min_acceptable_term) {
-  //TODO
+  for (auto &target : targets) {
+    target->seek_votes_or_catch_up(first_unchosen_slot, min_acceptable_term);
+  }
 }
 
 void RealWorld::offer_vote(
