@@ -32,6 +32,8 @@ namespace Peer {
 Target::Address::Address(const char *host, const char *port)
       : host(host), port(port) { }
 
+bool Target::is_connected() const { return fd != -1 && peer_id != 0; }
+
 void Target::shutdown() {
   manager.deregister_close_and_clear(fd);
   received_handshake_bytes = 0;
@@ -45,6 +47,7 @@ void Target::start_connection() {
 
   sent_handshake = false;
   received_handshake_bytes = 0;
+  waiting_to_become_writeable = false;
   peer_id = 0;
 
   struct addrinfo hints;
@@ -82,6 +85,7 @@ void Target::start_connection() {
       assert(connect_result == -1);
       if (errno == EINPROGRESS) {
         manager.register_handler(fd, this, EPOLLOUT);
+        waiting_to_become_writeable = true;
         break;
       } else {
         perror(__PRETTY_FUNCTION__);
@@ -154,9 +158,66 @@ void Target::handle_writeable() {
     return;
   }
 
-  fprintf(stderr, "%s: TODO\n",
-                  __PRETTY_FUNCTION__);
-  abort();
+  while (current_message.still_to_send > 0) {
+    struct iovec iov[2];
+    int          iovcnt;
+    if (current_message.still_to_send <= sizeof(Protocol::Message)) {
+      iovcnt = 1;
+      iov[0].iov_len  = current_message.still_to_send;
+      iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message.message)
+                      + sizeof(Protocol::Message)
+                      - current_message.still_to_send;
+    } else {
+      assert(current_message.still_to_send == sizeof(Protocol::Message)
+                                            + 1);
+      iovcnt = 2;
+      iov[1].iov_len  = sizeof(Protocol::Message);
+      iov[0].iov_len  = 1;
+      iov[1].iov_base = reinterpret_cast<uint8_t*>(&current_message.message);
+      iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message.type);
+    }
+
+    ssize_t writev_result = writev(fd, iov, iovcnt);
+
+    if (writev_result == -1) {
+      if (errno == EAGAIN) {
+        if (!waiting_to_become_writeable) {
+          manager.modify_handler(fd, this, EPOLLOUT);
+          waiting_to_become_writeable = true;
+        }
+      } else {
+        perror(__PRETTY_FUNCTION__);
+        fprintf(stderr, "%s: writev() failed\n", __PRETTY_FUNCTION__);
+        shutdown();
+      }
+      return;
+    } else {
+      assert(writev_result >= 0);
+      size_t bytes_written = writev_result;
+      assert(bytes_written <= current_message.still_to_send);
+      current_message.still_to_send -= bytes_written;
+    }
+  }
+
+  if (waiting_to_become_writeable) {
+    manager.modify_handler(fd, this, 0);
+    waiting_to_become_writeable = false;
+  }
+}
+
+bool Target::prepare_to_send(uint8_t message_type) {
+  if (!is_connected()) {
+    return false;
+  }
+  if (0 < current_message.still_to_send) {
+    return false;
+  }
+
+  assert(current_message.still_to_send == 0);
+  memset(&current_message, 0, sizeof(current_message));
+  current_message.type          = message_type;
+  current_message.still_to_send = 1 + sizeof(Protocol::Message);
+  return true;
 }
 
 void Target::seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
@@ -167,6 +228,11 @@ void Target::seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
             << " " << min_acceptable_term
             << std::endl;
 #endif //ndef NTRACE
+  if (!prepare_to_send(MESSAGE_TYPE_SEEK_VOTES_OR_CATCH_UP)) { return; }
+  auto &payload = current_message.message.seek_votes_or_catch_up;
+  payload.slot = first_unchosen_slot;
+  payload.term.copy_from(min_acceptable_term);
+  handle_writeable();
 }
 
 void Target::handle_error(const uint32_t events) {

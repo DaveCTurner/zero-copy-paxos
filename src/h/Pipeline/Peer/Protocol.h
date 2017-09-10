@@ -21,6 +21,7 @@
 #ifndef PIPELINE_PEER_PROTOCOL_H
 #define PIPELINE_PEER_PROTOCOL_H
 
+#include "Paxos/Term.h"
 #include "Pipeline/NodeName.h"
 
 #define CLUSTER_ID_LENGTH 36  // length of a GUID string
@@ -45,6 +46,42 @@ void send_handshake(int, const NodeName&);
 #define RECEIVE_HANDSHAKE_SUCCESS     4
 
 int receive_handshake(int, Handshake&, size_t&, const std::string&);
+
+/*
+
+Protocol - start with a handshake:
+- 4 bytes protocol version
+- 36 bytes cluster ID
+- 1 byte null terminator
+- 4 bytes node ID
+
+Then sequence of messages. Each message starts
+with an identifying byte followed by some (or fewer)
+bytes according to its type.
+
+*/
+
+struct Term {
+  Paxos::Era        era;
+  Paxos::TermNumber term_number;
+  Paxos::NodeId     owner;
+  void copy_from(const Paxos::Term&);
+} __attribute__((packed));
+
+union Message {
+
+/* Type 0x01: seek_votes_or_catch_up(const Slot&, const Term&)
+    - 8 bytes slot number
+    - 12 bytes term (4 bytes era, 4 bytes term number, 4 bytes owner id)
+*/
+
+#define MESSAGE_TYPE_SEEK_VOTES_OR_CATCH_UP 0x01
+  struct seek_votes_or_catch_up {
+    Paxos::Slot slot;
+    Term        term;
+  } __attribute__((packed));
+  seek_votes_or_catch_up      seek_votes_or_catch_up;
+};
 
 }}}
 

@@ -42,6 +42,14 @@ public:
   };
 
 private:
+  struct CurrentMessage {
+    uint8_t           type = 0xff;
+    Protocol::Message message;
+    size_t            still_to_send = 0;
+  }                          current_message;
+  bool                       waiting_to_become_writeable = true;
+  bool prepare_to_send(uint8_t);
+
   const Address             address;
         Epoll::Manager     &manager;
         Paxos::Legislator  &legislator;
@@ -54,6 +62,7 @@ private:
         Protocol::Handshake received_handshake;
         size_t              received_handshake_bytes = 0;
 
+  bool is_connected() const;
   void shutdown();
 
 public:
