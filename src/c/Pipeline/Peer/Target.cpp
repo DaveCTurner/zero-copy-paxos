@@ -261,4 +261,14 @@ void Target::seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
   handle_writeable();
 }
 
+void Target::offer_catch_up(const Paxos::NodeId &destination) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ":"
+            << " " << destination
+            << std::endl;
+#endif //ndef NTRACE
+  if (!prepare_to_send(MESSAGE_TYPE_OFFER_CATCH_UP)) { return; }
+  handle_writeable();
+}
+
 }}

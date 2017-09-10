@@ -92,7 +92,9 @@ void RealWorld::offer_vote(
 }
 
 void RealWorld::offer_catch_up(const Paxos::NodeId &destination) {
-  //TODO
+  for (auto &target : targets) {
+    target->offer_catch_up(destination);
+  }
 }
 
 void RealWorld::request_catch_up(const Paxos::NodeId &destination) {

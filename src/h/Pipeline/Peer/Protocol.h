@@ -83,6 +83,14 @@ union Message {
     Term        term;
   } __attribute__((packed));
   seek_votes_or_catch_up      seek_votes_or_catch_up;
+
+/* Type 0x02: offer_catch_up(const NodeId&)
+    - (NodeId parameter is destination, not included in message)
+    - no further data
+*/
+
+#define MESSAGE_TYPE_OFFER_CATCH_UP 0x02
+
 };
 
 }}}
