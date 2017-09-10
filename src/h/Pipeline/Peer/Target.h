@@ -60,6 +60,9 @@ public:
   void handle_readable() override;
   void handle_writeable() override;
   void handle_error(const uint32_t) override;
+
+  void start_connection();
+
 };
 
 }}

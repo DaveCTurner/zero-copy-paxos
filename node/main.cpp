@@ -183,6 +183,15 @@ int main(int argc, char **argv) {
       (new Pipeline::Peer::Target(address, manager, legislator, node_name))));
   }
 
+  const std::chrono::steady_clock::duration
+                                    target_check_interval
+          = std::chrono::milliseconds(500);
+
+  std::chrono::steady_clock::time_point
+                                    next_target_check_time
+                                      = real_world.get_current_time()
+                                      + target_check_interval;
+
   signal(SIGPIPE, SIG_IGN);
 
   while (1) {
@@ -198,6 +207,15 @@ int main(int argc, char **argv) {
     manager.wait(ms_to_next_wake_up);
 
     legislator.handle_wake_up();
+
+    if (next_target_check_time < real_world.get_current_time()) {
+      for (auto &target : targets) {
+        target->start_connection();
+      }
+
+      next_target_check_time = real_world.get_current_time()
+                             + target_check_interval;
+    }
   }
 
   return 1;
