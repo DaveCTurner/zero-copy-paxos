@@ -224,6 +224,13 @@ void Target::handle_writeable() {
   }
 }
 
+void Target::handle_error(const uint32_t events) {
+  fprintf(stderr, "%s (fd=%d, events=%x): unexpected\n",
+                  __PRETTY_FUNCTION__, fd, events);
+  shutdown();
+  assert(fd == -1);
+}
+
 bool Target::prepare_to_send(uint8_t message_type) {
   if (!is_connected()) {
     return false;
@@ -252,13 +259,6 @@ void Target::seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
   payload.slot = first_unchosen_slot;
   payload.term.copy_from(min_acceptable_term);
   handle_writeable();
-}
-
-void Target::handle_error(const uint32_t events) {
-  fprintf(stderr, "%s (fd=%d, events=%x): unexpected\n",
-                  __PRETTY_FUNCTION__, fd, events);
-  shutdown();
-  assert(fd == -1);
 }
 
 }}
