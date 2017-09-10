@@ -50,8 +50,7 @@ Socket::Socket
 
   manager.register_handler(fd, this, EPOLLIN);
 
-  fprintf(stderr, "%s: TODO\n", __PRETTY_FUNCTION__);
-  abort();
+  Protocol::send_handshake(fd, node_name);
 }
 
 Socket::~Socket() {

@@ -21,6 +21,7 @@
 #ifndef PIPELINE_PEER_SOCKET_H
 #define PIPELINE_PEER_SOCKET_H
 
+#include "Pipeline/Peer/Protocol.h"
 #include "Pipeline/Pipe.h"
 #include "Pipeline/Peer/Protocol.h"
 #include "Epoll.h"
