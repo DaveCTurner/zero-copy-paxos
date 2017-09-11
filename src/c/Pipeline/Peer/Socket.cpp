@@ -70,7 +70,9 @@ bool Socket::is_shutdown() const {
 }
 
 void Socket::handle_readable() {
-  assert(fd != -1);
+  if (fd == -1) {
+    return;
+  }
 
   if (received_handshake_size < sizeof received_handshake) {
     assert(peer_id == 0);
