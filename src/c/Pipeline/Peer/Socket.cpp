@@ -97,6 +97,84 @@ void Socket::handle_readable() {
     return;
   }
 
+  if (size_received == 1 + sizeof(Protocol::Message)
+          && current_message_type == MESSAGE_TYPE_SEND_CATCH_UP) {
+
+    // reading configuration entries after a catch-up message
+
+    auto &payload = current_message.send_catch_up;
+    assert(current_entry_size < sizeof(Protocol::Message::configuration_entry));
+
+    ssize_t read_configuration_entry_result
+      = read(fd,
+        reinterpret_cast<uint8_t*>(&current_entry) + current_entry_size,
+        sizeof(Protocol::Message::configuration_entry) - current_entry_size);
+
+    if (read_configuration_entry_result == -1) {
+      perror(__PRETTY_FUNCTION__);
+      fprintf(stderr, "%s (fd=%d,peer=%d): read(configuration entry) failed\n",
+                      __PRETTY_FUNCTION__, fd, peer_id);
+      shutdown();
+      return;
+    }
+
+    if (read_configuration_entry_result == 0) {
+      shutdown();
+      return;
+    }
+
+    assert(read_configuration_entry_result > 0);
+    current_entry_size += read_configuration_entry_result;
+    assert(current_entry_size <= sizeof(Protocol::Message::configuration_entry));
+
+    if (current_entry_size < sizeof(Protocol::Message::configuration_entry)) {
+      return;
+    }
+
+    received_entries.push_back(
+      Paxos::Configuration::Entry(current_entry.node_id,
+                                  current_entry.weight));
+    payload.configuration_size -= 1;
+    current_entry_size = 0;
+#ifndef NTRACE
+    std::cout << __PRETTY_FUNCTION__
+      << " (fd=" << fd << ",peer=" << peer_id << "): "
+      << "received configuration entry("
+      << current_entry.node_id << ", "
+      << (uint32_t)current_entry.weight << ")"
+      << std::endl;
+#endif // ndef NTRACE
+
+    if (0 < payload.configuration_size) {
+      // still more entries to go
+      return;
+    }
+
+#ifndef NTRACE
+    std::cout << __PRETTY_FUNCTION__
+      << " (fd=" << fd << ",peer=" << peer_id << "): "
+      << "received all configuration entries"
+      << std::endl;
+#endif // ndef NTRACE
+
+    Paxos::Configuration configuration(received_entries);
+    Paxos::Value::StreamName stream =
+      {.owner = payload.current_stream_owner,
+       .id    = payload.current_stream_id };
+
+    legislator.handle_send_catch_up(
+      payload.slot,
+      payload.era,
+      configuration,
+      payload.next_generated_node_id,
+      stream,
+      payload.current_stream_position);
+
+    received_entries.clear();
+    size_received = 0;
+    return;
+  }
+
   struct iovec iov[2];
   int iovcnt;
   if (size_received == 0) {
@@ -208,6 +286,24 @@ void Socket::handle_readable() {
       size_received = 0;
       return;
     }
+
+    case MESSAGE_TYPE_SEND_CATCH_UP:
+    {
+      auto &payload __attribute__((unused))
+        = current_message.send_catch_up;
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received send_catch_up() header"
+        << std::endl;
+#endif // ndef NTRACE
+      // have received header so now reading
+      // configuration entries.
+      assert(payload.configuration_size > 0);
+      assert(current_entry_size == 0);
+      return;
+    }
+
 
     default:
       fprintf(stderr, "%s (fd=%d): unknown message type=%02x\n",

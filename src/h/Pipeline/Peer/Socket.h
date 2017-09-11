@@ -50,6 +50,10 @@ private:
   Protocol::Message current_message;
   size_t            size_received = 0;
 
+  std::vector<Paxos::Configuration::Entry> received_entries;
+  Protocol::Message::configuration_entry   current_entry;
+  size_t                                   current_entry_size = 0;
+
   void shutdown();
 
 public:
