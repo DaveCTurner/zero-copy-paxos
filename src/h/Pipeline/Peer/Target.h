@@ -94,6 +94,8 @@ public:
     const Paxos::Value::StreamName &current_stream,
     const uint64_t                  current_stream_pos);
 
+  void prepare_term(const Paxos::Term &term);
+
 };
 
 }}

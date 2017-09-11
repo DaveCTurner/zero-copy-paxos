@@ -126,7 +126,9 @@ void RealWorld::send_catch_up(
 }
 
 void RealWorld::prepare_term(const Paxos::Term &term) {
-  //TODO
+  for (auto &target : targets) {
+    target->prepare_term(term);
+  }
 }
 
 void RealWorld::write_log_line(std::ostringstream &os) {

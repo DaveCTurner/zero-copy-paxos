@@ -383,4 +383,16 @@ void Target::send_catch_up(
   }
 }
 
+void Target::prepare_term(const Paxos::Term &term) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ":"
+            << " " << term
+            << std::endl;
+#endif //ndef NTRACE
+  if (!prepare_to_send(MESSAGE_TYPE_PREPARE_TERM)) { return; }
+  auto &payload = current_message.message.prepare_term;
+  payload.term.copy_from(term);
+  handle_writeable();
+}
+
 }}

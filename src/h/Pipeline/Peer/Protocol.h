@@ -143,6 +143,16 @@ union Message {
     Paxos::Configuration::Weight weight;
   } __attribute__((packed));
 
+/* Type 0x06: prepare_term(const Term&)
+    - 12 bytes term (4 bytes era, 4 bytes term number, 4 bytes owner id)
+*/
+
+#define MESSAGE_TYPE_PREPARE_TERM 0x06
+  struct prepare_term {
+    Term        term;
+  } __attribute__((packed));
+  prepare_term                prepare_term;
+
 };
 
 }}}

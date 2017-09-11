@@ -304,6 +304,21 @@ void Socket::handle_readable() {
       return;
     }
 
+    case MESSAGE_TYPE_PREPARE_TERM:
+    {
+      const auto &payload = current_message.prepare_term;
+      const auto term = payload.term.get_paxos_term();
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received prepare_term("
+        << term << ")"
+        << std::endl;
+#endif // ndef NTRACE
+      legislator.handle_prepare_term(peer_id, term);
+      size_received = 0;
+      return;
+    }
 
     default:
       fprintf(stderr, "%s (fd=%d): unknown message type=%02x\n",
