@@ -178,6 +178,91 @@ union Message {
   } __attribute__((packed));
   make_promise_free           make_promise_free;
 
+/* Message types containing values are of the form 0xvt where the bottom nibble
+   't' is the message type and the top nibble 'v' is the value type. They all
+   comprise the message followed by the value.
+*/
+
+/* Type 0xv9: make_promise(const Promise& == Promise::Type::bound) TODO */
+
+/* Type 0xva: proposed_and_accepted(const Proposal&)
+    - 16 bytes slot range (8 byte slot number *2)
+    - 12 bytes term (4 bytes era, 4 bytes term number, 4 bytes owner id)
+    - value
+*/
+
+#define MESSAGE_TYPE_PROPOSED_AND_ACCEPTED 0x0a
+  struct proposed_and_accepted {
+    Paxos::Slot start_slot;
+    Paxos::Slot end_slot;
+    Term        term;
+  } __attribute__((packed));
+  proposed_and_accepted       proposed_and_accepted;
+
+};
+
+union Value {
+
+/* Value 0x0t: no-op
+    - one dummy byte, for simplicity's sake
+*/
+
+#define VALUE_TYPE_NO_OP 0x00
+  struct no_op {
+    uint8_t dummy;
+  } __attribute__((packed));
+  no_op no_op;
+
+/* Value 0x1t: generate-node-id
+    - 4 bytes originator
+*/
+
+#define VALUE_TYPE_GENERATE_NODE_ID 0x10
+  struct generate_node_id {
+    Paxos::NodeId originator;
+  } __attribute__((packed));
+  generate_node_id generate_node_id;
+
+/* Value 0x2t: increment weight
+    - 4 bytes node id
+*/
+
+#define VALUE_TYPE_INCREMENT_WEIGHT 0x20
+  struct increment_weight {
+    Paxos::NodeId node_id;
+  } __attribute__((packed));
+  increment_weight increment_weight;
+
+/* Value 0x3t: decrement weight
+    - 4 bytes node id
+*/
+
+#define VALUE_TYPE_DECREMENT_WEIGHT 0x30
+  struct decrement_weight {
+    Paxos::NodeId node_id;
+  } __attribute__((packed));
+  decrement_weight decrement_weight;
+
+/* Value 0x4t: multiply weights
+    - 1 byte multiplier
+*/
+
+#define VALUE_TYPE_MULTIPLY_WEIGHTS 0x40
+  struct multiply_weights {
+    Paxos::Configuration::Weight multiplier;
+  } __attribute__((packed));
+  multiply_weights multiply_weights;
+
+/* Value 0x5t: divide weights
+    - 1 byte divisor
+*/
+
+#define VALUE_TYPE_DIVIDE_WEIGHTS 0x50
+  struct divide_weights {
+    Paxos::Configuration::Weight divisor;
+  } __attribute__((packed));
+  divide_weights divide_weights;
+
 };
 
 }}}

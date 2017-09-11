@@ -97,7 +97,7 @@ void Socket::handle_readable() {
     return;
   }
 
-  if (size_received == 1 + sizeof(Protocol::Message)
+  if (size_received == 1 + sizeof(Protocol::Message) + sizeof(Protocol::Value)
           && current_message_type == MESSAGE_TYPE_SEND_CATCH_UP) {
 
     // reading configuration entries after a catch-up message
@@ -175,21 +175,31 @@ void Socket::handle_readable() {
     return;
   }
 
-  struct iovec iov[2];
+  struct iovec iov[3];
   int iovcnt;
   if (size_received == 0) {
-    iovcnt = 2;
+    iovcnt = 3;
     iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message_type);
     iov[1].iov_base = reinterpret_cast<uint8_t*>(&current_message);
+    iov[2].iov_base = reinterpret_cast<uint8_t*>(&current_value);
     iov[0].iov_len  = 1;
     iov[1].iov_len  = sizeof(Protocol::Message);
-  } else {
-    assert(size_received < 1 + sizeof(Protocol::Message));
-    iovcnt = 1;
+    iov[2].iov_len  = sizeof(Protocol::Value);
+  } else if (size_received <= 1 + sizeof(Protocol::Message)) {
+    iovcnt = 2;
     iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message)
                     + (size_received - 1);
+    iov[1].iov_base = reinterpret_cast<uint8_t*>(&current_value);
     iov[0].iov_len  = sizeof(Protocol::Message)
                     - (size_received - 1);
+    iov[1].iov_len  = sizeof(Protocol::Value);
+  } else {
+    assert(size_received < 1 + sizeof(Protocol::Message) + sizeof(Protocol::Value));
+    iovcnt = 1;
+    iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_value)
+                    + (size_received - 1 - sizeof(Protocol::Message));
+    iov[0].iov_len  = sizeof(Protocol::Value)
+                    - (size_received - 1 - sizeof(Protocol::Message));
   }
 
   int readv_result = readv(fd, iov, iovcnt);
@@ -212,9 +222,9 @@ void Socket::handle_readable() {
 
   assert(readv_result > 0);
   size_received += readv_result;
-  assert(size_received <= 1 + sizeof(Protocol::Message));
+  assert(size_received <= 1 + sizeof(Protocol::Message) + sizeof(Protocol::Value));
 
-  if (size_received < 1 + sizeof(Protocol::Message)) {
+  if (size_received < 1 + sizeof(Protocol::Message) + sizeof(Protocol::Value)) {
     return;
   }
 
@@ -224,7 +234,7 @@ void Socket::handle_readable() {
     current_message_type);
 #endif // ndef NTRACE
 
-  switch (current_message_type) {
+  switch (current_message_type & 0x0f) {
 
     case MESSAGE_TYPE_SEEK_VOTES_OR_CATCH_UP:
     {
@@ -365,6 +375,39 @@ void Socket::handle_readable() {
       return;
     }
 
+    case MESSAGE_TYPE_PROPOSED_AND_ACCEPTED:
+    {
+      const auto &payload = current_message.proposed_and_accepted;
+      const auto term     = payload.term.get_paxos_term();
+      Paxos::Value value;
+      if (!get_paxos_value(value)) {
+        shutdown();
+        return;
+      }
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received proposed_and_accepted("
+        << payload.start_slot << ", "
+        << payload.end_slot << ", "
+        << term << "), value = "
+        << value
+        << std::endl;
+#endif // ndef NTRACE
+
+      assert(value.type != Paxos::Value::Type::stream_content);
+
+      Paxos::Proposal proposal = {
+        .slots = Paxos::SlotRange(payload.start_slot, payload.end_slot),
+        .term  = term,
+        .value = value
+      };
+
+      legislator.handle_proposed_and_accepted(peer_id, proposal);
+      size_received = 0;
+      return;
+    }
+
     default:
       fprintf(stderr, "%s (fd=%d): unknown message type=%02x\n",
           __PRETTY_FUNCTION__, fd,
@@ -372,6 +415,42 @@ void Socket::handle_readable() {
       shutdown();
       return;
   }
+}
+
+bool Socket::get_paxos_value(Paxos::Value &value) {
+  switch(current_message_type & 0xf0) {
+    case VALUE_TYPE_NO_OP:
+      value.type = Paxos::Value::Type::no_op;
+      break;
+    case VALUE_TYPE_GENERATE_NODE_ID:
+      value.type = Paxos::Value::Type::generate_node_id;
+      value.payload.originator = current_value.generate_node_id.originator;
+      break;
+    case VALUE_TYPE_INCREMENT_WEIGHT:
+      value.type = Paxos::Value::Type::reconfiguration_inc;
+      value.payload.reconfiguration.subject  = current_value.increment_weight.node_id;
+      break;
+    case VALUE_TYPE_DECREMENT_WEIGHT:
+      value.type = Paxos::Value::Type::reconfiguration_dec;
+      value.payload.reconfiguration.subject  = current_value.decrement_weight.node_id;
+      break;
+    case VALUE_TYPE_MULTIPLY_WEIGHTS:
+      value.type = Paxos::Value::Type::reconfiguration_mul;
+      value.payload.reconfiguration.factor = current_value.multiply_weights.multiplier;
+      break;
+    case VALUE_TYPE_DIVIDE_WEIGHTS:
+      value.type = Paxos::Value::Type::reconfiguration_div;
+      value.payload.reconfiguration.factor = current_value.divide_weights.divisor;
+      break;
+
+    default:
+      fprintf(stderr, "%s (fd=%d,peer=%d): unknown message type: %02x\n",
+        __PRETTY_FUNCTION__, fd, peer_id, current_message_type);
+      shutdown();
+      return false;
+  }
+
+  return true;
 }
 
 void Socket::handle_writeable() {

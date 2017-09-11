@@ -247,7 +247,9 @@ void RealWorld::proposed_and_accepted(const Paxos::Proposal &proposal) {
     record_non_stream_content_acceptance(proposal);
   }
 
-  //TODO
+  for (auto &target : targets) {
+    target->proposed_and_accepted(proposal);
+  }
 }
 
 void RealWorld::accepted(const Paxos::Proposal &proposal) {

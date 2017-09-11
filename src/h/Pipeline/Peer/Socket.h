@@ -48,7 +48,9 @@ private:
 
   uint8_t           current_message_type = 0;
   Protocol::Message current_message;
+  Protocol::Value   current_value;
   size_t            size_received = 0;
+  bool get_paxos_value(Paxos::Value&);
 
   std::vector<Paxos::Configuration::Entry> received_entries;
   Protocol::Message::configuration_entry   current_entry;

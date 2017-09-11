@@ -104,6 +104,48 @@ void Target::start_connection() {
   freeaddrinfo(remote_addrinfo);
 }
 
+uint8_t Target::value_type(const Paxos::Value::Type &t) {
+  switch (t) {
+    case Paxos::Value::Type::no_op:               return VALUE_TYPE_NO_OP;
+    case Paxos::Value::Type::generate_node_id:    return VALUE_TYPE_GENERATE_NODE_ID;
+    case Paxos::Value::Type::reconfiguration_inc: return VALUE_TYPE_INCREMENT_WEIGHT;
+    case Paxos::Value::Type::reconfiguration_dec: return VALUE_TYPE_DECREMENT_WEIGHT;
+    case Paxos::Value::Type::reconfiguration_mul: return VALUE_TYPE_MULTIPLY_WEIGHTS;
+    case Paxos::Value::Type::reconfiguration_div: return VALUE_TYPE_DIVIDE_WEIGHTS;
+    case Paxos::Value::Type::stream_content:      break; // not supported
+  }
+  fprintf(stderr, "%s: bad value: %d", __PRETTY_FUNCTION__, t);
+  abort();
+}
+
+void Target::set_current_message_value(const Paxos::Value &value) {
+  Protocol::Value &v = current_message.value;
+  switch (value.type) {
+    case Paxos::Value::Type::no_op:
+      return;
+    case Paxos::Value::Type::generate_node_id:
+      v.generate_node_id.originator = value.payload.originator;
+      return;
+    case Paxos::Value::Type::reconfiguration_inc:
+      v.increment_weight.node_id = value.payload.reconfiguration.subject;
+      return;
+    case Paxos::Value::Type::reconfiguration_dec:
+      v.decrement_weight.node_id = value.payload.reconfiguration.subject;
+      return;
+    case Paxos::Value::Type::reconfiguration_mul:
+      v.multiply_weights.multiplier = value.payload.reconfiguration.factor;
+      return;
+    case Paxos::Value::Type::reconfiguration_div:
+      v.divide_weights.divisor = value.payload.reconfiguration.factor;
+      return;
+    case Paxos::Value::Type::stream_content:
+      // not supported
+      break;
+  }
+  fprintf(stderr, "%s: bad value type: %d", __PRETTY_FUNCTION__, value.type);
+  abort();
+}
+
 Target::Target(const Address           &address,
                      Epoll::Manager    &manager,
                      Paxos::Legislator &legislator,
@@ -163,20 +205,35 @@ void Target::handle_writeable() {
   }
 
   while (current_message.still_to_send > 0) {
-    struct iovec iov[2];
+    struct iovec iov[3];
     int          iovcnt;
-    if (current_message.still_to_send <= sizeof(Protocol::Message)) {
+    if (current_message.still_to_send <= sizeof(Protocol::Value)) {
       iovcnt = 1;
       iov[0].iov_len  = current_message.still_to_send;
+      iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message.value)
+                      + sizeof(Protocol::Value)
+                      - current_message.still_to_send;
+    } else if (current_message.still_to_send <= sizeof(Protocol::Value)
+                                              + sizeof(Protocol::Message)) {
+
+      iovcnt = 2;
+      iov[1].iov_len  = sizeof(Protocol::Value);
+      iov[0].iov_len  = current_message.still_to_send
+                      - sizeof(Protocol::Value);
+      iov[1].iov_base = reinterpret_cast<uint8_t*>(&current_message.value);
       iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message.message)
                       + sizeof(Protocol::Message)
+                      + sizeof(Protocol::Value)
                       - current_message.still_to_send;
     } else {
-      assert(current_message.still_to_send == sizeof(Protocol::Message)
+      assert(current_message.still_to_send == sizeof(Protocol::Value)
+                                            + sizeof(Protocol::Message)
                                             + 1);
-      iovcnt = 2;
+      iovcnt = 3;
+      iov[2].iov_len  = sizeof(Protocol::Value);
       iov[1].iov_len  = sizeof(Protocol::Message);
       iov[0].iov_len  = 1;
+      iov[2].iov_base = reinterpret_cast<uint8_t*>(&current_message.value);
       iov[1].iov_base = reinterpret_cast<uint8_t*>(&current_message.message);
       iov[0].iov_base = reinterpret_cast<uint8_t*>(&current_message.type);
     }
@@ -246,7 +303,8 @@ bool Target::prepare_to_send(uint8_t message_type) {
   assert(current_message.still_to_send == 0);
   memset(&current_message, 0, sizeof(current_message));
   current_message.type          = message_type;
-  current_message.still_to_send = 1 + sizeof(Protocol::Message);
+  current_message.still_to_send = 1 + sizeof(Protocol::Message)
+                                    + sizeof(Protocol::Value);
   return true;
 }
 
@@ -433,6 +491,29 @@ void Target::make_promise(const Paxos::Promise &promise) {
 
   fprintf(stderr, "%s: bound promises TODO\n", __PRETTY_FUNCTION__);
   return;
+}
+
+
+void Target::proposed_and_accepted(const Paxos::Proposal &proposal) {
+  if (proposal.value.type == Paxos::Value::Type::stream_content) {
+    fprintf(stderr, "%s (fd=%d): proposed_and_accepted(stream_content) TODO\n",
+      __PRETTY_FUNCTION__, fd);
+  } else {
+#ifndef NTRACE
+    std::cout << __PRETTY_FUNCTION__ << ":"
+              << " " << proposal
+              << std::endl;
+#endif //ndef NTRACE
+    if (!prepare_to_send( MESSAGE_TYPE_PROPOSED_AND_ACCEPTED
+                        | value_type(proposal.value.type)))
+           { return; }
+    auto &payload = current_message.message.proposed_and_accepted;
+    payload.start_slot = proposal.slots.start();
+    payload.end_slot   = proposal.slots.end();
+    payload.term.copy_from(proposal.term);
+    set_current_message_value(proposal.value);
+    handle_writeable();
+  }
 }
 
 }}

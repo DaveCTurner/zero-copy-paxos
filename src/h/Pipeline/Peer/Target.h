@@ -45,9 +45,11 @@ private:
   struct CurrentMessage {
     uint8_t           type = 0xff;
     Protocol::Message message;
+    Protocol::Value   value;
     size_t            still_to_send = 0;
   }                          current_message;
   bool                       waiting_to_become_writeable = true;
+  void set_current_message_value(const Paxos::Value&);
   bool prepare_to_send(uint8_t);
 
   const Address             address;
@@ -65,6 +67,8 @@ private:
   bool is_connected() const;
   bool is_connected_to(const Paxos::NodeId &n) const;
   void shutdown();
+
+  uint8_t value_type(const Paxos::Value::Type &t);
 
 public:
   Target(const Address           &address,
@@ -96,6 +100,7 @@ public:
 
   void prepare_term(const Paxos::Term &term);
   void make_promise(const Paxos::Promise &promise);
+  void proposed_and_accepted(const Paxos::Proposal &proposal);
 
 };
 
