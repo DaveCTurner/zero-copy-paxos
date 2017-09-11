@@ -408,6 +408,37 @@ void Socket::handle_readable() {
       return;
     }
 
+    case MESSAGE_TYPE_ACCEPTED:
+    {
+      const auto &payload = current_message.accepted;
+      const auto term     = payload.term.get_paxos_term();
+      Paxos::Value value;
+      if (!get_paxos_value(value)) {
+        shutdown();
+        return;
+      }
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received accepted("
+        << payload.start_slot << ", "
+        << payload.end_slot << ", "
+        << term << "), value = "
+        << value
+        << std::endl;
+#endif // ndef NTRACE
+
+      Paxos::Proposal proposal = {
+        .slots = Paxos::SlotRange(payload.start_slot, payload.end_slot),
+        .term  = term,
+        .value = value
+      };
+
+      legislator.handle_accepted(peer_id, proposal);
+      size_received = 0;
+      return;
+    }
+
     default:
       fprintf(stderr, "%s (fd=%d): unknown message type=%02x\n",
           __PRETTY_FUNCTION__, fd,

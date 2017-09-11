@@ -101,6 +101,7 @@ public:
   void prepare_term(const Paxos::Term &term);
   void make_promise(const Paxos::Promise &promise);
   void proposed_and_accepted(const Paxos::Proposal &proposal);
+  void accepted(const Paxos::Proposal &proposal);
 
 };
 

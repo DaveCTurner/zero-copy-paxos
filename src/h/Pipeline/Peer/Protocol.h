@@ -199,6 +199,20 @@ union Message {
   } __attribute__((packed));
   proposed_and_accepted       proposed_and_accepted;
 
+/* Type 0xvb: accepted(const Proposal&)
+    - 16 bytes slot range (8 byte slot number *2)
+    - 12 bytes term (4 bytes era, 4 bytes term number, 4 bytes owner id)
+    - value
+*/
+
+#define MESSAGE_TYPE_ACCEPTED 0x0b
+  struct accepted {
+    Paxos::Slot start_slot;
+    Paxos::Slot end_slot;
+    Term        term;
+  } __attribute__((packed));
+  accepted                    accepted;
+
 };
 
 union Value {

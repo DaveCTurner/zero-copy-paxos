@@ -516,4 +516,21 @@ void Target::proposed_and_accepted(const Paxos::Proposal &proposal) {
   }
 }
 
+void Target::accepted(const Paxos::Proposal &proposal) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ":"
+            << " " << proposal
+            << std::endl;
+#endif //ndef NTRACE
+  if (!prepare_to_send( MESSAGE_TYPE_ACCEPTED
+                      | value_type(proposal.value.type)))
+         { return; }
+  auto &payload = current_message.message.accepted;
+  payload.start_slot = proposal.slots.start();
+  payload.end_slot   = proposal.slots.end();
+  payload.term.copy_from(proposal.term);
+  set_current_message_value(proposal.value);
+  handle_writeable();
+}
+
 }}
