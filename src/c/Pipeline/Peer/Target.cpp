@@ -267,6 +267,7 @@ void Target::seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
 
 void Target::offer_vote(const Paxos::NodeId &destination,
                 const Paxos::Term   &min_acceptable_term) {
+  if (!is_connected_to(destination)) { return; }
 #ifndef NTRACE
   std::cout << __PRETTY_FUNCTION__ << ":"
             << " " << destination
@@ -280,6 +281,7 @@ void Target::offer_vote(const Paxos::NodeId &destination,
 }
 
 void Target::offer_catch_up(const Paxos::NodeId &destination) {
+  if (!is_connected_to(destination)) { return; }
 #ifndef NTRACE
   std::cout << __PRETTY_FUNCTION__ << ":"
             << " " << destination
