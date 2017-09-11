@@ -489,10 +489,36 @@ void Target::make_promise(const Paxos::Promise &promise) {
     return;
   }
 
-  fprintf(stderr, "%s: bound promises TODO\n", __PRETTY_FUNCTION__);
-  return;
-}
+  if (promise.type == Paxos::Promise::Type::bound) {
+    if (promise.max_accepted_term_value.type == Paxos::Value::Type::stream_content) {
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__ << " (TODO):"
+                << " " << promise
+                << std::endl;
+#endif //ndef NTRACE
+    } else {
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__ << " (bound):"
+                << " " << promise
+                << std::endl;
+#endif //ndef NTRACE
+      if (!prepare_to_send( MESSAGE_TYPE_MAKE_PROMISE_BOUND
+                          | value_type(promise.max_accepted_term_value.type)))
+             { return; }
+      auto &payload = current_message.message.make_promise_bound;
+      payload.start_slot = promise.slots.start();
+      payload.end_slot   = promise.slots.end();
+      payload.term.copy_from(promise.term);
+      payload.max_accepted_term.copy_from(promise.max_accepted_term);
+      set_current_message_value(promise.max_accepted_term_value);
+      handle_writeable();
+      return;
+    }
+  }
 
+  fprintf(stderr, "%s: bad promise: %d", __PRETTY_FUNCTION__, promise.type);
+  abort();
+}
 
 void Target::proposed_and_accepted(const Paxos::Proposal &proposal) {
   if (proposal.value.type == Paxos::Value::Type::stream_content) {

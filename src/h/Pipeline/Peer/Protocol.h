@@ -183,7 +183,21 @@ union Message {
    comprise the message followed by the value.
 */
 
-/* Type 0xv9: make_promise(const Promise& == Promise::Type::bound) TODO */
+/* Type 0xv9: make_promise(const Promise& == Promise::Type::bound)
+    - 16 bytes slot range (8 byte slot number *2)
+    - 12 bytes term (4 bytes era, 4 bytes term number, 4 bytes owner id)
+    - 12 bytes max-accepted term (4 b era, 4 b term number, 4 b owner id)
+    - value
+*/
+
+#define MESSAGE_TYPE_MAKE_PROMISE_BOUND 0x09
+  struct make_promise_bound {
+    Paxos::Slot start_slot;
+    Paxos::Slot end_slot;
+    Term        term;
+    Term        max_accepted_term;
+  } __attribute__((packed));
+  make_promise_bound          make_promise_bound;
 
 /* Type 0xva: proposed_and_accepted(const Proposal&)
     - 16 bytes slot range (8 byte slot number *2)

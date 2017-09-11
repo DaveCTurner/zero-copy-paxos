@@ -375,6 +375,41 @@ void Socket::handle_readable() {
       return;
     }
 
+    case MESSAGE_TYPE_MAKE_PROMISE_BOUND:
+    {
+      const auto &payload          = current_message.make_promise_bound;
+      const auto term              = payload.term.get_paxos_term();
+      const auto max_accepted_term = payload.max_accepted_term.get_paxos_term();
+      Paxos::Value value;
+      if (!get_paxos_value(value)) {
+        shutdown();
+        return;
+      }
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received make_promise_bound("
+        << payload.start_slot << ", "
+        << payload.end_slot << ", "
+        << term << ", "
+        << max_accepted_term << "), value = "
+        << value
+        << std::endl;
+#endif // ndef NTRACE
+
+      assert(value.type != Paxos::Value::Type::stream_content);
+
+      Paxos::Promise promise(
+        Paxos::Promise::Type::bound,
+        payload.start_slot, payload.end_slot, term);
+      promise.max_accepted_term       = max_accepted_term;
+      promise.max_accepted_term_value = value;
+
+      legislator.handle_promise(peer_id, promise);
+      size_received = 0;
+      return;
+    }
+
     case MESSAGE_TYPE_PROPOSED_AND_ACCEPTED:
     {
       const auto &payload = current_message.proposed_and_accepted;
