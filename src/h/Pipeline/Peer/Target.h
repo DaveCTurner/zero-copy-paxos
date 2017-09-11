@@ -85,6 +85,15 @@ public:
   void offer_catch_up(const Paxos::NodeId &destination);
   void request_catch_up(const Paxos::NodeId &destination);
 
+  void send_catch_up(
+    const Paxos::NodeId            &destination,
+    const Paxos::Slot              &first_unchosen_slot,
+    const Paxos::Era               &current_era,
+    const Paxos::Configuration     &current_configuration,
+    const Paxos::NodeId            &next_generated_node_id,
+    const Paxos::Value::StreamName &current_stream,
+    const uint64_t                  current_stream_pos);
+
 };
 
 }}

@@ -113,7 +113,16 @@ void RealWorld::send_catch_up(
       const Paxos::NodeId&            next_generated_node_id,
       const Paxos::Value::StreamName& current_stream,
       const uint64_t                  current_stream_pos) {
-  //TODO
+
+  for (auto &target : targets) {
+    target->send_catch_up(destination,
+                         first_unchosen_slot,
+                         current_era,
+                         current_configuration,
+                         next_generated_node_id,
+                         current_stream,
+                         current_stream_pos);
+  }
 }
 
 void RealWorld::prepare_term(const Paxos::Term &term) {

@@ -302,4 +302,43 @@ void Target::request_catch_up(const Paxos::NodeId &destination) {
   handle_writeable();
 }
 
+void Target::send_catch_up(
+  const Paxos::NodeId&          destination,
+  const Paxos::Slot&            first_unchosen_slot,
+  const Paxos::Era&             current_era,
+  const Paxos::Configuration&   current_configuration,
+  const Paxos::NodeId&          next_generated_node_id,
+  const Paxos::Value::StreamName& current_stream,
+  const uint64_t                current_stream_pos) {
+
+  if (!is_connected_to(destination)) { return; }
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ":"
+            << " " << destination
+            << " " << first_unchosen_slot
+            << " " << current_era
+            << " " << current_configuration
+            << " " << next_generated_node_id
+            << " " << current_stream
+            << " " << current_stream_pos
+            << std::endl;
+#endif //ndef NTRACE
+  if (!prepare_to_send(MESSAGE_TYPE_SEND_CATCH_UP)) { return; }
+  auto &payload = current_message.message.send_catch_up;
+  payload.slot                    = first_unchosen_slot;
+  payload.era                     = current_era;
+  payload.next_generated_node_id  = next_generated_node_id;
+  payload.current_stream_owner    = current_stream.owner;
+  payload.current_stream_id       = current_stream.id;
+  payload.current_stream_position = current_stream_pos;
+  payload.configuration_size      = current_configuration.entries.size();
+
+  handle_writeable();
+
+  // TODO also send config entries
+  fprintf(stderr, "%s: TODO: send config entries \n",
+    __PRETTY_FUNCTION__);
+  shutdown();
+}
+
 }}

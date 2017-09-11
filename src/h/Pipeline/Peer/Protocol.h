@@ -22,6 +22,7 @@
 #define PIPELINE_PEER_PROTOCOL_H
 
 #include "Paxos/Term.h"
+#include "Paxos/Value.h"
 #include "Pipeline/NodeName.h"
 
 #define CLUSTER_ID_LENGTH 36  // length of a GUID string
@@ -108,6 +109,34 @@ union Message {
 */
 
 #define MESSAGE_TYPE_REQUEST_CATCH_UP 0x04
+
+/* Type 0x05: send_catch_up(const NodeId&, const Slot&, const Era&,
+                            const Configuration&, const NodeId&, const NodeId&,
+                            const Value::StreamId&, const * uint64_t)
+    - (first NodeId parameter is destination, not included in message)
+    - 8 bytes slot number
+    - 4 bytes era
+    - 4 bytes next-generated node id
+    - 4 bytes current stream owner
+    - 4 bytes current stream id
+    - 8 bytes current stream position
+    - Configuration:
+      - 4 bytes entry count, then repeated this many times:
+        - 4 bytes node id
+        - 1 byte weight
+*/
+
+#define MESSAGE_TYPE_SEND_CATCH_UP 0x05
+  struct send_catch_up {
+    Paxos::Slot            slot;
+    Paxos::Era             era;
+    Paxos::NodeId          next_generated_node_id;
+    Paxos::NodeId          current_stream_owner;
+    Paxos::Value::StreamId current_stream_id;
+    uint64_t               current_stream_position;
+    uint32_t               configuration_size;
+  } __attribute__((packed));
+  send_catch_up               send_catch_up;
 
 };
 
