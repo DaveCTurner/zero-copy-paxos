@@ -412,7 +412,26 @@ void Target::make_promise(const Paxos::Promise &promise) {
     return;
   }
 
-  fprintf(stderr, "%s: non-multi promises TODO\n", __PRETTY_FUNCTION__);
+  if (promise.slots.is_empty()) {
+    return;
+  }
+
+  if (promise.type == Paxos::Promise::Type::free) {
+#ifndef NTRACE
+    std::cout << __PRETTY_FUNCTION__ << " (free):"
+              << " " << promise
+              << std::endl;
+#endif //ndef NTRACE
+  if (!prepare_to_send(MESSAGE_TYPE_MAKE_PROMISE_FREE)) { return; }
+    auto &payload = current_message.message.make_promise_free;
+    payload.start_slot = promise.slots.start();
+    payload.end_slot   = promise.slots.end();
+    payload.term.copy_from(promise.term);
+    handle_writeable();
+    return;
+  }
+
+  fprintf(stderr, "%s: bound promises TODO\n", __PRETTY_FUNCTION__);
   return;
 }
 

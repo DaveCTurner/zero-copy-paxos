@@ -165,6 +165,19 @@ union Message {
   } __attribute__((packed));
   make_promise_multi          make_promise_multi;
 
+/* Type 0x08: make_promise(const Promise& == Promise::Type::free)
+    - 16 bytes slot range (8 byte slot number *2)
+    - 12 bytes term (4 bytes era, 4 bytes term number, 4 bytes owner id)
+*/
+
+#define MESSAGE_TYPE_MAKE_PROMISE_FREE 0x08
+  struct make_promise_free {
+    Paxos::Slot start_slot;
+    Paxos::Slot end_slot;
+    Term        term;
+  } __attribute__((packed));
+  make_promise_free           make_promise_free;
+
 };
 
 }}}

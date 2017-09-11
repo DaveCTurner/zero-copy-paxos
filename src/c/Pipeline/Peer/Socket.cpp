@@ -342,6 +342,29 @@ void Socket::handle_readable() {
       return;
     }
 
+    case MESSAGE_TYPE_MAKE_PROMISE_FREE:
+    {
+      const auto &payload = current_message.make_promise_free;
+      const auto term = payload.term.get_paxos_term();
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received make_promise_free("
+        << payload.start_slot << ", "
+        << payload.end_slot << ", "
+        << term << ")"
+        << std::endl;
+#endif // ndef NTRACE
+
+      Paxos::Promise promise(
+        Paxos::Promise::Type::free,
+        payload.start_slot, payload.end_slot, term);
+
+      legislator.handle_promise(peer_id, promise);
+      size_received = 0;
+      return;
+    }
+
     default:
       fprintf(stderr, "%s (fd=%d): unknown message type=%02x\n",
           __PRETTY_FUNCTION__, fd,
