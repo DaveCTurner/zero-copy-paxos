@@ -153,6 +153,18 @@ union Message {
   } __attribute__((packed));
   prepare_term                prepare_term;
 
+/* Type 0x07: make_promise(const Promise& == Promise::Type::multi)
+    - 8 bytes slot number
+    - 12 bytes term (4 bytes era, 4 bytes term number, 4 bytes owner id)
+*/
+
+#define MESSAGE_TYPE_MAKE_PROMISE_MULTI 0x07
+  struct make_promise_multi {
+    Paxos::Slot slot;
+    Term        term;
+  } __attribute__((packed));
+  make_promise_multi          make_promise_multi;
+
 };
 
 }}}

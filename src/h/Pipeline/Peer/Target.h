@@ -95,6 +95,7 @@ public:
     const uint64_t                  current_stream_pos);
 
   void prepare_term(const Paxos::Term &term);
+  void make_promise(const Paxos::Promise &promise);
 
 };
 

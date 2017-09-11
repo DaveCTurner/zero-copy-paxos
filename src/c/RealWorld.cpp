@@ -182,7 +182,9 @@ void RealWorld::record_promise(const Paxos::Term &t, const Paxos::Slot &s) {
 }
 
 void RealWorld::make_promise(const Paxos::Promise &promise) {
-  //TODO
+  for (auto &target : targets) {
+    target->make_promise(promise);
+  }
 }
 
 void RealWorld::record_non_stream_content_acceptance(const Paxos::Proposal &proposal) {

@@ -395,4 +395,25 @@ void Target::prepare_term(const Paxos::Term &term) {
   handle_writeable();
 }
 
+void Target::make_promise(const Paxos::Promise &promise) {
+  if (!is_connected_to(promise.term.owner)) { return; }
+
+  if (promise.type == Paxos::Promise::Type::multi) {
+#ifndef NTRACE
+    std::cout << __PRETTY_FUNCTION__ << " (multi):"
+              << " " << promise
+              << std::endl;
+#endif //ndef NTRACE
+    if (!prepare_to_send(MESSAGE_TYPE_MAKE_PROMISE_MULTI)) { return; }
+    auto &payload = current_message.message.make_promise_multi;
+    payload.slot = promise.slots.start();
+    payload.term.copy_from(promise.term);
+    handle_writeable();
+    return;
+  }
+
+  fprintf(stderr, "%s: non-multi promises TODO\n", __PRETTY_FUNCTION__);
+  return;
+}
+
 }}
