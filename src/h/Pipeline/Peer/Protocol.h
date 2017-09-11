@@ -84,19 +84,30 @@ union Message {
   } __attribute__((packed));
   seek_votes_or_catch_up      seek_votes_or_catch_up;
 
-/* Type 0x02: offer_catch_up(const NodeId&)
+/* Type 0x02: offer_vote(const NodeId&, const Term&)
+    - (NodeId parameter is destination, not included in message)
+    - 12 bytes term (4 bytes era, 4 bytes term number, 4 bytes owner id)
+*/
+
+#define MESSAGE_TYPE_OFFER_VOTE 0x02
+  struct offer_vote {
+    Term        term;
+  } __attribute__((packed));
+  offer_vote                  offer_vote;
+
+/* Type 0x03: offer_catch_up(const NodeId&)
     - (NodeId parameter is destination, not included in message)
     - no further data
 */
 
-#define MESSAGE_TYPE_OFFER_CATCH_UP 0x02
+#define MESSAGE_TYPE_OFFER_CATCH_UP 0x03
 
-/* Type 0x03: request_catch_up(const NodeId&)
+/* Type 0x04: request_catch_up(const NodeId&)
     - (NodeId parameter is destination, not included in message)
     - no further data
 */
 
-#define MESSAGE_TYPE_REQUEST_CATCH_UP 0x03
+#define MESSAGE_TYPE_REQUEST_CATCH_UP 0x04
 
 };
 

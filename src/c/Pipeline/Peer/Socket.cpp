@@ -167,6 +167,22 @@ void Socket::handle_readable() {
       return;
     }
 
+    case MESSAGE_TYPE_OFFER_VOTE:
+    {
+      const auto &payload = current_message.offer_vote;
+      const auto term = payload.term.get_paxos_term();
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received offer_vote("
+        << term << ")"
+        << std::endl;
+#endif // ndef NTRACE
+      legislator.handle_offer_vote(peer_id, term);
+      size_received = 0;
+      return;
+    }
+
     case MESSAGE_TYPE_OFFER_CATCH_UP:
     {
 #ifndef NTRACE

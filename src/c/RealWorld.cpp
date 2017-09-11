@@ -88,7 +88,9 @@ void RealWorld::seek_votes_or_catch_up(
 void RealWorld::offer_vote(
       const Paxos::NodeId &destination,
       const Paxos::Term   &min_acceptable_term) {
-  //TODO
+  for (auto &target : targets) {
+    target->offer_vote(destination, min_acceptable_term);
+  }
 }
 
 void RealWorld::offer_catch_up(const Paxos::NodeId &destination) {

@@ -80,6 +80,8 @@ public:
 
   void seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
                               const Paxos::Term &min_acceptable_term);
+  void offer_vote(const Paxos::NodeId &destination,
+                  const Paxos::Term   &min_acceptable_term);
   void offer_catch_up(const Paxos::NodeId &destination);
   void request_catch_up(const Paxos::NodeId &destination);
 

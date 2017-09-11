@@ -265,6 +265,20 @@ void Target::seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
   handle_writeable();
 }
 
+void Target::offer_vote(const Paxos::NodeId &destination,
+                const Paxos::Term   &min_acceptable_term) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ":"
+            << " " << destination
+            << " " << min_acceptable_term
+            << std::endl;
+#endif //ndef NTRACE
+  if (!prepare_to_send(MESSAGE_TYPE_OFFER_VOTE)) { return; }
+  auto &payload = current_message.message.offer_vote;
+  payload.term.copy_from(min_acceptable_term);
+  handle_writeable();
+}
+
 void Target::offer_catch_up(const Paxos::NodeId &destination) {
 #ifndef NTRACE
   std::cout << __PRETTY_FUNCTION__ << ":"
