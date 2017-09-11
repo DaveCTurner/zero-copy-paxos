@@ -63,6 +63,7 @@ private:
         size_t              received_handshake_bytes = 0;
 
   bool is_connected() const;
+  bool is_connected_to(const Paxos::NodeId &n) const;
   void shutdown();
 
 public:
@@ -80,6 +81,7 @@ public:
   void seek_votes_or_catch_up(const Paxos::Slot &first_unchosen_slot,
                               const Paxos::Term &min_acceptable_term);
   void offer_catch_up(const Paxos::NodeId &destination);
+  void request_catch_up(const Paxos::NodeId &destination);
 
 };
 

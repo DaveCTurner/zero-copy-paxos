@@ -91,6 +91,13 @@ union Message {
 
 #define MESSAGE_TYPE_OFFER_CATCH_UP 0x02
 
+/* Type 0x03: request_catch_up(const NodeId&)
+    - (NodeId parameter is destination, not included in message)
+    - no further data
+*/
+
+#define MESSAGE_TYPE_REQUEST_CATCH_UP 0x03
+
 };
 
 }}}

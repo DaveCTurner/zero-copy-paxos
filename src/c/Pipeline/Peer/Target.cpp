@@ -34,6 +34,10 @@ Target::Address::Address(const char *host, const char *port)
 
 bool Target::is_connected() const { return fd != -1 && peer_id != 0; }
 
+bool Target::is_connected_to(const Paxos::NodeId &n) const {
+  return is_connected() && peer_id == n;
+}
+
 void Target::shutdown() {
   manager.deregister_close_and_clear(fd);
   received_handshake_bytes = 0;
@@ -268,6 +272,17 @@ void Target::offer_catch_up(const Paxos::NodeId &destination) {
             << std::endl;
 #endif //ndef NTRACE
   if (!prepare_to_send(MESSAGE_TYPE_OFFER_CATCH_UP)) { return; }
+  handle_writeable();
+}
+
+void Target::request_catch_up(const Paxos::NodeId &destination) {
+  if (!is_connected_to(destination)) { return; }
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ":"
+            << " " << destination
+            << std::endl;
+#endif //ndef NTRACE
+  if (!prepare_to_send(MESSAGE_TYPE_REQUEST_CATCH_UP)) { return; }
   handle_writeable();
 }
 

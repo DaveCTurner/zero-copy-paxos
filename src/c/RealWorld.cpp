@@ -98,7 +98,9 @@ void RealWorld::offer_catch_up(const Paxos::NodeId &destination) {
 }
 
 void RealWorld::request_catch_up(const Paxos::NodeId &destination) {
-  //TODO
+  for (auto &target : targets) {
+    target->request_catch_up(destination);
+  }
 }
 
 void RealWorld::send_catch_up(

@@ -180,6 +180,19 @@ void Socket::handle_readable() {
       return;
     }
 
+    case MESSAGE_TYPE_REQUEST_CATCH_UP:
+    {
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received request_catch_up()"
+        << std::endl;
+#endif // ndef NTRACE
+      legislator.handle_request_catch_up(peer_id);
+      size_received = 0;
+      return;
+    }
+
     default:
       fprintf(stderr, "%s (fd=%d): unknown message type=%02x\n",
           __PRETTY_FUNCTION__, fd,
