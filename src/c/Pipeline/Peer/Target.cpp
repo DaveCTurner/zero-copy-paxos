@@ -334,11 +334,53 @@ void Target::send_catch_up(
   payload.configuration_size      = current_configuration.entries.size();
 
   handle_writeable();
+  if (current_message.still_to_send > 0) {
+    fprintf(stderr, "%s: partial write of catch-up data, %ld bytes remaining\n",
+      __PRETTY_FUNCTION__, current_message.still_to_send);
+    shutdown();
+    return;
+  }
 
-  // TODO also send config entries
-  fprintf(stderr, "%s: TODO: send config entries \n",
-    __PRETTY_FUNCTION__);
-  shutdown();
+  if (!is_connected()) {
+    fprintf(stderr, "%s: disconnected before writing configuration entries\n",
+                     __PRETTY_FUNCTION__);
+    return;
+  }
+
+  for (const auto &entry : current_configuration.entries) {
+
+    Protocol::Message::configuration_entry e;
+    e.node_id = entry.node_id();
+    e.weight  = entry.weight();
+    const uint8_t* ptr  = reinterpret_cast<const uint8_t*>(&e);
+    const size_t   size = sizeof e;
+
+#ifndef NTRACE
+    printf("%s: sending %lu bytes:", __PRETTY_FUNCTION__, size);
+    for (size_t n = 0; n < size; n++) {
+      printf(" %02x", ptr[n]);
+    }
+    printf("\n");
+#endif // ndef NTRACE
+
+    ssize_t write_result = write(fd, ptr, size);
+
+    if (write_result == -1) {
+      perror(__PRETTY_FUNCTION__);
+      fprintf(stderr, "%s: write() failed\n", __PRETTY_FUNCTION__);
+      shutdown();
+      return;
+    } else {
+      assert(0 <= write_result);
+      size_t bytes_written = write_result;
+      if (bytes_written < size) {
+        fprintf(stderr, "%s: write() only wrote %ld of %ld bytes\n",
+               __PRETTY_FUNCTION__, bytes_written, size);
+        shutdown();
+        return;
+      }
+    }
+  }
 }
 
 }}

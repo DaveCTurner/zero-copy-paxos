@@ -138,6 +138,11 @@ union Message {
   } __attribute__((packed));
   send_catch_up               send_catch_up;
 
+  struct configuration_entry {
+    Paxos::NodeId                node_id;
+    Paxos::Configuration::Weight weight;
+  } __attribute__((packed));
+
 };
 
 }}}
