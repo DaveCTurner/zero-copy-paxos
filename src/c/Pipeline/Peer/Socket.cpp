@@ -51,9 +51,17 @@ Socket::Socket
   manager.register_handler(fd, this, EPOLLIN);
 
   Protocol::send_handshake(fd, node_name);
+
+#ifndef NTRACE
+  printf("%s: fd=%d\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
 }
 
 Socket::~Socket() {
+#ifndef NTRACE
+  printf("%s: fd=%d\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+
   shutdown();
 }
 
@@ -119,6 +127,10 @@ void Socket::handle_readable() {
     }
 
     if (read_configuration_entry_result == 0) {
+#ifndef NTRACE
+      printf("%s (fd=%d,peer=%d): EOF in configuration entry\n",
+              __PRETTY_FUNCTION__, fd, peer_id);
+#endif // ndef NTRACE
       shutdown();
       return;
     }

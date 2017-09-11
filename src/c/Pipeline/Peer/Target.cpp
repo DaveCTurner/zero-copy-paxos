@@ -45,6 +45,10 @@ void Target::shutdown() {
 }
 
 void Target::start_connection() {
+#ifndef NTRACE
+  printf("%s (fd=%d): called\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+
   if (fd != -1) {
     return;
   }
@@ -71,6 +75,10 @@ void Target::start_connection() {
     return;
   }
 
+#ifndef NTRACE
+  printf("%s (fd=%d): getaddrinfo succeeded\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+
   for (struct addrinfo *r = remote_addrinfo; r != NULL; r = r->ai_next) {
     fd = socket(r->ai_family,
                 r->ai_socktype | SOCK_NONBLOCK,
@@ -81,13 +89,23 @@ void Target::start_connection() {
       continue;
     }
 
+#ifndef NTRACE
+    printf("%s (fd=%d): created socket\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+
     int connect_result = connect(fd, r->ai_addr, r->ai_addrlen);
     if (connect_result == 0) {
+#ifndef NTRACE
+      printf("%s: connect() succeeded\n", __PRETTY_FUNCTION__);
+#endif // ndef NTRACE
       handle_writeable();
       break;
     } else {
       assert(connect_result == -1);
       if (errno == EINPROGRESS) {
+#ifndef NTRACE
+        printf("%s: connect() returned EINPROGRESS\n", __PRETTY_FUNCTION__);
+#endif // ndef NTRACE
         manager.register_handler(fd, this, EPOLLOUT);
         waiting_to_become_writeable = true;
         break;
@@ -294,9 +312,18 @@ void Target::handle_error(const uint32_t events) {
 
 bool Target::prepare_to_send(uint8_t message_type) {
   if (!is_connected()) {
+#ifndef NTRACE
+    printf("%s (fd=%d,type=%02x): not connected\n",
+      __PRETTY_FUNCTION__, fd, message_type);
+#endif //ndef NTRACE
     return false;
   }
   if (0 < current_message.still_to_send) {
+#ifndef NTRACE
+    printf("%s (fd=%d,type=%02x): still %ld bytes of previous message (%02x) to send\n",
+          __PRETTY_FUNCTION__, fd, message_type,
+          current_message.still_to_send, current_message.type);
+#endif //ndef NTRACE
     return false;
   }
 
