@@ -187,6 +187,9 @@ void Socket::handle_readable() {
     return;
   }
 
+  // receiving a value
+  assert(peer_id != 0);
+
   struct iovec iov[3];
   int iovcnt;
   if (size_received == 0) {

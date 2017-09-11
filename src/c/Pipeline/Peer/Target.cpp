@@ -40,6 +40,7 @@ bool Target::is_connected_to(const Paxos::NodeId &n) const {
 
 void Target::shutdown() {
   manager.deregister_close_and_clear(fd);
+  assert(fd == -1);
   received_handshake_bytes = 0;
   peer_id = 0;
 }
@@ -300,6 +301,8 @@ void Target::handle_writeable() {
       current_message.still_to_send -= bytes_written;
     }
   }
+
+  assert (current_message.still_to_send == 0);
 
   if (waiting_to_become_writeable) {
     manager.modify_handler(fd, this, 0);
