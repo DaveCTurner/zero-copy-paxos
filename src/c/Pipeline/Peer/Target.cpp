@@ -209,6 +209,10 @@ void Target::handle_readable() {
 }
 
 void Target::handle_writeable() {
+#ifndef NTRACE
+  fprintf(stderr, "%s (fd=%d,peer=%d)\n", __PRETTY_FUNCTION__, fd, peer_id);
+#endif // ndef NTRACE
+
   if (fd == -1) {
     return;
   }
