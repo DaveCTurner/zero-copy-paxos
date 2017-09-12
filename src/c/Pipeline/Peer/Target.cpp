@@ -131,7 +131,7 @@ uint8_t Target::value_type(const Paxos::Value::Type &t) {
     case Paxos::Value::Type::reconfiguration_dec: return VALUE_TYPE_DECREMENT_WEIGHT;
     case Paxos::Value::Type::reconfiguration_mul: return VALUE_TYPE_MULTIPLY_WEIGHTS;
     case Paxos::Value::Type::reconfiguration_div: return VALUE_TYPE_DIVIDE_WEIGHTS;
-    case Paxos::Value::Type::stream_content:      break; // not supported
+    case Paxos::Value::Type::stream_content:      return VALUE_TYPE_STREAM_CONTENT;
   }
   fprintf(stderr, "%s: bad value: %d", __PRETTY_FUNCTION__, t);
   abort();
@@ -158,8 +158,10 @@ void Target::set_current_message_value(const Paxos::Value &value) {
       v.divide_weights.divisor = value.payload.reconfiguration.factor;
       return;
     case Paxos::Value::Type::stream_content:
-      // not supported
-      break;
+      v.stream_content.stream_owner  = value.payload.stream.name.owner;
+      v.stream_content.stream_id     = value.payload.stream.name.id;
+      v.stream_content.stream_offset = value.payload.stream.offset;
+      return;
   }
   fprintf(stderr, "%s: bad value type: %d", __PRETTY_FUNCTION__, value.type);
   abort();

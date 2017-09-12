@@ -574,6 +574,12 @@ bool Socket::get_paxos_value(Paxos::Value &value) {
       value.type = Paxos::Value::Type::reconfiguration_div;
       value.payload.reconfiguration.factor = current_value.divide_weights.divisor;
       break;
+    case VALUE_TYPE_STREAM_CONTENT:
+      value.type = Paxos::Value::Type::stream_content;
+      value.payload.stream.name.owner = current_value.stream_content.stream_owner;
+      value.payload.stream.name.id    = current_value.stream_content.stream_id;
+      value.payload.stream.offset     = current_value.stream_content.stream_offset;
+      break;
 
     default:
       fprintf(stderr, "%s (fd=%d,peer=%d): unknown message type: %02x\n",

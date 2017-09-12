@@ -311,6 +311,20 @@ union Value {
   } __attribute__((packed));
   divide_weights divide_weights;
 
+/* Value 0x6t: stream-content
+    - 4 bytes stream owner
+    - 4 bytes stream id
+    - 8 bytes stream offset
+*/
+
+#define VALUE_TYPE_STREAM_CONTENT 0x60
+  struct stream_content {
+    Paxos::NodeId              stream_owner;
+    Paxos::Value::StreamId     stream_id;
+    Paxos::Value::StreamOffset stream_offset;
+  } __attribute__((packed));
+  stream_content stream_content;
+
 };
 
 }}}
