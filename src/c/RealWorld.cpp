@@ -28,7 +28,6 @@
 #include <string.h>
 #include <sstream>
 #include <iomanip>
-#include <unistd.h>
 
 RealWorld::RealWorld(
       const Pipeline::NodeName &node_name,
