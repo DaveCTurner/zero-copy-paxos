@@ -20,6 +20,7 @@
 #include <atomic>
 #include <errno.h>
 #include <fcntl.h>
+#include <getopt.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,6 +32,15 @@
 #include <thread>
 #include <time.h>
 #include <unistd.h>
+
+struct option long_options[] =
+  {
+    {"host",         required_argument, 0, 'h'},
+    {"port",         required_argument, 0, 'p'},
+    {"rate",         required_argument, 0, 'r'},
+    {"request-size", required_argument, 0, 's'},
+    {0, 0, 0, 0}
+  };
 
 int connect_to(const char *host, const char *port) {
   struct addrinfo hints;
@@ -158,7 +168,96 @@ struct Statistics {
 };
 
 int main(int argc, char **argv) {
-  int sock = connect_to("127.0.0.1", "41715");
+  const char *host        = NULL;
+  const char *port        = NULL;
+  const char *rate_string = NULL;
+  const char *size_string = NULL;
+
+  while (1) {
+    int option_index = 0;
+    int getopt_result = getopt_long(argc, argv, "h:p:r:s:",
+                                    long_options, &option_index);
+
+    if (getopt_result == -1) { break; }
+
+    switch (getopt_result) {
+      case 'h':
+        if (host != NULL) {
+          fprintf(stderr, "--host repeated\n");
+          abort();
+        }
+        host = strdup(optarg);
+        if (host == NULL) {
+          perror("getopt: host");
+          abort();
+        }
+        break;
+
+      case 'p':
+        if (port != NULL) {
+          fprintf(stderr, "--port repeated\n");
+          abort();
+        }
+        port = strdup(optarg);
+        if (port == NULL) {
+          perror("getopt: port");
+          abort();
+        }
+        break;
+
+      case 'r':
+        if (rate_string != NULL) {
+          fprintf(stderr, "--rate repeated\n");
+          abort();
+        }
+        rate_string = strdup(optarg);
+        if (rate_string == NULL) {
+          perror("getopt: rate");
+          abort();
+        }
+        break;
+
+      case 's':
+        if (size_string != NULL) {
+          fprintf(stderr, "--request-size repeated\n");
+          abort();
+        }
+        size_string = strdup(optarg);
+        if (size_string == NULL) {
+          perror("getopt: size");
+          abort();
+        }
+        break;
+
+      default:
+        fprintf(stderr, "unknown option\n");
+        abort();
+    }
+  }
+
+  if (host == NULL) {
+    fprintf(stderr, "--host required\n");
+    abort();
+  }
+
+  if (port == NULL) {
+    fprintf(stderr, "--port required\n");
+    abort();
+  }
+
+  if (rate_string == NULL) {
+    fprintf(stderr, "--rate required\n");
+    abort();
+  }
+
+  if (size_string == NULL) {
+    fprintf(stderr, "--request-size required\n");
+    abort();
+  }
+
+  sleep(2);
+
+  int sock = connect_to(host, port);
 
   uint64_t total_txns    = 0;
   uint64_t total_written = 0;
@@ -196,10 +295,14 @@ int main(int argc, char **argv) {
 
   double bucket_capacity_bytes             = 1e5;
   double bucket_level_bytes                = bucket_capacity_bytes;
-  double bucket_leak_rate_bytes_per_sec    = 1e5;
+  double bucket_leak_rate_bytes_per_sec    = strtod(rate_string, NULL);
   struct timespec bucket_last_request_time = current_time;
 
-  size_t request_size = 50;
+  size_t request_size = atoi(size_string);
+  if (request_size == 0) {
+    fprintf(stderr, "--request-size must be positive\n");
+    abort();
+  }
   char *current_request_buf = (char*)malloc(request_size);
   if (current_request_buf == NULL) {
     fprintf(stderr, "malloc() failed\n");
