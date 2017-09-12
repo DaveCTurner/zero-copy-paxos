@@ -163,13 +163,15 @@ int main(int argc, char **argv) {
     std::cout << address.host << " port " << address.port << std::endl;
   }
 
+  Pipeline::SegmentCache segment_cache(node_name);
   std::vector<std::unique_ptr<Pipeline::Peer::Target>> targets;
   Paxos::Configuration conf(1);
-  RealWorld real_world(node_name, targets);
+
+  RealWorld real_world(node_name, segment_cache, targets);
   Paxos::Legislator legislator(real_world, node_name.id, 0, 0, conf);
   Epoll::Manager manager;
   Pipeline::Client::Listener client_listener
-    (manager, legislator, node_name, client_port);
+    (manager, segment_cache, legislator, node_name, client_port);
   Pipeline::Peer::Listener peer_listener
     (manager, legislator, node_name, peer_port);
   Command::Listener command_listener

@@ -57,6 +57,7 @@ private:
 
         Epoll::Manager            &manager;
         Upstream                  &upstream;
+        SegmentCache              &segment_cache;
 
   const NodeName                  &node_name;
   const Paxos::Value::StreamName   stream;
@@ -77,6 +78,7 @@ private:
 public:
   Pipe (Epoll::Manager&,
         Upstream&,
+        SegmentCache&,
         const NodeName&,
         const Paxos::Value::StreamName&);
 

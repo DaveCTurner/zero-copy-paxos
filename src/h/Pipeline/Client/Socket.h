@@ -61,6 +61,7 @@ private:
 
 public:
   Socket (Epoll::Manager&,
+          SegmentCache&,
           Paxos::Legislator&,
           const NodeName&,
           const Paxos::Value::StreamName,

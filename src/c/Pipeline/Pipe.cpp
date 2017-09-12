@@ -95,7 +95,7 @@ void Pipe<Upstream>::handle_readable() {
 
   if (current_segment == NULL) {
     Paxos::Value::OffsetStream os = {.name = stream, .offset = offset_for_next_write};
-    current_segment = new Segment(node_name, os,
+    current_segment = new Segment(segment_cache, node_name, os,
         term_for_next_write, next_stream_pos);
   } else {
     assert(!current_segment->is_shutdown());
@@ -184,10 +184,12 @@ template<class Upstream>
 Pipe<Upstream>::Pipe
        (Epoll::Manager                  &manager,
         Upstream                        &upstream,
+        SegmentCache                    &segment_cache,
         const NodeName                  &node_name,
         const Paxos::Value::StreamName  &stream)
   : manager         (manager),
     upstream        (upstream),
+    segment_cache   (segment_cache),
     node_name       (node_name),
     stream          (stream),
     next_stream_pos (0),

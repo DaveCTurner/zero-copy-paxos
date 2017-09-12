@@ -31,8 +31,10 @@
 
 RealWorld::RealWorld(
       const Pipeline::NodeName &node_name,
+      Pipeline::SegmentCache &segment_cache,
       std::vector<std::unique_ptr<Pipeline::Peer::Target>> &targets)
   : node_name(node_name),
+    segment_cache(segment_cache),
     targets(targets) {
 
   ensure_directory(".", "data");
@@ -268,6 +270,8 @@ void RealWorld::chosen_stream_content(const Paxos::Proposal &proposal) {
     << std::endl;
 #endif
 
+  segment_cache.expire_because_chosen_to(proposal.slots.end());
+
   for (auto h : chosen_stream_content_handlers) {
     h->handle_stream_content(proposal);
   }
@@ -284,6 +288,8 @@ void RealWorld::chosen_non_contiguous_stream_content
     << " actual="   << actual_stream_pos
     << std::endl;
 #endif
+
+  segment_cache.expire_because_chosen_to(proposal.slots.end());
 
   for (auto h : chosen_stream_content_handlers) {
     h->handle_non_contiguous_stream_content(proposal);
@@ -302,6 +308,8 @@ void RealWorld::chosen_unknown_stream_content
     << std::endl;
 #endif
 
+  segment_cache.expire_because_chosen_to(proposal.slots.end());
+
   for (auto h : chosen_stream_content_handlers) {
     h->handle_unknown_stream_content(proposal);
   }
@@ -317,6 +325,8 @@ void RealWorld::chosen_generate_node_ids(const Paxos::Proposal &p, Paxos::NodeId
 
   assert(p.value.type == Paxos::Value::Type::generate_node_id);
   assert(p.value.payload.originator == node_name.id);
+
+  segment_cache.expire_because_chosen_to(p.slots.end());
 
   if (node_id_generation_handler != NULL) {
     for (Paxos::Slot s = p.slots.start();
@@ -338,6 +348,8 @@ void RealWorld::chosen_new_configuration
     << " conf="     << conf
     << std::endl;
 #endif
+
+  segment_cache.expire_because_chosen_to(proposal.slots.end());
 
   Paxos::Slot slot = proposal.slots.start();
   assert(proposal.slots.end() == slot + 1);

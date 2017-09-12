@@ -37,6 +37,7 @@ class Listener : public AbstractListener,
                  public ChosenStreamContentHandler {
 
   Paxos::Legislator &legislator;
+  SegmentCache      &segment_cache;
   const NodeName    &node_name;
   Paxos::Value::StreamId next_stream_id = 0;
   std::vector<std::unique_ptr<Socket>> client_sockets;
@@ -45,7 +46,7 @@ class Listener : public AbstractListener,
   void handle_accept(int client_fd) override;
 
   public:
-    Listener(Epoll::Manager&, Paxos::Legislator&,
+    Listener(Epoll::Manager&, SegmentCache&, Paxos::Legislator&,
              const NodeName&, const char*);
     void handle_stream_content(const Paxos::Proposal&);
     void handle_unknown_stream_content(const Paxos::Proposal&);

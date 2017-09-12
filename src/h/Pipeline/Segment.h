@@ -24,6 +24,7 @@
 #include "Paxos/Value.h"
 #include "Paxos/Term.h"
 #include "Pipeline/NodeName.h"
+#include "Pipeline/SegmentCache.h"
 
 namespace Pipeline {
 
@@ -37,13 +38,15 @@ private:
   int      fd = -1;
   const Paxos::Term                &term;
   const Paxos::Value::StreamOffset  stream_offset;
+        SegmentCache::CacheEntry   &cache_entry;
 
 public:
 
 #define CLIENT_SEGMENT_DEFAULT_SIZE_BITS 24 // 16MB
 #define CLIENT_SEGMENT_DEFAULT_SIZE (1ul<<CLIENT_SEGMENT_DEFAULT_SIZE_BITS)
 
-  Segment(const NodeName&,
+  Segment(SegmentCache&,
+          const NodeName&,
           const Paxos::Value::OffsetStream,
           const Paxos::Term&,
           const uint64_t);

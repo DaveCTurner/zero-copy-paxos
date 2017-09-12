@@ -32,7 +32,8 @@
 namespace Pipeline {
 
 Segment::Segment
-       (const NodeName                   &node_name,
+       (      SegmentCache               &segment_cache,
+        const NodeName                   &node_name,
         const Paxos::Value::OffsetStream  stream,
         const Paxos::Term                &term,
         const uint64_t                    first_stream_pos)
@@ -40,7 +41,9 @@ Segment::Segment
   , remaining_space(CLIENT_SEGMENT_DEFAULT_SIZE
       - (first_stream_pos & (CLIENT_SEGMENT_DEFAULT_SIZE-1)))
   , term(term)
-  , stream_offset(stream.offset) {
+  , stream_offset(stream.offset)
+  , cache_entry(segment_cache.add(stream,
+                                  first_stream_pos + stream.offset)) {
 
   char path[PATH_MAX], parent[PATH_MAX];
 
@@ -82,6 +85,8 @@ Segment::Segment
     abort();
   }
 
+  cache_entry.set_fd(fd);
+
   sync_directory(parent);
 
 #ifndef NTRACE
@@ -99,12 +104,12 @@ Segment::~Segment() {
 
 void Segment::shutdown() {
   if (fd != -1) {
-    close(fd);
 #ifndef NTRACE
     printf("%s: fd=%d\n", __PRETTY_FUNCTION__, fd);
 #endif // ndef NTRACE
     fd = -1;
   }
+  cache_entry.close_for_writing();
 }
 
 void Segment::record_bytes_in(uint64_t bytes) {
@@ -112,6 +117,7 @@ void Segment::record_bytes_in(uint64_t bytes) {
   assert(bytes <= remaining_space);
   next_stream_pos += bytes;
   remaining_space -= bytes;
+  cache_entry.extend(bytes);
   if (remaining_space == 0) {
     shutdown();
   }

@@ -32,6 +32,7 @@ void Socket::shutdown() {
 
 Socket::Socket
        (Epoll::Manager                  &manager,
+        SegmentCache                    &segment_cache,
         Paxos::Legislator               &legislator,
         const NodeName                  &node_name,
         const Paxos::Value::StreamName   stream,
@@ -40,7 +41,7 @@ Socket::Socket
     legislator      (legislator),
     node_name       (node_name),
     stream          (stream),
-    pipe            (manager, *this, node_name, stream),
+    pipe            (manager, *this, segment_cache, node_name, stream),
     fd              (fd) {
 
   manager.register_handler(fd, this, EPOLLIN);

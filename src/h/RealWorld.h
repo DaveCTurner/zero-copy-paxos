@@ -23,6 +23,7 @@
 
 #include "Paxos/OutsideWorld.h"
 #include "Pipeline/Peer/Target.h"
+#include "Pipeline/SegmentCache.h"
 #include "Pipeline/Client/ChosenStreamContentHandler.h"
 #include "Command/NodeIdGenerationHandler.h"
 #include "Pipeline/NodeName.h"
@@ -38,6 +39,7 @@ class RealWorld : public Paxos::OutsideWorld {
   std::vector<Pipeline::Client::ChosenStreamContentHandler*> chosen_stream_content_handlers;
 
   const Pipeline::NodeName     &node_name;
+        Pipeline::SegmentCache &segment_cache;
   std::vector<std::unique_ptr<Pipeline::Peer::Target>> &targets;
 
   Command::NodeIdGenerationHandler *node_id_generation_handler = NULL;
@@ -47,6 +49,7 @@ class RealWorld : public Paxos::OutsideWorld {
 
 public:
   RealWorld(const Pipeline::NodeName&,
+                  Pipeline::SegmentCache&,
                   std::vector<std::unique_ptr<Pipeline::Peer::Target>>&);
 
   ~RealWorld();
