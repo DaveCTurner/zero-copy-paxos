@@ -293,7 +293,7 @@ int main(int argc, char **argv) {
   struct timespec last_output = current_time;
   last_output.tv_sec = 0;
 
-  double bucket_capacity_bytes             = 1e5;
+  double bucket_capacity_bytes             = 100e6;
   double bucket_level_bytes                = bucket_capacity_bytes;
   double bucket_leak_rate_bytes_per_sec    = strtod(rate_string, NULL);
   struct timespec bucket_last_request_time = current_time;
