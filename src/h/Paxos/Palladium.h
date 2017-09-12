@@ -454,9 +454,13 @@ public:
     return proposal;
   }
 
+  bool proposal_is_acceptable(const Proposal &proposal) const {
+    return min_acceptable_term <= proposal.term;
+  }
+
   /* Returns whether the proposal was accepted or not. */
   const bool handle_proposal(const Proposal &proposal) {
-    if (UNLIKELY(proposal.term < min_acceptable_term)) {
+    if (UNLIKELY(!proposal_is_acceptable(proposal))) {
       return false;
     }
 

@@ -75,7 +75,7 @@ public:
   void handle_writeable() override;
   void handle_error(const uint32_t) override;
 
-  bool ok_to_write_data() const;
+  bool ok_to_write_data(uint64_t) const;
   const Paxos::Term &get_term_for_next_write() const;
   const Paxos::Value::StreamOffset get_offset_for_next_write(uint64_t) const;
 

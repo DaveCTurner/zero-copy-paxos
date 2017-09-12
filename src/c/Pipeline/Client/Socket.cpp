@@ -41,7 +41,7 @@ Socket::Socket
     legislator      (legislator),
     node_name       (node_name),
     stream          (stream),
-    pipe            (manager, *this, segment_cache, node_name, stream),
+    pipe            (manager, *this, segment_cache, node_name, stream, 0),
     fd              (fd) {
 
   manager.register_handler(fd, this, EPOLLIN);
@@ -124,7 +124,9 @@ void Socket::downstream_closed() {
   shutdown();
 }
 
-bool Socket::ok_to_write_data() const {
+bool Socket::ok_to_write_data(uint64_t start_pos) const {
+  assert(written_stream_pos == start_pos);
+
   if (!legislator.activation_will_yield_proposals()) {
     printf("%s: cannot propose\n", __PRETTY_FUNCTION__);
     return false;

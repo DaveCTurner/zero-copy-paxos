@@ -20,6 +20,7 @@
 
 #include "Pipeline/Pipe.h"
 #include "Pipeline/Client/Socket.h"
+#include "Pipeline/Peer/Socket.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -74,7 +75,7 @@ void Pipe<Upstream>::handle_readable() {
     return;
   }
 
-  if (!upstream.ok_to_write_data()) {
+  if (!upstream.ok_to_write_data(next_stream_pos)) {
     fprintf(stderr, "%s: cancelled by upstream\n", __PRETTY_FUNCTION__);
     unclean_shutdown();
     upstream.downstream_closed();
@@ -186,13 +187,14 @@ Pipe<Upstream>::Pipe
         Upstream                        &upstream,
         SegmentCache                    &segment_cache,
         const NodeName                  &node_name,
-        const Paxos::Value::StreamName  &stream)
+        const Paxos::Value::StreamName  &stream,
+        const uint64_t                   first_stream_pos)
   : manager         (manager),
     upstream        (upstream),
     segment_cache   (segment_cache),
     node_name       (node_name),
     stream          (stream),
-    next_stream_pos (0),
+    next_stream_pos (first_stream_pos),
     read_end        (ReadEnd(*this)),
     write_end       (WriteEnd(*this)) {
 
@@ -204,7 +206,7 @@ Pipe<Upstream>::Pipe
 
 #ifndef NTRACE
   std::cout << __PRETTY_FUNCTION__ << ": "
-            << stream << " "
+            << stream << "/" << first_stream_pos << " "
             << "fds=[" << pipe_fds[0] << "," << pipe_fds[1] << "]"
             << std::endl;
 #endif // ndef NTRACE
@@ -248,5 +250,6 @@ void Pipe<Upstream>::record_bytes_in(uint64_t bytes) {
 }
 
 template class Pipe<Client::Socket>;
+template class Pipe<Peer::Socket::ProposalReceiver>;
 
 }

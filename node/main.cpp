@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
   Pipeline::Client::Listener client_listener
     (manager, segment_cache, legislator, node_name, client_port);
   Pipeline::Peer::Listener peer_listener
-    (manager, legislator, node_name, peer_port);
+    (manager, segment_cache, legislator, node_name, peer_port);
   Command::Listener command_listener
     (manager, legislator, node_name, command_port);
 

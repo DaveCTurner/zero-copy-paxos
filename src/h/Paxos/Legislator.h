@@ -130,6 +130,14 @@ class Legislator {
     std::ostream &write_to(std::ostream&) const;
     std::ostream &write_configuration_to(std::ostream&) const;
 
+    bool is_unchosen(const Paxos::Slot &slot) const {
+      return _palladium.next_chosen_slot() <= slot;
+    }
+
+    bool proposal_will_be_accepted(const Proposal &proposal) const {
+      return _palladium.proposal_is_acceptable(proposal);
+    }
+
     const Term &get_next_activated_term() const {
       return _palladium.next_activated_term();
     }

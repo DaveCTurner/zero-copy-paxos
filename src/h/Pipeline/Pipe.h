@@ -80,7 +80,8 @@ public:
         Upstream&,
         SegmentCache&,
         const NodeName&,
-        const Paxos::Value::StreamName&);
+        const Paxos::Value::StreamName&,
+        const uint64_t /* first stream pos */);
 
   ~Pipe();
 

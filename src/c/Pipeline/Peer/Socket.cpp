@@ -40,10 +40,12 @@ void Socket::shutdown() {
 
 Socket::Socket
        (Epoll::Manager                  &manager,
+        SegmentCache                    &segment_cache,
         Paxos::Legislator               &legislator,
         const NodeName                  &node_name,
         const int                        fd)
   : manager         (manager),
+    segment_cache   (segment_cache),
     legislator      (legislator),
     node_name       (node_name),
     fd              (fd) {
@@ -66,7 +68,8 @@ Socket::~Socket() {
 }
 
 bool Socket::is_shutdown() const {
-  return fd == -1;
+  return fd == -1
+    && (proposal_receiver == NULL || proposal_receiver->is_shutdown());
 }
 
 void Socket::handle_readable() {
@@ -504,6 +507,36 @@ void Socket::handle_readable() {
 
       legislator.handle_accepted(peer_id, proposal);
       size_received = 0;
+      return;
+    }
+
+    case MESSAGE_TYPE_START_STREAMING_PROPOSALS:
+    {
+      const auto &payload = current_message.start_streaming_proposals;
+      const auto term = payload.term.get_paxos_term();
+      const Paxos::Value::OffsetStream stream
+        = {.name = {.owner = payload.stream_owner,
+                    .id    = payload.stream_id },
+           .offset         = payload.stream_offset };
+
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received start_streaming_proposals("
+        << stream                   << ", "
+        << payload.first_slot       << ", "
+        << term             << ")"
+        << std::endl;
+#endif // ndef NTRACE
+
+      assert(proposal_receiver == NULL);
+
+      proposal_receiver = std::unique_ptr<ProposalReceiver>(new ProposalReceiver
+        (manager, segment_cache, legislator, node_name, peer_id, fd, term,
+          stream, payload.first_slot));
+
+      manager.modify_handler(fd, proposal_receiver.get(), EPOLLIN);
+      fd = -1;
       return;
     }
 

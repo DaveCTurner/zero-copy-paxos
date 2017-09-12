@@ -36,15 +36,17 @@ void Listener::handle_accept(int client_fd) {
     peer_sockets.end());
 
   peer_sockets.push_back(std::move(std::unique_ptr<Socket>
-    (new Socket(manager, legislator, node_name, client_fd))));
+    (new Socket(manager, segment_cache, legislator, node_name, client_fd))));
 }
 
 Listener::Listener(Epoll::Manager    &manager,
+                   SegmentCache      &segment_cache,
                    Paxos::Legislator &legislator,
                    const NodeName    &node_name,
-                   const char *port)
+                   const char        *port)
       : AbstractListener(manager, port),
         legislator(legislator),
+        segment_cache(segment_cache),
         node_name(node_name) {}
 
 }

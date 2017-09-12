@@ -34,6 +34,7 @@ namespace Peer {
 class Listener : public AbstractListener {
 
   Paxos::Legislator     &legislator;
+  SegmentCache          &segment_cache;
   const NodeName        &node_name;
   std::vector<std::unique_ptr<Socket>> peer_sockets;
 
@@ -42,6 +43,7 @@ class Listener : public AbstractListener {
 
   public:
     Listener(Epoll::Manager&,
+             SegmentCache&,
              Paxos::Legislator&,
              const NodeName&,
              const char*);

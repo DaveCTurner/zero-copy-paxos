@@ -35,10 +35,51 @@ class Socket : public Epoll::Handler {
   Socket &operator=(const Socket&) = delete; // no assignment
 
 private:
+
+  class ProposalReceiver : public Epoll::Handler {
+          Epoll::Manager            &manager;
+          Paxos::Legislator         &legislator;
+    const NodeName                  &node_name;
+    const Paxos::NodeId              peer_id;
+          int                        fd;
+          Paxos::Proposal            proposal;
+          Pipe<ProposalReceiver>     pipe;
+          bool                       waiting_for_downstream = false;
+
+    void shutdown();
+
+  public:
+    ProposalReceiver(Epoll::Manager &manager,
+              SegmentCache      &segment_cache,
+              Paxos::Legislator &legislator,
+        const NodeName          &node_name,
+              Paxos::NodeId      peer_id,
+              int                fd,
+        const Paxos::Term       &term,
+              Paxos::Value::OffsetStream,
+              Paxos::Slot        first_slot);
+
+    bool is_shutdown() const;
+    void handle_readable() override;
+    void handle_writeable() override;
+    void handle_error(const uint32_t) override;
+
+    bool ok_to_write_data(uint64_t);
+    const Paxos::Term &get_term_for_next_write() const;
+    const Paxos::Value::StreamOffset get_offset_for_next_write(uint64_t) const;
+
+    void downstream_became_writeable();
+    void downstream_closed();
+    void downstream_wrote_bytes(uint64_t next_stream_pos, uint64_t bytes_sent);
+  };
+
         Epoll::Manager            &manager;
+        SegmentCache              &segment_cache;
         Paxos::Legislator         &legislator;
 
   const NodeName                  &node_name;
+
+        std::unique_ptr<ProposalReceiver> proposal_receiver = NULL;
 
         int                        fd;
 
@@ -59,7 +100,7 @@ private:
   void shutdown();
 
 public:
-  Socket(Epoll::Manager&, Paxos::Legislator&,
+  Socket(Epoll::Manager&, SegmentCache&, Paxos::Legislator&,
          const NodeName&, const int);
   ~Socket();
 
