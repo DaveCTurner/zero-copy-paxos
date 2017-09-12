@@ -83,13 +83,27 @@ void Socket::handle_readable() {
                                        node_name.cluster)) {
 
       case RECEIVE_HANDSHAKE_ERROR:
-      case RECEIVE_HANDSHAKE_EOF:
-      case RECEIVE_HANDSHAKE_INVALID:
+        fprintf(stderr, "%s (fd=%d): read(handshake) failed\n",
+                        __PRETTY_FUNCTION__, fd);
         shutdown();
-        break;
+        return;
 
       case RECEIVE_HANDSHAKE_INCOMPLETE:
-        break;
+        return;
+
+      case RECEIVE_HANDSHAKE_EOF:
+#ifndef NTRACE
+        printf("%s (fd=%d): EOF in handshake\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+        shutdown();
+        return;
+
+      case RECEIVE_HANDSHAKE_INVALID:
+#ifndef NTRACE
+        printf("%s (fd=%d): invalid handshake\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+        shutdown();
+        return;
 
       case RECEIVE_HANDSHAKE_SUCCESS:
         peer_id = received_handshake.node_id;
@@ -101,10 +115,12 @@ void Socket::handle_readable() {
           received_handshake.cluster_id,
           received_handshake.node_id);
 #endif // ndef NTRACE
-        break;
+        return;
     }
 
-    return;
+    fprintf(stderr, "%s (fd=%d): unexpected result from receive_handshake\n",
+      __PRETTY_FUNCTION__, fd);
+    abort();
   }
 
   if (size_received == 1 + sizeof(Protocol::Message) + sizeof(Protocol::Value)

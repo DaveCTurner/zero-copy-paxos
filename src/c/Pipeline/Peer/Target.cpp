@@ -182,31 +182,58 @@ void Target::handle_readable() {
   }
 
   if (received_handshake_bytes < sizeof received_handshake) {
+    assert(peer_id == 0);
+
     switch(Protocol::receive_handshake(fd,
-                                       received_handshake, received_handshake_bytes,
+                                       received_handshake,
+                                       received_handshake_bytes,
                                        node_name.cluster)) {
+
       case RECEIVE_HANDSHAKE_ERROR:
-      case RECEIVE_HANDSHAKE_EOF:
-      case RECEIVE_HANDSHAKE_INVALID:
+        fprintf(stderr, "%s (fd=%d): read(handshake) failed\n",
+                        __PRETTY_FUNCTION__, fd);
         shutdown();
-        break;
+        return;
 
       case RECEIVE_HANDSHAKE_INCOMPLETE:
-        break;
+        return;
+
+      case RECEIVE_HANDSHAKE_EOF:
+#ifndef NTRACE
+        printf("%s (fd=%d): EOF in handshake\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+        shutdown();
+        return;
+
+      case RECEIVE_HANDSHAKE_INVALID:
+#ifndef NTRACE
+        printf("%s (fd=%d): invalid handshake\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+        shutdown();
+        return;
 
       case RECEIVE_HANDSHAKE_SUCCESS:
         peer_id = received_handshake.node_id;
+
 #ifndef NTRACE
-        printf("%s (fd=%d): connected to %d\n", __PRETTY_FUNCTION__,
-                                                fd, peer_id);
+        printf("%s (fd=%d): accepted handshake version %d cluster %s node %d\n",
+          __PRETTY_FUNCTION__, fd,
+          received_handshake.protocol_version,
+          received_handshake.cluster_id,
+          received_handshake.node_id);
 #endif // ndef NTRACE
-        break;
+        assert(is_connected());
+        return;
     }
-  } else {
-    fprintf(stderr, "%s (fd=%d): unexpected\n",
-                    __PRETTY_FUNCTION__, fd);
-    shutdown();
+
+    fprintf(stderr, "%s (fd=%d): unexpected result from receive_handshake\n",
+      __PRETTY_FUNCTION__, fd);
+    abort();
   }
+
+  fprintf(stderr, "%s (fd=%d): unexpected\n",
+                  __PRETTY_FUNCTION__, fd);
+  shutdown();
 }
 
 void Target::handle_writeable() {
