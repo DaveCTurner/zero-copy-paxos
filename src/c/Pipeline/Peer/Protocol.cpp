@@ -19,7 +19,6 @@
 
 
 #include "Pipeline/Peer/Protocol.h"
-#include <assert.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -63,6 +62,9 @@ int receive_handshake(int fd, Handshake &handshake, size_t &received_bytes,
   }
 
   if (read_result == 0) {
+#ifndef NTRACE
+    printf("%s (fd=%d): EOF in handshake\n", __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
     return RECEIVE_HANDSHAKE_EOF;
   }
 
@@ -73,6 +75,14 @@ int receive_handshake(int fd, Handshake &handshake, size_t &received_bytes,
   if (received_bytes < sizeof handshake) {
     return RECEIVE_HANDSHAKE_INCOMPLETE;
   }
+
+#ifndef NTRACE
+  printf("%s (fd=%d): received handshake version %d cluster %s node %d\n",
+    __PRETTY_FUNCTION__, fd,
+    handshake.protocol_version,
+    handshake.cluster_id,
+    handshake.node_id);
+#endif // ndef NTRACE
 
   if (handshake.protocol_version != 1) {
     fprintf(stderr, "%s (fd=%d): protocol version mismatch: %u != %u\n",
@@ -95,6 +105,14 @@ int receive_handshake(int fd, Handshake &handshake, size_t &received_bytes,
       handshake.cluster_id, cluster_id.c_str());
     return RECEIVE_HANDSHAKE_INVALID;
   }
+
+#ifndef NTRACE
+    printf("%s (fd=%d): accepted handshake version %d cluster %s node %d\n",
+      __PRETTY_FUNCTION__, fd,
+      handshake.protocol_version,
+      handshake.cluster_id,
+      handshake.node_id);
+#endif // ndef NTRACE
 
   return RECEIVE_HANDSHAKE_SUCCESS;
 }
