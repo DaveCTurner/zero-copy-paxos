@@ -56,6 +56,7 @@ public:
 private:
   std::vector<std::unique_ptr<CacheEntry>> entries;
   const NodeName &node_name;
+  void locally_accept(const Paxos::Proposal&, Paxos::SlotRange&);
 
 public:
   SegmentCache(const NodeName &node_name)
@@ -77,6 +78,8 @@ public:
     write_accepted_data_to(int out_fd,
                 const Paxos::Value::OffsetStream &stream,
                 Paxos::SlotRange &slots);
+
+  void ensure_locally_accepted(const Paxos::Proposal&);
 };
 
 

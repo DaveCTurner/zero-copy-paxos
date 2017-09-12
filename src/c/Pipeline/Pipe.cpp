@@ -21,12 +21,13 @@
 #include "Pipeline/Pipe.h"
 #include "Pipeline/Client/Socket.h"
 #include "Pipeline/Peer/Socket.h"
+#include "Pipeline/LocalAcceptor.h"
 
 #include <assert.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
-#include <fcntl.h>
 
 namespace Pipeline {
 
@@ -254,5 +255,6 @@ void Pipe<Upstream>::record_bytes_in(uint64_t bytes) {
 template class Pipe<Client::Socket>;
 template class Pipe<Peer::Socket::ProposalReceiver>;
 template class Pipe<Peer::Socket::PromiseReceiver>;
+template class Pipe<LocalAcceptor>;
 
 }

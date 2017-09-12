@@ -244,12 +244,11 @@ void RealWorld::record_non_stream_content_acceptance(const Paxos::Proposal &prop
 }
 
 void RealWorld::proposed_and_accepted(const Paxos::Proposal &proposal) {
-  if (proposal.value.type != Paxos::Value::Type::stream_content) {
+  if (proposal.value.type == Paxos::Value::Type::stream_content) {
+    segment_cache.ensure_locally_accepted(proposal);
+  } else {
     record_non_stream_content_acceptance(proposal);
   }
-  // TODO for stream_content proposals, they must be accepted by this node
-  // before proposal, which may not be the case if this is coming from a
-  // bound promise.
 
   for (auto &target : targets) {
     target->proposed_and_accepted(proposal);

@@ -18,7 +18,7 @@
 
 
 
-#include "Pipeline/SegmentCache.h"
+#include "Pipeline/LocalAcceptor.h"
 
 #include <algorithm>
 #include <unistd.h>
@@ -130,6 +130,60 @@ SegmentCache::WriteAcceptedDataResult
   slots.truncate(slots.start() + sendfile_result);
 
   return SegmentCache::WriteAcceptedDataResult::succeeded;
+}
+
+void SegmentCache::locally_accept(const Paxos::Proposal &proposal,
+                                        Paxos::SlotRange &slots_to_accept) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ": proposal="       << proposal
+                                   << " slots_to_ensure=" << slots_to_accept
+                                   << std::endl;
+
+  for (const auto &pce : entries) {
+    std::cout << __PRETTY_FUNCTION__ << ": cache entry stream=" << pce->stream
+                                     << " slots="               << pce->slots
+                                     << std::endl;
+  }
+#endif // def NTRACE
+
+  LocalAcceptor local_acceptor(proposal, slots_to_accept,
+                               *this, node_name, entries);
+  local_acceptor.run();
+}
+
+void SegmentCache::ensure_locally_accepted(const Paxos::Proposal &proposal) {
+  assert(proposal.value.type == Paxos::Value::Type::stream_content);
+
+  Paxos::SlotRange slots_to_ensure = proposal.slots;
+  const auto &stream               = proposal.value.payload.stream;
+
+  while (slots_to_ensure.is_nonempty()) {
+    const Paxos::Slot first_slot_to_ensure = slots_to_ensure.start();
+
+    const auto locally_accepted_it = std::find_if(
+      entries.cbegin(),
+      entries.cend(),
+      [&stream, &first_slot_to_ensure](const std::unique_ptr<CacheEntry> &ce) {
+        return ce->stream.name.owner == stream.name.owner
+            && ce->stream.name.id    == stream.name.id
+            && ce->stream.offset     == stream.offset
+            && ce->slots.contains(first_slot_to_ensure)
+            && ce->is_locally_accepted;
+      });
+
+    if (locally_accepted_it == entries.cend()) {
+      // Here, have a nonempty range of slots to fill, and the first slot is
+      // not locally accepted. Therefore we must have an acceptance from a
+      // bound promise that needs to be copied across to a local acceptance
+      // file.
+
+      locally_accept(proposal, slots_to_ensure);
+      return;
+    }
+
+    const CacheEntry &locally_accepted = **locally_accepted_it;
+    slots_to_ensure.truncate(locally_accepted.slots.end());
+  }
 }
 
 }
