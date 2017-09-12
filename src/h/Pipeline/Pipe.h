@@ -60,6 +60,7 @@ private:
         SegmentCache              &segment_cache;
 
   const NodeName                  &node_name;
+  const Paxos::NodeId              acceptor_id;
   const Paxos::Value::StreamName   stream;
 
         Segment                   *current_segment = NULL;
@@ -80,6 +81,7 @@ public:
         Upstream&,
         SegmentCache&,
         const NodeName&,
+        const Paxos::NodeId,
         const Paxos::Value::StreamName&,
         const uint64_t /* first stream pos */);
 

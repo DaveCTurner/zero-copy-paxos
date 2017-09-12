@@ -33,17 +33,18 @@
 namespace Pipeline {
 namespace Peer {
 
-void Socket::ProposalReceiver::shutdown() {
+void Socket::PromiseReceiver::shutdown() {
   manager.deregister_close_and_clear(fd);
 }
 
-Socket::ProposalReceiver::ProposalReceiver(Epoll::Manager &manager,
+Socket::PromiseReceiver::PromiseReceiver(Epoll::Manager &manager,
           SegmentCache      &segment_cache,
           Paxos::Legislator &legislator,
     const NodeName          &node_name,
           Paxos::NodeId      peer_id,
           int                fd,
     const Paxos::Term       &term,
+    const Paxos::Term       &max_accepted_term,
           Paxos::Value::OffsetStream stream,
           Paxos::Slot        first_slot)
   : manager(manager),
@@ -51,18 +52,19 @@ Socket::ProposalReceiver::ProposalReceiver(Epoll::Manager &manager,
     node_name(node_name),
     peer_id(peer_id),
     fd(fd),
-    proposal({.slots = Paxos::SlotRange(first_slot, first_slot),
-              .term = term,
-              .value = {.type = Paxos::Value::Type::stream_content}}),
-    pipe(manager, *this, segment_cache, node_name, node_name.id,
-         stream.name, first_slot - stream.offset) {
+    promise(Paxos::Promise::Type::bound,
+            first_slot, first_slot, term),
+    pipe(manager, *this, segment_cache, node_name, peer_id,
+          stream.name, first_slot - stream.offset) {
 
-  proposal.value.payload.stream = stream;
+  promise.max_accepted_term = max_accepted_term,
+  promise.max_accepted_term_value.type = Paxos::Value::Type::stream_content;
+  promise.max_accepted_term_value.payload.stream = stream;
 }
 
-bool Socket::ProposalReceiver::is_shutdown() const { return fd == -1; }
+bool Socket::PromiseReceiver::is_shutdown() const { return fd == -1; }
 
-void Socket::ProposalReceiver::handle_readable() {
+void Socket::PromiseReceiver::handle_readable() {
   assert(fd != -1);
   assert(pipe.get_write_end_fd() != -1);
   assert(!waiting_for_downstream);
@@ -95,63 +97,52 @@ void Socket::ProposalReceiver::handle_readable() {
     assert(splice_result > 0);
     uint64_t bytes_sent = splice_result;
     pipe.record_bytes_in(bytes_sent);
-    pipe.handle_readable();
   }
 }
 
-void Socket::ProposalReceiver::handle_writeable() {
+void Socket::PromiseReceiver::handle_writeable() {
   fprintf(stderr, "%s (fd=%d): unexpected\n",
                   __PRETTY_FUNCTION__, fd);
   abort();
 }
 
-void Socket::ProposalReceiver::handle_error(const uint32_t events) {
+void Socket::PromiseReceiver::handle_error(const uint32_t events) {
   fprintf(stderr, "%s (fd=%d, events=%x): unexpected\n",
                   __PRETTY_FUNCTION__, fd, events);
   shutdown();
 }
 
-bool Socket::ProposalReceiver::ok_to_write_data(uint64_t next_stream_pos) {
-  Paxos::Slot next_slot = next_stream_pos
-                        + proposal.value.payload.stream.offset;
-  if   (legislator.proposal_will_be_accepted(proposal)
-     && legislator.is_unchosen(next_slot)) {
-    return true;
-  }
-
-  fprintf(stderr, "%s (fd=%d,peer=%d): not ok, shutting down\n",
-                  __PRETTY_FUNCTION__, fd, peer_id);
-  shutdown();
-  return false;
+bool Socket::PromiseReceiver::ok_to_write_data(uint64_t) {
+  return true;
 }
 
-void Socket::ProposalReceiver::downstream_became_writeable() {
+void Socket::PromiseReceiver::downstream_became_writeable() {
   assert(waiting_for_downstream);
   manager.modify_handler(fd, this, EPOLLIN);
   waiting_for_downstream = false;
 }
 
-void Socket::ProposalReceiver::downstream_closed() {
+void Socket::PromiseReceiver::downstream_closed() {
   fprintf(stderr, "%s (fd=%d,peer=%d): unexpected\n",
                   __PRETTY_FUNCTION__, fd, peer_id);
   shutdown();
 }
 
-void Socket::ProposalReceiver::downstream_wrote_bytes
+void Socket::PromiseReceiver::downstream_wrote_bytes
         (uint64_t next_stream_pos,
          uint64_t bytes_sent) {
 
-  proposal.slots.set_end(next_stream_pos + bytes_sent
-                          + proposal.value.payload.stream.offset);
-  legislator.handle_proposed_and_accepted(peer_id, proposal);
+  promise.slots.set_end(next_stream_pos + bytes_sent
+                  + promise.max_accepted_term_value.payload.stream.offset);
+  legislator.handle_promise(peer_id, promise);
 }
 
-const Paxos::Term &Socket::ProposalReceiver::get_term_for_next_write() const {
-  return proposal.term;
+const Paxos::Term &Socket::PromiseReceiver::get_term_for_next_write() const {
+  return promise.max_accepted_term;
 }
 
-const Paxos::Value::StreamOffset Socket::ProposalReceiver::get_offset_for_next_write(uint64_t) const {
-  return proposal.value.payload.stream.offset;
+const Paxos::Value::StreamOffset Socket::PromiseReceiver::get_offset_for_next_write(uint64_t) const {
+  return promise.max_accepted_term_value.payload.stream.offset;
 }
 
 

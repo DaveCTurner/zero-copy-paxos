@@ -69,6 +69,7 @@ Socket::~Socket() {
 
 bool Socket::is_shutdown() const {
   return fd == -1
+    &&  (promise_receiver == NULL ||  promise_receiver->is_shutdown())
     && (proposal_receiver == NULL || proposal_receiver->is_shutdown());
 }
 
@@ -510,6 +511,40 @@ void Socket::handle_readable() {
       return;
     }
 
+
+    case MESSAGE_TYPE_START_STREAMING_PROMISES:
+    {
+      const auto &payload = current_message.start_streaming_promises;
+      const auto term              = payload.term.get_paxos_term();
+      const auto max_accepted_term = payload.max_accepted_term.get_paxos_term();
+      const Paxos::Value::OffsetStream stream
+        = {.name = {.owner = payload.stream_owner,
+                    .id    = payload.stream_id },
+           .offset         = payload.stream_offset };
+
+#ifndef NTRACE
+      std::cout << __PRETTY_FUNCTION__
+        << " (fd=" << fd << ",peer=" << peer_id << "): "
+        << "received start_streaming_promises("
+        << stream                   << ", "
+        << payload.first_slot       << ", "
+        << term                     << ", "
+        << max_accepted_term        << ")"
+        << std::endl;
+#endif // ndef NTRACE
+
+      assert(promise_receiver == NULL);
+      assert(proposal_receiver == NULL);
+
+      promise_receiver = std::unique_ptr<PromiseReceiver>(new PromiseReceiver
+        (manager, segment_cache, legislator, node_name, peer_id, fd, term,
+          max_accepted_term, stream, payload.first_slot));
+
+      manager.modify_handler(fd, promise_receiver.get(), EPOLLIN);
+      fd = -1;
+      return;
+    }
+
     case MESSAGE_TYPE_START_STREAMING_PROPOSALS:
     {
       const auto &payload = current_message.start_streaming_proposals;
@@ -529,6 +564,7 @@ void Socket::handle_readable() {
         << std::endl;
 #endif // ndef NTRACE
 
+      assert(promise_receiver == NULL);
       assert(proposal_receiver == NULL);
 
       proposal_receiver = std::unique_ptr<ProposalReceiver>(new ProposalReceiver

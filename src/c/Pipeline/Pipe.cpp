@@ -96,7 +96,7 @@ void Pipe<Upstream>::handle_readable() {
 
   if (current_segment == NULL) {
     Paxos::Value::OffsetStream os = {.name = stream, .offset = offset_for_next_write};
-    current_segment = new Segment(segment_cache, node_name, os,
+    current_segment = new Segment(segment_cache, node_name, acceptor_id, os,
         term_for_next_write, next_stream_pos);
   } else {
     assert(!current_segment->is_shutdown());
@@ -187,12 +187,14 @@ Pipe<Upstream>::Pipe
         Upstream                        &upstream,
         SegmentCache                    &segment_cache,
         const NodeName                  &node_name,
+        const Paxos::NodeId              acceptor_id,
         const Paxos::Value::StreamName  &stream,
         const uint64_t                   first_stream_pos)
   : manager         (manager),
     upstream        (upstream),
     segment_cache   (segment_cache),
     node_name       (node_name),
+    acceptor_id     (acceptor_id),
     stream          (stream),
     next_stream_pos (first_stream_pos),
     read_end        (ReadEnd(*this)),
@@ -251,5 +253,6 @@ void Pipe<Upstream>::record_bytes_in(uint64_t bytes) {
 
 template class Pipe<Client::Socket>;
 template class Pipe<Peer::Socket::ProposalReceiver>;
+template class Pipe<Peer::Socket::PromiseReceiver>;
 
 }

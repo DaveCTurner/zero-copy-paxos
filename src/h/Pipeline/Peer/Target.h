@@ -35,6 +35,30 @@ class Target : public Epoll::Handler {
   Target           (const Target&) = delete; // no copying
   Target &operator=(const Target&) = delete; // no assignment
 
+  class BoundPromiseSender : public Epoll::Handler {
+          Epoll::Manager             &manager;
+          SegmentCache               &segment_cache;
+          int                         fd;
+          Paxos::SlotRange            slots;
+    const Paxos::Value::OffsetStream  stream;
+
+    void shutdown();
+  public:
+    BoundPromiseSender(      Epoll::Manager&,
+                             SegmentCache&,
+                       const NodeName&,
+                       int,
+                       const Paxos::SlotRange&,
+                       const Paxos::Value::OffsetStream&);
+
+    ~BoundPromiseSender();
+
+    bool is_shutdown() const;
+    void handle_readable() override;
+    void handle_writeable() override;
+    void handle_error(const uint32_t) override;
+  };
+
   class ProposedAndAcceptedSender : public Epoll::Handler {
           Epoll::Manager             &manager;
           SegmentCache               &segment_cache;
@@ -99,6 +123,8 @@ private:
         Protocol::Handshake received_handshake;
         size_t              received_handshake_bytes = 0;
 
+        std::vector<std::unique_ptr<BoundPromiseSender>>
+                            bound_promise_senders;
         std::vector<std::unique_ptr<ProposedAndAcceptedSender>>
                             expired_proposed_and_accepted_senders;
         std::unique_ptr<ProposedAndAcceptedSender>

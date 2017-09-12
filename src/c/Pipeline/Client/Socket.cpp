@@ -41,7 +41,8 @@ Socket::Socket
     legislator      (legislator),
     node_name       (node_name),
     stream          (stream),
-    pipe            (manager, *this, segment_cache, node_name, stream, 0),
+    pipe            (manager, *this, segment_cache, node_name,
+                     node_name.id, stream, 0),
     fd              (fd) {
 
   manager.register_handler(fd, this, EPOLLIN);

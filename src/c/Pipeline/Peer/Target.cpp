@@ -19,7 +19,6 @@
 
 
 #include "Pipeline/Peer/Target.h"
-#include "Pipeline/Peer/Protocol.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -353,7 +352,39 @@ void Target::handle_writeable() {
   if (sent_data) {
     // Just finished sending a message, so may need to switch to another mode.
 
-    if (current_message.type == MESSAGE_TYPE_START_STREAMING_PROPOSALS) {
+    if (current_message.type == MESSAGE_TYPE_START_STREAMING_PROMISES) {
+
+#ifndef NTRACE
+      printf("%s (fd=%d): sent MESSAGE_TYPE_START_STREAMING_PROMISES\n",
+        __PRETTY_FUNCTION__, fd);
+      printf("%s (fd=%d): active senders before cleanout = %ld\n",
+        __PRETTY_FUNCTION__, fd, bound_promise_senders.size());
+#endif // ndef NTRACE
+
+      bound_promise_senders.erase(std::remove_if(
+        bound_promise_senders.begin(),
+        bound_promise_senders.end(),
+        [](const std::unique_ptr<BoundPromiseSender> &s) {
+          return s->is_shutdown(); }),
+        bound_promise_senders.end());
+
+#ifndef NTRACE
+      printf("%s (fd=%d): active senders after cleanout = %ld\n",
+        __PRETTY_FUNCTION__, fd, bound_promise_senders.size());
+#endif // ndef NTRACE
+
+      bound_promise_senders.push_back(
+        std::move(std::unique_ptr<BoundPromiseSender>
+          (new BoundPromiseSender(manager, segment_cache,
+                                  node_name, fd,
+                                  streaming_slots, streaming_stream))));
+
+      // previous constructor took ownership of this FD so dissociate it and
+      // make a new one.
+      fd = -1;
+      start_connection();
+
+    } else if (current_message.type == MESSAGE_TYPE_START_STREAMING_PROPOSALS) {
 
 #ifndef NTRACE
       printf("%s (fd=%d): active senders before cleanout = %ld\n",
@@ -609,10 +640,24 @@ void Target::make_promise(const Paxos::Promise &promise) {
   if (promise.type == Paxos::Promise::Type::bound) {
     if (promise.max_accepted_term_value.type == Paxos::Value::Type::stream_content) {
 #ifndef NTRACE
-      std::cout << __PRETTY_FUNCTION__ << " (TODO):"
+      std::cout << __PRETTY_FUNCTION__ << " (start streaming):"
                 << " " << promise
                 << std::endl;
 #endif //ndef NTRACE
+      if (!prepare_to_send(MESSAGE_TYPE_START_STREAMING_PROMISES)) { return; }
+      auto &pl = current_message.message.start_streaming_promises;
+      auto &stream = promise.max_accepted_term_value.payload.stream;
+      pl.stream_owner  = stream.name.owner;
+      pl.stream_id     = stream.name.id;
+      pl.stream_offset = stream.offset;
+      pl.first_slot    = promise.slots.start();
+      pl.term.copy_from(promise.term);
+      pl.max_accepted_term.copy_from(promise.max_accepted_term);
+      streaming_slots = promise.slots;
+      streaming_stream = stream;
+      handle_writeable();
+      return;
+
     } else {
 #ifndef NTRACE
       std::cout << __PRETTY_FUNCTION__ << " (bound):"
@@ -714,6 +759,84 @@ void Target::accepted(const Paxos::Proposal &proposal) {
   payload.term.copy_from(proposal.term);
   set_current_message_value(proposal.value);
   handle_writeable();
+}
+
+Target::BoundPromiseSender::BoundPromiseSender(
+        Epoll::Manager             &manager,
+        SegmentCache               &segment_cache,
+  const NodeName                   &node_name,
+        int                         fd,
+  const Paxos::SlotRange           &slots,
+  const Paxos::Value::OffsetStream &stream)
+  : manager(manager),
+    segment_cache(segment_cache),
+    fd(fd),
+    slots(slots),
+    stream(stream) {
+  manager.modify_handler(fd, this, EPOLLOUT);
+}
+
+Target::BoundPromiseSender::~BoundPromiseSender() {
+  shutdown();
+}
+
+void Target::BoundPromiseSender::shutdown() {
+  manager.deregister_close_and_clear(fd);
+  assert(fd == -1);
+}
+
+bool Target::BoundPromiseSender::is_shutdown() const {
+  return fd == -1;
+}
+
+void Target::BoundPromiseSender::handle_error(const uint32_t events) {
+  fprintf(stderr, "%s (fd=%d, events=%x): unexpected\n",
+                  __PRETTY_FUNCTION__, fd, events);
+  shutdown();
+}
+
+void Target::BoundPromiseSender::handle_readable() {
+  fprintf(stderr, "%s (fd=%d): unexpected\n",
+                  __PRETTY_FUNCTION__, fd);
+  shutdown();
+}
+
+void Target::BoundPromiseSender::handle_writeable() {
+#ifndef NTRACE
+  printf("%s (fd=%d): writing [%lu,%lu)\n",
+    __PRETTY_FUNCTION__, fd, slots.start(), slots.end());
+#endif // def NTRACE
+
+  if (fd == -1) {
+    return;
+  }
+
+  auto write_result
+    = segment_cache.write_accepted_data_to(fd, stream, slots);
+
+  switch(write_result) {
+    case SegmentCache::WriteAcceptedDataResult::succeeded:
+#ifndef NTRACE
+      printf("%s (fd=%d): still-to-write [%lu,%lu)\n",
+        __PRETTY_FUNCTION__, fd, slots.start(), slots.end());
+#endif // def NTRACE
+      if (slots.is_empty()) {
+        shutdown();
+      }
+      break;
+
+    case SegmentCache::WriteAcceptedDataResult::blocked:
+      // Should not happen, as this is only called in response
+      // to epoll_wait() returning EPOLLOUT. Fall through to ...
+
+    case SegmentCache::WriteAcceptedDataResult::failed:
+#ifndef NTRACE
+      printf("%s (fd=%d): write failed, shutting down\n",
+        __PRETTY_FUNCTION__, fd);
+#endif // def NTRACE
+      shutdown();
+      break;
+  }
 }
 
 

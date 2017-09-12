@@ -47,6 +47,7 @@ public:
 
   Segment(SegmentCache&,
           const NodeName&,
+    const Paxos::NodeId,
           const Paxos::Value::OffsetStream,
           const Paxos::Term&,
           const uint64_t);

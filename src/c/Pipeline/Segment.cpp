@@ -34,6 +34,7 @@ namespace Pipeline {
 Segment::Segment
        (      SegmentCache               &segment_cache,
         const NodeName                   &node_name,
+        const Paxos::NodeId               acceptor_id,
         const Paxos::Value::OffsetStream  stream,
         const Paxos::Term                &term,
         const uint64_t                    first_stream_pos)
@@ -43,7 +44,8 @@ Segment::Segment
   , term(term)
   , stream_offset(stream.offset)
   , cache_entry(segment_cache.add(stream,
-                                  first_stream_pos + stream.offset)) {
+                                  first_stream_pos + stream.offset,
+                                  node_name.id == acceptor_id)) {
 
   char path[PATH_MAX], parent[PATH_MAX];
 
@@ -69,15 +71,26 @@ Segment::Segment
   ensure_directory(parent, path);
 
   strncpy(parent, path, PATH_MAX);
-  ensure_length(snprintf(path, PATH_MAX,
-          "data/clu_%s/n_%08x/own_%08x_str_%08x/off_%016lx/pos_%016lx_trm_%08x_%08x_%08x",
-          node_name.cluster.c_str(), node_name.id,
-          stream.name.owner,
-          stream.name.id,
-          stream.offset,
-          next_stream_pos,
-          term.era, term.term_number, term.owner));
-
+  if (acceptor_id == node_name.id) {
+    ensure_length(snprintf(path, PATH_MAX,
+            "data/clu_%s/n_%08x/own_%08x_str_%08x/off_%016lx/pos_%016lx_trm_%08x_%08x_%08x",
+            node_name.cluster.c_str(), node_name.id,
+            stream.name.owner,
+            stream.name.id,
+            stream.offset,
+            next_stream_pos,
+            term.era, term.term_number, term.owner));
+  } else {
+    ensure_length(snprintf(path, PATH_MAX,
+            "data/clu_%s/n_%08x/own_%08x_str_%08x/off_%016lx/pos_%016lx_trm_%08x_%08x_%08x_by_%08x",
+            node_name.cluster.c_str(), node_name.id,
+            stream.name.owner,
+            stream.name.id,
+            stream.offset,
+            next_stream_pos,
+            term.era, term.term_number, term.owner,
+            acceptor_id));
+  }
   fd = open(path, O_CREAT | O_RDWR, 0644);
   if (fd == -1) {
     perror(__PRETTY_FUNCTION__);

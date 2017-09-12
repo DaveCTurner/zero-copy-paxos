@@ -36,10 +36,12 @@ public:
     const Paxos::Value::OffsetStream stream;
           Paxos::SlotRange           slots;
           bool                       closed_for_writing = false;
+    const bool                       is_locally_accepted;
           int                        fd = -1;
 
     CacheEntry(const Paxos::Value::OffsetStream &stream,
-               const Paxos::Slot                &initial_slot);
+               const Paxos::Slot                &initial_slot,
+               const bool                        is_locally_accepted);
 
     ~CacheEntry();
 
@@ -60,7 +62,8 @@ public:
     : node_name(node_name) {}
 
   CacheEntry &add(const Paxos::Value::OffsetStream &stream,
-                  const Paxos::Slot                 initial_slot);
+                  const Paxos::Slot                 initial_slot,
+                        bool                        is_locally_accepted);
 
   void expire_because_chosen_to(const Paxos::Slot first_unchosen_slot);
 

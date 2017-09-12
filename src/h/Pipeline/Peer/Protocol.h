@@ -227,7 +227,25 @@ union Message {
   } __attribute__((packed));
   accepted                    accepted;
 
-/* Type 0x0c: start streaming bound promises TODO */
+/* Type 0x0c: start streaming bound promises
+    - 4 bytes stream owner
+    - 4 bytes stream id
+    - 8 bytes stream offset
+    - 8 bytes first slot
+    - 12 bytes term (4 bytes era, 4 bytes term number, 4 bytes owner id)
+    - 12 bytes max-accepted term (4 b era, 4 b term number, 4 b owner id)
+*/
+
+#define MESSAGE_TYPE_START_STREAMING_PROMISES 0x0c
+  struct start_streaming_promises {
+    Paxos::NodeId              stream_owner;
+    Paxos::Value::StreamId     stream_id;
+    Paxos::Value::StreamOffset stream_offset;
+    Paxos::Slot                first_slot;
+    Term                       term;
+    Term                       max_accepted_term;
+  } __attribute__((packed));
+  start_streaming_promises   start_streaming_promises;
 
 /* Type 0x0d: start streaming proposals
     - 4 bytes stream owner

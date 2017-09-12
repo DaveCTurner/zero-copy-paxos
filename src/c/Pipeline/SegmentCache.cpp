@@ -28,9 +28,11 @@ namespace Pipeline {
 
 SegmentCache::CacheEntry::CacheEntry
   (const Paxos::Value::OffsetStream &stream,
-   const Paxos::Slot                &initial_slot)
+   const Paxos::Slot                &initial_slot,
+   const bool                        is_locally_accepted)
       : stream(stream),
-        slots(Paxos::SlotRange(initial_slot, initial_slot)) {}
+        slots(Paxos::SlotRange(initial_slot, initial_slot)),
+        is_locally_accepted(is_locally_accepted) {}
 
 SegmentCache::CacheEntry::~CacheEntry() {
   shutdown();
@@ -61,10 +63,11 @@ void SegmentCache::CacheEntry::set_fd(const int new_fd) {
 
 SegmentCache::CacheEntry &SegmentCache::add
   (const Paxos::Value::OffsetStream &stream,
-   const Paxos::Slot                 initial_slot) {
+   const Paxos::Slot                 initial_slot,
+         bool                        is_locally_accepted) {
 
   entries.push_back(std::move(std::unique_ptr<CacheEntry>
-    (new CacheEntry(stream, initial_slot))));
+    (new CacheEntry(stream, initial_slot, is_locally_accepted))));
   return *entries.back();
 }
 
@@ -95,6 +98,7 @@ SegmentCache::WriteAcceptedDataResult
           && ce->stream.name.id    == stream.name.id
           && ce->stream.offset     == stream.offset
           && ce->slots.contains(slots.start())
+          && ce->is_locally_accepted
           && ce->fd != -1;
     });
 
