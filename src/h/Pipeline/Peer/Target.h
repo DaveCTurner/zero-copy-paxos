@@ -21,9 +21,12 @@
 #ifndef PIPELINE_PEER_TARGET_H
 #define PIPELINE_PEER_TARGET_H
 
+#include "Pipeline/SegmentCache.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 #include "Pipeline/Peer/Protocol.h"
+
+#include <memory>
 
 namespace Pipeline {
 namespace Peer {
@@ -31,6 +34,35 @@ namespace Peer {
 class Target : public Epoll::Handler {
   Target           (const Target&) = delete; // no copying
   Target &operator=(const Target&) = delete; // no assignment
+
+  class ProposedAndAcceptedSender : public Epoll::Handler {
+          Epoll::Manager             &manager;
+          SegmentCache               &segment_cache;
+          int                         fd;
+          Paxos::SlotRange            slots;
+    const Paxos::Value::OffsetStream  stream;
+          bool                        waiting_to_be_writeable = true;
+
+    void shutdown();
+
+  public:
+    ProposedAndAcceptedSender(Epoll::Manager&,
+                              SegmentCache&,
+                        const NodeName&,
+                        int,
+                        const Paxos::SlotRange&,
+                        const Paxos::Value::OffsetStream&);
+
+    ~ProposedAndAcceptedSender();
+
+    bool send(const Paxos::Value::OffsetStream&,
+              const Paxos::SlotRange&);
+
+    bool is_shutdown() const;
+    void handle_readable() override;
+    void handle_writeable() override;
+    void handle_error(const uint32_t) override;
+  };
 
 public:
   class Address {
@@ -49,11 +81,14 @@ private:
     size_t            still_to_send = 0;
   }                          current_message;
   bool                       waiting_to_become_writeable = true;
+  Paxos::SlotRange           streaming_slots;
+  Paxos::Value::OffsetStream streaming_stream;
   void set_current_message_value(const Paxos::Value&);
   bool prepare_to_send(uint8_t);
 
   const Address             address;
         Epoll::Manager     &manager;
+        SegmentCache       &segment_cache;
         Paxos::Legislator  &legislator;
   const NodeName           &node_name;
         Paxos::NodeId       peer_id = 0;
@@ -64,6 +99,11 @@ private:
         Protocol::Handshake received_handshake;
         size_t              received_handshake_bytes = 0;
 
+        std::vector<std::unique_ptr<ProposedAndAcceptedSender>>
+                            expired_proposed_and_accepted_senders;
+        std::unique_ptr<ProposedAndAcceptedSender>
+                            current_proposed_and_accepted_sender = NULL;
+
   bool is_connected() const;
   bool is_connected_to(const Paxos::NodeId &n) const;
   void shutdown();
@@ -73,6 +113,7 @@ private:
 public:
   Target(const Address           &address,
                Epoll::Manager    &manager,
+               SegmentCache      &segment_cache,
                Paxos::Legislator &legislator,
          const NodeName          &node_name);
 

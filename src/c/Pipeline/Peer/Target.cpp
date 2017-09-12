@@ -167,10 +167,13 @@ void Target::set_current_message_value(const Paxos::Value &value) {
 
 Target::Target(const Address           &address,
                      Epoll::Manager    &manager,
+                     SegmentCache      &segment_cache,
                      Paxos::Legislator &legislator,
                const NodeName          &node_name)
-  : address(address),
+  : streaming_slots(0,0),
+    address(address),
     manager(manager),
+    segment_cache(segment_cache),
     legislator(legislator),
     node_name(node_name) {
   start_connection();
@@ -254,6 +257,12 @@ void Target::handle_writeable() {
     return;
   }
 
+  if (peer_id == 0) {
+    return;
+  }
+
+  bool sent_data = false;
+
   while (current_message.still_to_send > 0) {
     struct iovec iov[3];
     int          iovcnt;
@@ -326,6 +335,9 @@ void Target::handle_writeable() {
       size_t bytes_written = writev_result;
       assert(bytes_written <= current_message.still_to_send);
       current_message.still_to_send -= bytes_written;
+      if (writev_result > 0) {
+        sent_data = true;
+      }
     }
   }
 
@@ -334,6 +346,48 @@ void Target::handle_writeable() {
   if (waiting_to_become_writeable) {
     manager.modify_handler(fd, this, 0);
     waiting_to_become_writeable = false;
+  }
+
+  if (sent_data) {
+    // Just finished sending a message, so may need to switch to another mode.
+
+    if (current_message.type == MESSAGE_TYPE_START_STREAMING_PROPOSALS) {
+
+#ifndef NTRACE
+      printf("%s (fd=%d): active senders before cleanout = %ld\n",
+        __PRETTY_FUNCTION__, fd, expired_proposed_and_accepted_senders.size());
+#endif // ndef NTRACE
+
+      expired_proposed_and_accepted_senders.erase(std::remove_if(
+        expired_proposed_and_accepted_senders.begin(),
+        expired_proposed_and_accepted_senders.end(),
+        [](const std::unique_ptr<ProposedAndAcceptedSender> &s) {
+          return s->is_shutdown(); }),
+        expired_proposed_and_accepted_senders.end());
+
+#ifndef NTRACE
+      printf("%s (fd=%d): active senders after cleanout = %ld\n",
+        __PRETTY_FUNCTION__, fd, expired_proposed_and_accepted_senders.size());
+#endif // ndef NTRACE
+
+      assert(current_proposed_and_accepted_sender == NULL);
+
+#ifndef NTRACE
+      printf("%s (fd=%d): creating new sender\n",
+        __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+
+      current_proposed_and_accepted_sender
+        = std::unique_ptr<ProposedAndAcceptedSender>
+          (new ProposedAndAcceptedSender(manager, segment_cache,
+                                         node_name, fd,
+                                         streaming_slots, streaming_stream));
+
+      // previous constructor took ownership of this FD so dissociate it and
+      // make a new one.
+      fd = -1;
+      start_connection();
+    }
   }
 }
 
@@ -583,8 +637,48 @@ void Target::make_promise(const Paxos::Promise &promise) {
 
 void Target::proposed_and_accepted(const Paxos::Proposal &proposal) {
   if (proposal.value.type == Paxos::Value::Type::stream_content) {
-    fprintf(stderr, "%s (fd=%d): proposed_and_accepted(stream_content) TODO\n",
+
+#ifndef NTRACE
+    printf("%s (fd=%d): proposed_and_accepted(stream_content)\n",
       __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+
+    if (current_proposed_and_accepted_sender != NULL) {
+#ifndef NTRACE
+      printf("%s (fd=%d): try existing sender\n",
+        __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+
+      if (current_proposed_and_accepted_sender->send(
+            proposal.value.payload.stream, proposal.slots)) {
+#ifndef NTRACE
+        printf("%s (fd=%d): succeeded with existing sender\n",
+          __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+        return;
+      }
+
+#ifndef NTRACE
+      printf("%s (fd=%d): failed with existing sender - expiring it\n",
+        __PRETTY_FUNCTION__, fd);
+#endif // ndef NTRACE
+
+      expired_proposed_and_accepted_senders.push_back(
+        std::move(current_proposed_and_accepted_sender));
+    }
+
+    assert(current_proposed_and_accepted_sender == NULL);
+
+    if (!prepare_to_send(MESSAGE_TYPE_START_STREAMING_PROPOSALS)) { return; }
+    auto &pl = current_message.message.start_streaming_proposals;
+    auto &stream = proposal.value.payload.stream;
+    pl.stream_owner  = stream.name.owner;
+    pl.stream_id     = stream.name.id;
+    pl.stream_offset = stream.offset;
+    pl.first_slot    = proposal.slots.start();
+    pl.term.copy_from(proposal.term);
+    streaming_slots = proposal.slots;
+    streaming_stream = stream;
   } else {
 #ifndef NTRACE
     std::cout << __PRETTY_FUNCTION__ << ":"
@@ -599,8 +693,8 @@ void Target::proposed_and_accepted(const Paxos::Proposal &proposal) {
     payload.end_slot   = proposal.slots.end();
     payload.term.copy_from(proposal.term);
     set_current_message_value(proposal.value);
-    handle_writeable();
   }
+  handle_writeable();
 }
 
 void Target::accepted(const Paxos::Proposal &proposal) {
@@ -619,5 +713,127 @@ void Target::accepted(const Paxos::Proposal &proposal) {
   set_current_message_value(proposal.value);
   handle_writeable();
 }
+
+
+
+Target::ProposedAndAcceptedSender::ProposedAndAcceptedSender(
+        Epoll::Manager             &manager,
+        SegmentCache               &segment_cache,
+  const NodeName                   &node_name,
+        int                         fd,
+  const Paxos::SlotRange           &slots,
+  const Paxos::Value::OffsetStream &stream)
+  : manager(manager),
+    segment_cache(segment_cache),
+    fd(fd),
+    slots(slots),
+    stream(stream) {
+  assert(slots.is_nonempty());
+  manager.modify_handler(fd, this, EPOLLOUT);
+}
+
+Target::ProposedAndAcceptedSender::~ProposedAndAcceptedSender() {
+  shutdown();
+}
+
+void Target::ProposedAndAcceptedSender::shutdown() {
+  manager.deregister_close_and_clear(fd);
+  assert(fd == -1);
+}
+
+bool Target::ProposedAndAcceptedSender::is_shutdown() const {
+  return fd == -1;
+}
+
+void Target::ProposedAndAcceptedSender::handle_error(const uint32_t events) {
+  fprintf(stderr, "%s (fd=%d, events=%x): unexpected\n",
+                  __PRETTY_FUNCTION__, fd, events);
+  shutdown();
+}
+
+void Target::ProposedAndAcceptedSender::handle_readable() {
+  fprintf(stderr, "%s (fd=%d): unexpected\n",
+                  __PRETTY_FUNCTION__, fd);
+  shutdown();
+}
+
+void Target::ProposedAndAcceptedSender::handle_writeable() {
+#ifndef NTRACE
+  printf("%s (fd=%d): writing [%lu,%lu)\n",
+    __PRETTY_FUNCTION__, fd, slots.start(), slots.end());
+#endif // def NTRACE
+
+  if (fd == -1) {
+    return;
+  }
+
+  auto write_result
+    = segment_cache.write_accepted_data_to(fd, stream, slots);
+
+  switch(write_result) {
+    case SegmentCache::WriteAcceptedDataResult::succeeded:
+#ifndef NTRACE
+      printf("%s (fd=%d): still-to-write [%lu,%lu)\n",
+        __PRETTY_FUNCTION__, fd, slots.start(), slots.end());
+#endif // def NTRACE
+      if (waiting_to_be_writeable && slots.is_empty()) {
+        waiting_to_be_writeable = false;
+        manager.modify_handler(fd, this, 0);
+      }
+      break;
+
+    case SegmentCache::WriteAcceptedDataResult::blocked:
+#ifndef NTRACE
+      printf("%s (fd=%d): blocked, still-to-write [%lu,%lu)\n",
+        __PRETTY_FUNCTION__, fd, slots.start(), slots.end());
+#endif // def NTRACE
+      if (!waiting_to_be_writeable) {
+        waiting_to_be_writeable = true;
+        manager.modify_handler(fd, this, EPOLLOUT);
+      }
+      break;
+
+    case SegmentCache::WriteAcceptedDataResult::failed:
+#ifndef NTRACE
+      printf("%s (fd=%d): write failed, shutting down\n",
+        __PRETTY_FUNCTION__, fd);
+#endif // def NTRACE
+      shutdown();
+       break;
+  }
+}
+
+bool Target::ProposedAndAcceptedSender::send(
+  const Paxos::Value::OffsetStream &proposal_stream,
+  const Paxos::SlotRange           &proposal_slots) {
+
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << " (fd=%d):"
+    << " proposal_stream = " << proposal_stream
+    << " proposal_slots = "  << proposal_slots
+    << " stream = " << stream
+    << " slots = "  << slots
+    << " waiting_to_be_writeable = " << waiting_to_be_writeable
+    << std::endl;
+#endif // ndef NTRACE
+
+  assert(proposal_slots.is_nonempty());
+
+  if  (proposal_stream.name.owner != stream.name.owner
+    || proposal_stream.name.id    != stream.name.id
+    || proposal_stream.offset     != stream.offset
+    || proposal_slots.start()     != slots.end()) {
+      return false;
+  }
+
+  slots.set_end(proposal_slots.end());
+
+  if (!waiting_to_be_writeable) {
+    handle_writeable();
+  }
+
+  return true;
+}
+
 
 }}

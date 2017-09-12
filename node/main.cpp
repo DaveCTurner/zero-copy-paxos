@@ -182,7 +182,8 @@ int main(int argc, char **argv) {
 
   for (const auto &address : target_addresses) {
     targets.push_back(std::move(std::unique_ptr<Pipeline::Peer::Target>
-      (new Pipeline::Peer::Target(address, manager, legislator, node_name))));
+      (new Pipeline::Peer::Target(address, manager,
+                                  segment_cache, legislator, node_name))));
   }
 
   const std::chrono::steady_clock::duration

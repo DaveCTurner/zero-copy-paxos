@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <unistd.h>
+#include <sys/sendfile.h>
 
 namespace Pipeline {
 
@@ -76,6 +77,55 @@ void SegmentCache::expire_because_chosen_to(const Paxos::Slot first_unchosen_slo
           && ce->slots.end() < first_unchosen_slot;
     }),
     entries.end());
+}
+
+SegmentCache::WriteAcceptedDataResult
+  SegmentCache::write_accepted_data_to(int out_fd,
+              const Paxos::Value::OffsetStream &stream,
+              Paxos::SlotRange &slots) {
+  if (slots.is_empty()) {
+    return SegmentCache::WriteAcceptedDataResult::succeeded;
+  }
+
+  const auto it = std::find_if(
+    entries.cbegin(),
+    entries.cend(),
+    [&stream, &slots](const std::unique_ptr<CacheEntry> &ce) {
+      return ce->stream.name.owner == stream.name.owner
+          && ce->stream.name.id    == stream.name.id
+          && ce->stream.offset     == stream.offset
+          && ce->slots.contains(slots.start())
+          && ce->fd != -1;
+    });
+
+  if (it == entries.cend()) {
+    fprintf(stderr, "%s: matching CacheEntry not found\n",
+                    __PRETTY_FUNCTION__);
+    return SegmentCache::WriteAcceptedDataResult::failed;
+  }
+
+  CacheEntry &ce = **it;
+
+  assert(slots.start() >= ce.slots.start());
+  off_t file_offset = slots.start() - ce.slots.start();
+
+  ssize_t sendfile_result = sendfile(out_fd, ce.fd,
+                                     &file_offset,
+                                     slots.end() - slots.start());
+
+  if (sendfile_result == -1) {
+    if (errno == EAGAIN) {
+      return SegmentCache::WriteAcceptedDataResult::blocked;
+    }
+    perror(__PRETTY_FUNCTION__);
+    fprintf(stderr, "%s: sendfile() failed\n", __PRETTY_FUNCTION__);
+    return SegmentCache::WriteAcceptedDataResult::failed;
+  }
+
+  assert(sendfile_result > 0);
+  slots.truncate(slots.start() + sendfile_result);
+
+  return SegmentCache::WriteAcceptedDataResult::succeeded;
 }
 
 }

@@ -63,6 +63,17 @@ public:
                   const Paxos::Slot                 initial_slot);
 
   void expire_because_chosen_to(const Paxos::Slot first_unchosen_slot);
+
+  enum WriteAcceptedDataResult : uint8_t {
+    failed,
+    blocked,
+    succeeded
+  };
+
+  WriteAcceptedDataResult
+    write_accepted_data_to(int out_fd,
+                const Paxos::Value::OffsetStream &stream,
+                Paxos::SlotRange &slots);
 };
 
 
