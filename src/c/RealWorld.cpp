@@ -376,7 +376,16 @@ void RealWorld::chosen_new_configuration
 }
 
 const Paxos::instant RealWorld::get_current_time() {
-  return std::chrono::steady_clock::now();
+  return current_time;
+}
+
+void RealWorld::set_current_time(const Paxos::instant &t) {
+#ifndef NTRACE
+  std::cout << __PRETTY_FUNCTION__ << ": " <<
+    std::chrono::time_point_cast<std::chrono::milliseconds>
+      (t).time_since_epoch().count() << std::endl;
+#endif // ndef NTRACE
+  current_time = t;
 }
 
 const Paxos::instant RealWorld::get_next_wake_up_time() const {

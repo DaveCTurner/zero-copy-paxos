@@ -29,9 +29,14 @@
 namespace Pipeline {
 
 class LocalAcceptor {
+  class DummyClockCache : public Epoll::ClockCache {
+  public:
+    void set_current_time(const timestamp&);
+  };
 
   const Paxos::Proposal     &proposal;
         Paxos::SlotRange    &slots_to_accept;
+        DummyClockCache      dummy_clock_cache;
         Epoll::Manager       manager;
         Pipe<LocalAcceptor>  pipe;
         std::vector<std::unique_ptr<SegmentCache::CacheEntry>> &entries;

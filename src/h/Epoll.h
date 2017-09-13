@@ -26,8 +26,18 @@
 #include <stdlib.h>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <chrono>
+#include <atomic>
+#include <thread>
+
+using timestamp = std::chrono::time_point<std::chrono::steady_clock>;
 
 namespace Epoll {
+
+class ClockCache {
+  public:
+    virtual void set_current_time(const timestamp&) = 0;
+};
 
 class Handler {
   public:
@@ -36,11 +46,18 @@ class Handler {
     virtual void handle_error    (const uint32_t) = 0;
 };
 
+void update_clock(std::atomic<bool>*, std::atomic<bool>*);
+
 class Manager {
   Manager           (const Manager&) = delete; // no copying
   Manager &operator=(const Manager&) = delete; // no assignment
 
   const int epfd;
+  ClockCache &clock_cache;
+
+  std::atomic<bool> clock_updater_should_exit;
+  std::atomic<bool> clock_needs_updating;
+  std::thread       clock_updater;
 
   void ctl_and_verify(int op,
                       int fd,
@@ -58,8 +75,14 @@ class Manager {
   }
 
   public:
-  Manager()
-      : epfd(epoll_create(1)) {
+  Manager(ClockCache &clock_cache)
+      : epfd(epoll_create(1)),
+        clock_cache(clock_cache),
+        clock_updater_should_exit(false),
+        clock_needs_updating(true),
+        clock_updater(update_clock, &clock_needs_updating,
+                                    &clock_updater_should_exit) {
+
     if (epfd == -1) {
       perror(__PRETTY_FUNCTION__);
       abort();
@@ -78,6 +101,8 @@ class Manager {
     if (epfd != -1) {
       close(epfd);
     }
+    clock_updater_should_exit.store(true);
+    clock_updater.join();
   }
 
   void register_handler(int fd, Handler *handler, uint32_t events) {
@@ -112,6 +137,11 @@ class Manager {
                                  EPOLL_EVENTS_SIZE,
                                  timeout_milliseconds);
 #undef EPOLL_EVENTS_SIZE
+
+    if (clock_needs_updating.load()) {
+      clock_needs_updating.store(false);
+      clock_cache.set_current_time(std::chrono::steady_clock::now());
+    }
 
 #ifndef NTRACE
     printf("%s: %d events received\n", __PRETTY_FUNCTION__, event_count);

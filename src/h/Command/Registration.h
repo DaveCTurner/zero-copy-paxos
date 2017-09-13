@@ -52,6 +52,10 @@ public:
 
 private:
 
+  class DummyClock : public Epoll::ClockCache {
+    void set_current_time(const timestamp &) override {}
+  };
+
   class Target : public Epoll::Handler {
       const Address        &address;
             Epoll::Manager &manager;
@@ -205,12 +209,13 @@ private:
 
   std::vector<Target> targets;
   Paxos::NodeId &node;
+  DummyClock dummy_clock;
   Epoll::Manager manager;
 
   Registration(std::string &cluster, Paxos::NodeId &node,
                const std::vector<Address> &addresses)
       : node(node),
-        manager() {
+        manager(dummy_clock) {
 
     assert(!addresses.empty());
 

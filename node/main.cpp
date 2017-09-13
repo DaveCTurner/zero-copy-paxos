@@ -170,7 +170,7 @@ int main(int argc, char **argv) {
 
   RealWorld real_world(node_name, segment_cache, targets);
   Paxos::Legislator legislator(real_world, node_name.id, 0, 0, conf);
-  Epoll::Manager manager;
+  Epoll::Manager manager(real_world);
   Pipeline::Client::Listener client_listener
     (manager, segment_cache, legislator, node_name, client_port);
   Pipeline::Peer::Listener peer_listener

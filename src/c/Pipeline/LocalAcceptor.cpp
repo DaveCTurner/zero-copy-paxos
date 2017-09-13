@@ -25,6 +25,11 @@
 
 namespace Pipeline {
 
+void LocalAcceptor::DummyClockCache::set_current_time(const timestamp&) {
+  fprintf(stderr, "%s: unexpected\n", __PRETTY_FUNCTION__);
+  abort();
+}
+
 LocalAcceptor::LocalAcceptor
   (const Paxos::Proposal  &proposal,
          Paxos::SlotRange &slots_to_accept,
@@ -34,6 +39,7 @@ LocalAcceptor::LocalAcceptor
 
     : proposal(proposal),
       slots_to_accept(slots_to_accept),
+      manager(dummy_clock_cache),
       pipe(manager, *this, segment_cache, node_name, node_name.id,
             proposal.value.payload.stream.name,
             slots_to_accept.start() - proposal.value.payload.stream.offset),

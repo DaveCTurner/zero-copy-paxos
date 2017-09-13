@@ -23,17 +23,16 @@
 
 #include "Paxos/OutsideWorld.h"
 #include "Pipeline/Peer/Target.h"
-#include "Pipeline/SegmentCache.h"
+#include "Epoll.h"
 #include "Pipeline/Client/ChosenStreamContentHandler.h"
 #include "Command/NodeIdGenerationHandler.h"
 #include "Pipeline/NodeName.h"
 
-#include <memory>
-
-class RealWorld : public Paxos::OutsideWorld {
+class RealWorld : public Paxos::OutsideWorld, public Epoll::ClockCache {
   RealWorld           (const RealWorld&) = delete; // no copying
   RealWorld &operator=(const RealWorld&) = delete; // no assignment
 
+  Paxos::instant current_time      = std::chrono::steady_clock::now();
   Paxos::instant next_wake_up_time = std::chrono::steady_clock::now();
 
   std::vector<Pipeline::Client::ChosenStreamContentHandler*> chosen_stream_content_handlers;
@@ -107,6 +106,8 @@ public:
              const Paxos::Configuration &conf) override;
 
   const Paxos::instant get_current_time() override;
+
+  void set_current_time(const Paxos::instant &t) override;
 
   const Paxos::instant get_next_wake_up_time() const;
 
