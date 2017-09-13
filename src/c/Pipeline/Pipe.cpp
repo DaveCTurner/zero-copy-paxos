@@ -124,12 +124,14 @@ void Pipe<Upstream>::handle_readable() {
   } else {
     assert(splice_result > 0);
 
+#ifndef NFSYNC
     int fsync_result = fsync(current_segment->get_fd());
     if (fsync_result == -1) {
       perror(__PRETTY_FUNCTION__);
       fprintf(stderr, "%s: fsync() failed\n", __PRETTY_FUNCTION__);
       abort();
     }
+#endif // ndef NFSYNC
 
     uint64_t bytes_sent = splice_result;
     assert(bytes_sent <= bytes_in_pipe);

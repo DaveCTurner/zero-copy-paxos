@@ -23,10 +23,12 @@ import           Development.Shake.FilePath
 import           Development.Shake.Util
 
 optFlag :: String -> String
-optFlag "release" = "-O3"
-optFlag _         = "-Og"
+optFlag "release"  = "-O3"
+optFlag "volatile" = "-O3"
+optFlag _          = "-Og"
 
 defineFlags :: String -> [String]
+defineFlags "volatile" = ["-DNDEBUG", "-DNTRACE", "-DNFSYNC"]
 defineFlags "release"  = ["-DNDEBUG", "-DNTRACE"]
 defineFlags "debug"    = ["-DNTRACE", "-g"]
 defineFlags "trace"    = ["-g"]
@@ -36,7 +38,7 @@ main :: IO ()
 main = shakeArgs shakeOptions $ do
   want ["_build/test-output"]
   want ["_build" </> level </> executable
-       | level <- ["release", "debug", "trace"]
+       | level <- ["volatile", "release", "debug", "trace"]
        , executable <- ["test", "node", "client"]
        ]
 
