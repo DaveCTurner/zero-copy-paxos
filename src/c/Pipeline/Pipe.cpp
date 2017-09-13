@@ -207,6 +207,12 @@ Pipe<Upstream>::Pipe
     abort();
   }
 
+  if (fcntl(pipe_fds[0], F_SETPIPE_SZ, PIPE_SIZE) == -1) {
+    perror(__PRETTY_FUNCTION__);
+    fprintf(stderr, "%s: fcntl(F_SETPIPE_SZ) failed\n", __PRETTY_FUNCTION__);
+    abort();
+  }
+
 #ifndef NTRACE
   std::cout << __PRETTY_FUNCTION__ << ": "
             << stream << "/" << first_stream_pos << " "

@@ -70,7 +70,8 @@ void Socket::handle_readable() {
 
   ssize_t splice_result = splice(
     fd, NULL, pipe.get_write_end_fd(), NULL,
-    (1<<20), SPLICE_F_MOVE | SPLICE_F_NONBLOCK | SPLICE_F_MORE);
+    PIPE_SIZE,
+    SPLICE_F_MOVE | SPLICE_F_NONBLOCK | SPLICE_F_MORE);
 
   if (splice_result == -1) {
     if (errno == EAGAIN) {
