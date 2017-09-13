@@ -113,9 +113,16 @@ SegmentCache::WriteAcceptedDataResult
   assert(slots.start() >= ce.slots.start());
   off_t file_offset = slots.start() - ce.slots.start();
 
+#ifndef NDEBUG
+  off_t current_offset = lseek(ce.fd, 0, SEEK_CUR);
+  assert(0 <= current_offset);
+#endif // ndef NDEBUG
+
   ssize_t sendfile_result = sendfile(out_fd, ce.fd,
                                      &file_offset,
                                      slots.end() - slots.start());
+
+  assert(current_offset == lseek(ce.fd, 0, SEEK_CUR));
 
   if (sendfile_result == -1) {
     if (errno == EAGAIN) {
