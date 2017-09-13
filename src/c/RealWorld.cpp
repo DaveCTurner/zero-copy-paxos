@@ -107,13 +107,13 @@ void RealWorld::request_catch_up(const Paxos::NodeId &destination) {
 }
 
 void RealWorld::send_catch_up(
-      const Paxos::NodeId&            destination,
-      const Paxos::Slot&              first_unchosen_slot,
-      const Paxos::Era&               current_era,
-      const Paxos::Configuration&     current_configuration,
-      const Paxos::NodeId&            next_generated_node_id,
-      const Paxos::Value::StreamName& current_stream,
-      const uint64_t                  current_stream_pos) {
+  const Paxos::NodeId&            destination,
+  const Paxos::Slot&              first_unchosen_slot,
+  const Paxos::Era&               current_era,
+  const Paxos::Configuration&     current_configuration,
+  const Paxos::NodeId&            next_generated_node_id,
+  const Paxos::Value::StreamName& current_stream,
+  const uint64_t                  current_stream_pos) {
 
   for (auto &target : targets) {
     target->send_catch_up(destination,
