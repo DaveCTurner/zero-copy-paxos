@@ -244,7 +244,7 @@ void RealWorld::record_non_stream_content_acceptance(const Paxos::Proposal &prop
 }
 
 void RealWorld::proposed_and_accepted(const Paxos::Proposal &proposal) {
-  if (proposal.value.type == Paxos::Value::Type::stream_content) {
+  if (LIKELY(proposal.value.type == Paxos::Value::Type::stream_content)) {
     segment_cache.ensure_locally_accepted(proposal);
   } else {
     record_non_stream_content_acceptance(proposal);
@@ -256,7 +256,7 @@ void RealWorld::proposed_and_accepted(const Paxos::Proposal &proposal) {
 }
 
 void RealWorld::accepted(const Paxos::Proposal &proposal) {
-  if (proposal.value.type != Paxos::Value::Type::stream_content) {
+  if (UNLIKELY(proposal.value.type != Paxos::Value::Type::stream_content)) {
     record_non_stream_content_acceptance(proposal);
   }
 
