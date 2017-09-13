@@ -23,6 +23,7 @@
 
 #include "Epoll.h"
 #include "Pipeline/NodeName.h"
+#include "Pipeline/Peer/Protocol.h"
 
 #include <vector>
 #include <string>
@@ -34,8 +35,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <string.h>
-
-#define CLUSTER_ID_LENGTH 36
 
 namespace Command {
 
