@@ -111,10 +111,11 @@ void read_thread_main(ReadThreadData *d) {
     abort();
   }
 
-  uint32_t received_ack;
+#define MAX_RECEIVED_ACKS 1024
+  uint32_t received_acks[MAX_RECEIVED_ACKS];
   size_t   received_bytes = 0;
   unsigned char *receive_buffer
-    = reinterpret_cast<unsigned char*>(&received_ack);
+    = reinterpret_cast<unsigned char*>(received_acks);
 
   while (1) {
     struct epoll_event evt;
@@ -126,7 +127,8 @@ void read_thread_main(ReadThreadData *d) {
 
     while (1) {
       int read_len = read(d->fd, receive_buffer + received_bytes,
-                                sizeof(uint32_t) - received_bytes);
+                                sizeof(uint32_t) * MAX_RECEIVED_ACKS
+                                    - received_bytes);
       if (read_len == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
           break;
@@ -143,13 +145,20 @@ void read_thread_main(ReadThreadData *d) {
       } else {
         assert(read_len >= 0);
         received_bytes += read_len;
-        assert(received_bytes <= sizeof(uint32_t));
+        assert(received_bytes <= sizeof(uint32_t) * MAX_RECEIVED_ACKS);
 
-        if (received_bytes == sizeof(uint32_t)) {
-          d->total_read          += received_ack;
+        for (uint32_t ack_index = 0;
+                      ack_index < received_bytes/sizeof(uint32_t);
+                      ack_index++) {
+          d->total_read          += received_acks[ack_index];
           d->total_received_acks += 1;
-          received_bytes = 0;
         }
+
+        size_t leftover = received_bytes % sizeof(uint32_t);
+        if (leftover != 0) {
+          received_acks[0] = received_acks[received_bytes/sizeof(uint32_t)];
+        }
+        received_bytes = leftover;
       }
     }
   }
