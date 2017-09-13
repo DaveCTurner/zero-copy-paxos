@@ -23,7 +23,6 @@
 
 #include "Pipeline/Peer/Protocol.h"
 #include "Pipeline/Pipe.h"
-#include "Pipeline/Peer/Protocol.h"
 #include "Epoll.h"
 #include "Paxos/Legislator.h"
 
