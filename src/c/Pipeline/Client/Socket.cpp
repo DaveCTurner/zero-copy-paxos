@@ -111,6 +111,7 @@ void Socket::handle_readable() {
     read_stream_pos += bytes_sent;
 #endif // ndef NDEBUG
     pipe.record_bytes_in(bytes_sent);
+    pipe.handle_readable();
   }
 }
 
