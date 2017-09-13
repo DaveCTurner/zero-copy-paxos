@@ -30,6 +30,12 @@ void LocalAcceptor::DummyClockCache::set_current_time(const timestamp&) {
   abort();
 }
 
+LocalAcceptor::ValidateArgs::ValidateArgs(const Paxos::Proposal &proposal,
+                       Paxos::SlotRange &slots) {
+  assert(proposal.value.type == Paxos::Value::Type::stream_content);
+  assert(proposal.value.payload.stream.offset <= slots.start());
+}
+
 LocalAcceptor::LocalAcceptor
   (const Paxos::Proposal  &proposal,
          Paxos::SlotRange &slots_to_accept,
@@ -40,6 +46,7 @@ LocalAcceptor::LocalAcceptor
     : proposal(proposal),
       slots_to_accept(slots_to_accept),
       manager(dummy_clock_cache),
+      validate_args(proposal, slots_to_accept),
       pipe(manager, *this, segment_cache, node_name, node_name.id,
             proposal.value.payload.stream.name,
             slots_to_accept.start() - proposal.value.payload.stream.offset),

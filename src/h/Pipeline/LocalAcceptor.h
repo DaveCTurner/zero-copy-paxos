@@ -34,10 +34,16 @@ class LocalAcceptor {
     void set_current_time(const timestamp&);
   };
 
+  class ValidateArgs {
+  public:
+    ValidateArgs(const Paxos::Proposal&, Paxos::SlotRange&);
+  };
+
   const Paxos::Proposal     &proposal;
         Paxos::SlotRange    &slots_to_accept;
         DummyClockCache      dummy_clock_cache;
         Epoll::Manager       manager;
+        ValidateArgs         validate_args;
         Pipe<LocalAcceptor>  pipe;
         std::vector<std::unique_ptr<SegmentCache::CacheEntry>> &entries;
 
