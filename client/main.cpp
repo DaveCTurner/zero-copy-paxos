@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <mutex>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +33,7 @@
 #include <thread>
 #include <time.h>
 #include <unistd.h>
+#include <vector>
 
 struct option long_options[] =
   {
@@ -88,10 +90,20 @@ struct ReadThreadData {
   std::atomic<uint64_t> total_read;
   std::atomic<uint32_t> total_received_acks;
 
+  std::atomic<uint64_t> start_time_sec;
+  std::atomic<uint64_t> start_time_nsec;
+  std::atomic<uint64_t> current_round_trip_target;
+
+  std::vector<double> latency_samples;
+  std::mutex latency_samples_mutex;
+
   ReadThreadData(int fd)
     : fd(fd),
       total_read(0),
-      total_received_acks(0) {}
+      total_received_acks(0),
+      start_time_sec(0),
+      start_time_nsec(0),
+      current_round_trip_target(0) {}
 };
 
 void read_thread_main(ReadThreadData *d) {
@@ -159,6 +171,23 @@ void read_thread_main(ReadThreadData *d) {
           received_acks[0] = received_acks[received_bytes/sizeof(uint32_t)];
         }
         received_bytes = leftover;
+
+        uint64_t current_round_trip_target_val
+          = d->current_round_trip_target.load();
+        if (current_round_trip_target_val != 0
+          && current_round_trip_target_val <= d->total_read.load()) {
+
+          struct timespec current_time;
+          clock_gettime(CLOCK_MONOTONIC, &current_time);
+
+          std::lock_guard<std::mutex> lock(d->latency_samples_mutex);
+
+          d->latency_samples.push_back(
+              ((double)current_time.tv_sec  - d->start_time_sec.load())
+            + ((double)current_time.tv_nsec - d->start_time_nsec.load()) * 1.0e-9);
+
+          d->current_round_trip_target.store(0);
+        }
       }
     }
   }
@@ -434,6 +463,11 @@ int main(int argc, char **argv) {
                    total_received_acks - start_statistics.ack_count,
                    total_read - start_statistics.acked_byte_count);
 
+        printf("latency samples:");
+        for (auto latency_sample : rtd.latency_samples) {
+          printf(" %8f", latency_sample);
+        }
+        printf("\n");
         exit(0);
       } else if (!warmup_complete && start_time.tv_sec + 15 < current_time.tv_sec) {
         printf("---- 15-sec warmup complete\n");
@@ -447,6 +481,9 @@ int main(int argc, char **argv) {
         start_statistics.written_byte_count    = total_written;
         start_statistics.ack_count             = total_received_acks;
         start_statistics.acked_byte_count      = total_read;
+
+        std::lock_guard<std::mutex> lock(rtd.latency_samples_mutex);
+        rtd.latency_samples.clear();
       }
     }
 
@@ -502,6 +539,14 @@ int main(int argc, char **argv) {
         bucket_level_bytes += current_request_still_to_send;
       } else {
         break;
+      }
+
+      if (current_request_still_to_send == request_size
+          && rtd.current_round_trip_target.load() == 0) {
+        clock_gettime(CLOCK_MONOTONIC, &current_time);
+        rtd.start_time_sec.store(current_time.tv_sec);
+        rtd.start_time_nsec.store(current_time.tv_nsec);
+        rtd.current_round_trip_target.store(total_written + request_size);
       }
 
       int write_result = write(sock, current_request_ptr, current_request_still_to_send);
