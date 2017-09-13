@@ -46,11 +46,11 @@ public:
 #define CLIENT_SEGMENT_DEFAULT_SIZE (1ul<<CLIENT_SEGMENT_DEFAULT_SIZE_BITS)
 
   Segment(SegmentCache&,
-          const NodeName&,
+    const NodeName&,
     const Paxos::NodeId,
-          const Paxos::Value::OffsetStream,
-          const Paxos::Term&,
-          const uint64_t);
+    const Paxos::Value::OffsetStream,
+    const Paxos::Term&,
+    const uint64_t);
 
   ~Segment();
 
