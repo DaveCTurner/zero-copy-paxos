@@ -364,8 +364,8 @@ int main(int argc, char **argv) {
                                         "ack rate (B/s)",
                                              "txn rate (Hz)");
 
-  struct timespec start_time      = current_time;
-  bool            warmup_complete = false;
+  struct timespec start_time = current_time;
+  bool   warmup_complete     = false;
 
   ReadThreadData rtd(sock);
   std::thread read_thread(read_thread_main, &rtd);
