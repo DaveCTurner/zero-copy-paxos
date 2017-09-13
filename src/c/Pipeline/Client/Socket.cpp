@@ -65,6 +65,7 @@ bool Socket::is_shutdown() const {
 }
 
 void Socket::handle_readable() {
+  if (fd == -1) { return; }
   if (waiting_for_downstream) { return; }
   assert(pipe.get_next_stream_pos_write() == read_stream_pos);
 
