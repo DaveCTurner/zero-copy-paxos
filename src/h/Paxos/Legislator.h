@@ -146,6 +146,10 @@ class Legislator {
       return _palladium.next_activated_slot();
     }
 
+    const Slot get_next_chosen_slot() const {
+      return _palladium.next_chosen_slot();
+    }
+
     bool activation_will_yield_proposals() const {
       return is_leading()
            && _palladium.activation_will_yield_proposals()

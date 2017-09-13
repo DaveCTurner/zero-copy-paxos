@@ -29,6 +29,7 @@
 
 #include <getopt.h>
 #include <signal.h>
+#include <sys/resource.h>
 
 struct option long_options[] =
   {
@@ -212,6 +213,21 @@ int main(int argc, char **argv) {
     legislator.handle_wake_up();
 
     if (next_target_check_time < real_world.get_current_time()) {
+      struct rusage usage;
+      if (getrusage(RUSAGE_SELF, &usage) == -1) {
+        perror(__PRETTY_FUNCTION__);
+        fprintf(stderr, "%s: getrusage() failed\n", __PRETTY_FUNCTION__);
+        abort();
+      }
+      printf("stats: real %13luus user %3ld%06ldus sys %4ld%06ldus active slots [%9lu,%9lu)=%7lu\n",
+        std::chrono::time_point_cast<std::chrono::microseconds>
+          (real_world.get_current_time()).time_since_epoch().count(),
+        usage.ru_utime.tv_sec, usage.ru_utime.tv_usec,
+        usage.ru_stime.tv_sec, usage.ru_stime.tv_usec,
+        legislator.get_next_chosen_slot(),
+        legislator.get_next_activated_slot(),
+        legislator.get_next_activated_slot() - legislator.get_next_chosen_slot());
+
       for (auto &target : targets) {
         target->start_connection();
       }
