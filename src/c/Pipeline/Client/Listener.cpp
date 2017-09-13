@@ -27,6 +27,14 @@ namespace Pipeline {
 namespace Client {
 
 void Listener::handle_accept(int client_fd) {
+  int receive_buffer_size = 1<<23;
+  if (setsockopt(client_fd, SOL_SOCKET, SO_RCVBUF,
+                  &receive_buffer_size, sizeof receive_buffer_size) == -1) {
+    perror(__PRETTY_FUNCTION__);
+    fprintf(stderr, "%s: setsockopt(SO_RCVBUF) failed\n", __PRETTY_FUNCTION__);
+    abort();
+  }
+
   client_sockets.erase(std::remove_if(
     client_sockets.begin(),
     client_sockets.end(),
