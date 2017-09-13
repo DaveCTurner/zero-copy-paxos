@@ -69,6 +69,17 @@ void Socket::handle_readable() {
   if (waiting_for_downstream) { return; }
   assert(pipe.get_next_stream_pos_write() == read_stream_pos);
 
+  if (legislator.get_next_activated_slot()
+         > CLIENT_SEGMENT_DEFAULT_SIZE + legislator.get_next_chosen_slot()) {
+
+    // TODO if legislator has too many active slots, unsubscribe from epoll and stop
+    // reading more data. Socket will be re-subscribed to epoll when the number
+    // of active slots drops back down.
+
+    // For now, just spin until the slots are chosen.
+    return;
+  }
+
   ssize_t splice_result = splice(
     fd, NULL, pipe.get_write_end_fd(), NULL,
     PIPE_SIZE,
@@ -216,6 +227,10 @@ void Socket::handle_stream_content(const Paxos::Proposal &proposal) {
     shutdown();
     return;
   }
+
+  // TODO if previously unsubscribed because there were too many
+  // active slots, but there are now not too many, then
+  // resubscribe
 
   assert(proposal.slots.start() - proposal.value.payload.stream.offset
            == committed_stream_pos);
