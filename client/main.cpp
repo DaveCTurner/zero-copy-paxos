@@ -326,8 +326,13 @@ int main(int argc, char **argv) {
                                         "ack rate (B/s)",
                                              "txn rate (Hz)");
 
+  struct timespec start_time      = current_time;
+  bool            warmup_complete = false;
+
   ReadThreadData rtd(sock);
   std::thread read_thread(read_thread_main, &rtd);
+
+  Statistics start_statistics;
 
   srand(time(NULL));
   while (1) {
@@ -379,6 +384,61 @@ int main(int argc, char **argv) {
         total_written,
         total_received_acks, total_read,
         rate_b, rate_w);
+
+      if (start_time.tv_sec + 60 < current_time.tv_sec) {
+        printf("---- 60-sec run complete\n");
+        shutdown(sock, SHUT_WR);
+        read_thread.join();
+
+        printf("%10s %18s %18s %18s %18s %18s %18s %18s %18s %18s\n",
+                "",
+                     "target rate",
+                           "request size",
+                                "start time",
+                                      "end time",
+                                         "elapsed (ms)",
+                                              "user time (ms)",
+                                                   "sys time (ms)",
+                                                        "acks",
+                                                             "acked (B)");
+        printf("%10s %18f %18lu %8ld.%09ld %8ld.%09ld %18lu %18lu %18lu %18lu %18lu\n",
+                "results:",
+                bucket_leak_rate_bytes_per_sec,
+                request_size,
+                start_statistics.current_ela_time_sec,
+                start_statistics.current_ela_time_nsec,
+                current_time.tv_sec,
+                current_time.tv_nsec,
+
+                 (current_time.tv_sec * 1000 + current_time.tv_nsec / 1000000)
+                - (start_statistics.current_ela_time_sec * 1000 +
+                   start_statistics.current_ela_time_nsec / 1000000),
+
+                  (usage.ru_utime.tv_sec * 1000 + usage.ru_utime.tv_usec / 1000)
+                - (start_statistics.current_usr_time_sec * 1000 +
+                   start_statistics.current_usr_time_usec / 1000),
+
+                  (usage.ru_stime.tv_sec * 1000 + usage.ru_stime.tv_usec / 1000)
+                - (start_statistics.current_sys_time_sec * 1000 +
+                   start_statistics.current_sys_time_usec / 1000),
+
+                   total_received_acks - start_statistics.ack_count,
+                   total_read - start_statistics.acked_byte_count);
+
+        exit(0);
+      } else if (!warmup_complete && start_time.tv_sec + 15 < current_time.tv_sec) {
+        printf("---- 15-sec warmup complete\n");
+        warmup_complete = true;
+        start_statistics.current_ela_time_sec  = current_time.tv_sec;
+        start_statistics.current_ela_time_nsec = current_time.tv_nsec;
+        start_statistics.current_usr_time_sec  = usage.ru_utime.tv_sec;
+        start_statistics.current_usr_time_usec = usage.ru_utime.tv_usec;
+        start_statistics.current_sys_time_sec  = usage.ru_stime.tv_sec;
+        start_statistics.current_sys_time_usec = usage.ru_stime.tv_usec;
+        start_statistics.written_byte_count    = total_written;
+        start_statistics.ack_count             = total_received_acks;
+        start_statistics.acked_byte_count      = total_read;
+      }
     }
 
     double bucket_leaked_bytes
