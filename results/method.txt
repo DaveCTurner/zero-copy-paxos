@@ -1,0 +1,138 @@
+# ---------------------------------------------------------------------------------------
+# Launch instances
+# ---------------------------------------------------------------------------------------
+
+RUN_NAME=$(date +%s)
+IMAGE_ID=$(aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amzn-ami-hvm-*-x86_64-gp2' 'Name=state,Values=available' | jq -r '.Images | sort_by(.CreationDate) | reverse | .[0].ImageId')
+SG_SSH_FROM_HOME=$(aws ec2 describe-security-groups --filter "Name=group-name,Values=ssh-from-home" | jq -r '.SecurityGroups[0].GroupId')
+SG_MUTUAL_ACCESS=$(aws ec2 describe-security-groups --filter "Name=group-name,Values=mutual-access" | jq -r '.SecurityGroups[0].GroupId')
+SUBNET_ID=$(aws ec2 describe-subnets --filter "Name=tag:Name,Values=storage-test-a" | jq -r '.Subnets[].SubnetId')
+echo '[{"DeviceName": "/dev/sdc","VirtualName":"ephemeral1"}]' >block-device-mapping.json
+
+aws ec2 run-instances                                                                     \
+          --count 2                                                                       \
+          --image-id $IMAGE_ID                                                            \
+          --instance-type i3.large                                                        \
+          --key-name davidturner@keepass-2017-05-22                                       \
+          --placement GroupName=pg-2017-09-14                                             \
+          --security-group-ids $SG_SSH_FROM_HOME $SG_MUTUAL_ACCESS                        \
+          --subnet-id $SUBNET_ID                                                          \
+          --associate-public-ip-address                                                   \
+          --iam-instance-profile Arn=arn:aws:iam::907640444254:instance-profile/SpeedTest \
+          --instance-initiated-shutdown-behavior terminate                                \
+          --block-device-mappings file://block-device-mapping.json                        \
+          --tag-specifications "ResourceType=instance,Tags=[{Key=run-name,Value=$RUN_NAME}]"
+
+aws ec2 describe-instances --filter "Name=tag:run-name,Values=$RUN_NAME" > instances.json
+
+INSTANCE_IDS=($(cat instances.json | jq -r '.Reservations[].Instances[].InstanceId'))
+declare -a -p INSTANCE_IDS
+
+PUBLIC_IPS=($(cat instances.json | jq -r '.Reservations[].Instances[].PublicIpAddress | select(.)'))
+declare -a -p PUBLIC_IPS
+
+PRIVATE_IPS=($(cat instances.json | jq -r '.Reservations[].Instances[].PrivateIpAddress'))
+declare -a -p PRIVATE_IPS
+
+# STOP HERE until there are two public ips
+
+for ip in ${PUBLIC_IPS[@]}; do scp _build/release/{client,node} ec2-user@$ip:; done
+
+# ---------------------------------------------------------------------------------------
+# Setup on each machine
+# ---------------------------------------------------------------------------------------
+
+export MY_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)
+echo $MY_IP
+
+export OTHER_IP=...
+export NODE_ID=1
+
+cat <<EOF | sudo tee -a /etc/sysctl.conf
+fs.file-max = 2097152
+fs.pipe-max-size = 536870912
+fs.pipe-user-pages-soft = 16777216
+net.core.wmem_max=12582912
+net.core.rmem_max=12582912
+net.ipv4.tcp_rmem= 10240 87380 12582912
+net.ipv4.tcp_wmem= 10240 87380 12582912
+net.ipv4.tcp_window_scaling = 1
+net.ipv4.tcp_timestamps = 1
+net.ipv4.tcp_sack = 1
+net.ipv4.tcp_no_metrics_save = 1
+net.core.netdev_max_backlog = 5000
+EOF
+sudo sysctl -p
+
+export FAST_DEVICE=/dev/nvme0n1
+
+sudo mke2fs -t ext4 $FAST_DEVICE
+mkdir data
+sudo mount $FAST_DEVICE data
+sudo chown ec2-user:ec2-user data
+
+if [ $NODE_ID -eq 1 ]
+then
+  export REGISTER_AT=""
+
+  rm -f test-script-raw.sh
+  for rate in {5,10,20,50,100,120,130,140,150,160,170,180,190,200,210,220}
+  do
+    if [ $rate -le 20 ]
+    then
+      minsize=1
+    else
+      minsize=$(($rate / 5))
+    fi
+
+    for size in 1 14 20 50 100 200 500 1000
+    do
+      if [ $size -lt $minsize ]
+      then
+        continue
+      fi
+
+      printf -v args -- "--rate %3de6 --request-size %4d" $rate $size
+      result=$(printf "client-%03de6-%04d-\$(date +%%s).log" $rate $size)
+      echo 'stdbuf -o 0 ./client --host $MY_IP --port 51001' "$args 2>&1 | tee $result" >> test-script-raw.sh
+    done
+  done
+
+  echo '#!/bin/bash' > test-script.sh
+  echo 'set +euo pipefail' >> test-script.sh
+  cat test-script-raw.sh >> test-script.sh
+
+  cat <<'EOF' >>test-script.sh
+find data -type f | xargs ls -ald >> created-files-$(date +%s).log
+
+RESULTS=results-${MY_IP}-$(date +%s).tar.gz
+tar zcvf $RESULTS node-*.log client-*.log created-files*.log $(find data -type f -name "*.log")
+aws s3api put-object --bucket dct25-results --key $RESULTS --body $RESULTS
+EOF
+
+  chmod +x test-script.sh
+else
+  export REGISTER_AT="--register-at ${OTHER_IP}:51021"
+fi
+
+
+screen
+
+# ---------------------------------------------------------------------------------------
+# Run this on the leader first, then the follower
+# ---------------------------------------------------------------------------------------
+
+sudo rm -rf data/*
+stdbuf -o 0 ./node --client-port 51001 --peer-port 51011 --command-port 51021 \
+                   --target ${OTHER_IP}:51011 $REGISTER_AT \
+                   2>&1 | tee -a node-${NODE_ID}-${MY_IP}-$(date +%s).log
+
+# ---------------------------------------------------------------------------------------
+# Run this on the leader only
+# ---------------------------------------------------------------------------------------
+
+echo inc 2 EOF | nc $MY_IP 51021
+echo inc 3 EOF | nc $MY_IP 51021
+echo conf      | nc $MY_IP 51021
+
+./test-script.sh
