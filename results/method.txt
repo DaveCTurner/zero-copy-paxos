@@ -136,3 +136,11 @@ echo inc 3 EOF | nc $MY_IP 51021
 echo conf      | nc $MY_IP 51021
 
 ./test-script.sh
+
+# ---------------------------------------------------------------------------------------
+# Analysis - download the resulting .tar.gz files from S3
+# ---------------------------------------------------------------------------------------
+
+mkdir -p logs
+for i in *.tar.gz; do tar xf $i -C logs; done
+./analyse.py
